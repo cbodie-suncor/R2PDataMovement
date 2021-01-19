@@ -120,12 +120,19 @@ namespace R2PTransformation.src.db {
             return tm;
         }
 
-        public static List<Sigmafinex> Load(DataTable dt) {
+        public static void PersistSigmafinex(List<Sigmafinex> newItems) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                context.Sigmafinexes.RemoveRange(context.Sigmafinexes);
+                context.Sigmafinexes.AddRange(newItems);
+                context.SaveChanges();
+            }
+        }
+
+        public static List<Sigmafinex> TransformToSigmafinex(DataTable dt) {
             List<Sigmafinex> records = new List<Sigmafinex>();
             foreach (var row in dt.AsEnumerable()) {
                 records.Add(SigmafineFile.FromDataRow(row));
             }
-
             return records;
         }
 

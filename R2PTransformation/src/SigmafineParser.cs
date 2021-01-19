@@ -8,13 +8,13 @@ using System.Data;
 
 namespace R2PTransformation.src {
     public class SigmafineParser {
-        public SigmafineFile Load(string file, string plant, DateTime dateTime) {
+        public SigmafineFile Load(string fileContents, string plant, DateTime dateTime) {
             SigmafineFile ms = new SigmafineFile(plant); // either GP01 or GP02
             List<Sigmafinex> sigmafineRecords = null;
-            if (file != null) {
-                string fileContents = File.ReadAllText(@"D:\projects\suncor\sampleFiles\Commerce City\sigmafine.csv");
+            if (fileContents != null) {
                 DataTable dt = Utilities.ConvertCSVTexttoDataTable(fileContents);
-                sigmafineRecords = AzureModel.Load(dt);
+                sigmafineRecords = AzureModel.TransformToSigmafinex(dt);
+                AzureModel.PersistSigmafinex(sigmafineRecords);
             } else {
                 sigmafineRecords = AzureModel.GetCommerceCity();
             }

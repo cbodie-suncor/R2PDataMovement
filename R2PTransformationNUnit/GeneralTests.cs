@@ -20,7 +20,13 @@ namespace STransformNUnit {
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
             var output = AzureModel.UpdateTagMappings(tm);
             Console.WriteLine(output);
-
+        }
+        [Test]
+        public void AddingSigmaTagMappings() {
+            string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappingsWithSigma.csv");
+            DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
+            var output = AzureModel.UpdateTagMappings(tm);
+            Console.WriteLine(output);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace R2PTransformation.src {
 
             item.MeasLiqVol = ParseDecimal(row["MeasLiqVol"]);
             item.TankOpenVol = ParseDecimal(row["TankOpenVol"]);
-            item.MeasLiqVol = ParseDecimal(row["TankCloseVol"]);
+            item.TankCloseVol = ParseDecimal(row["TankCloseVol"]);
             return item;
         }
 
