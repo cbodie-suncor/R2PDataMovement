@@ -17,10 +17,7 @@ namespace SuncorR2P {
         public static string SHARENAME = "sap-iot-data";
 
         public static void WriteFile(string fullPath, string output, Boolean append) {
-//            output = DateTime.Now.ToUniversalTime() + " " + output;
             ShareFileClient file = new ShareFileClient(CONNECTIONSTRING, SHARENAME, fullPath);
-//            ShareDirectoryClient directory = share.GetDirectoryClient(directoryName);
-//            ShareFileClient file = directory.GetFileClient(logFile); // get original contents
 
             string original = "";
             if (!append && file.Exists()) file.Delete();

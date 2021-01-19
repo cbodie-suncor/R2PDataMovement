@@ -18,19 +18,14 @@ namespace SuncorR2P
             try {
                 SetConnection(context, log);
                 AzureFileHelper.ProcessModifiedTagMapping();
-            } catch (Exception ex) {
-                AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", ex.Message, true);
-                log.LogError(ex, $"R2PLoader failed at: {DateTime.Now}"); 
-            }
+            } catch (Exception ex) { LogSystemError(log, ex); }
 
             while (true) {
                 foundFile = null;
                 try {
                     foundFile = AzureFileHelper.ScanForANewFile();
-                } catch (Exception ex) {
-                    AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", ex.Message, true);
-                    log.LogError(ex, $"R2PLoader failed at: {DateTime.Now}");
-                }
+                } catch (Exception ex) { LogSystemError(log, ex); }
+
                 if (foundFile == null) break;
 
                 try {
@@ -43,17 +38,20 @@ namespace SuncorR2P
                     LogMessage(foundFile.PlantName, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
                     try {
                         foundFile.DisposeOfFile(true);
-                    } catch (Exception ex2) {
-                        log.LogError(ex2, $"R2PLoader failed at: {DateTime.Now}");
-                    }
+                    } catch (Exception ex2) { LogSystemError(log, ex2); }
                 }
             }
 
             try {
-                if (DateTime.Now.Minute == 1 && DateTime.Now.Hour == 12) FoundFile.ProcessCommerceCity(FoundFile.GetCurrentDay());
+                if (DateTime.Now.Minute == 20 && DateTime.Now.Hour == 0) FoundFile.ProcessCommerceCity(FoundFile.GetCurrentDay());
             } catch (Exception ex) {
                 LogMessage("GP01", "Fatal error with Commerce City : " + ex.Message);
             }
+        }
+
+        private static void LogSystemError(ILogger log, Exception ex) {
+            log.LogError(ex, $"R2PLoader failed at: {DateTime.Now}");
+            AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", ex.Message, true);
         }
 
         private static void SetConnection(ExecutionContext context, ILogger log) {
@@ -67,11 +65,10 @@ namespace SuncorR2P
             string cs = iconfig["ConnectionStrings:DataHub"];
 
             string aw = GetEnvironmentVariable("AzureWebJobsStorage");
-            log.LogInformation($"using cs:" + cs);
-            log.LogInformation($"using aw:" + aw);
-            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - Curtis" : "cs:" + cs, true);
-            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - Curti2s" : "env:" + aw, true);
-            cs = "Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020";
+            log.LogInformation($"connectionString:" + cs);
+            log.LogInformation($"AW Storage:" + aw);
+//            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - Curtis" : "cs:" + cs, true);
+//            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - Curti2s" : "env:" + aw, true);
             DBContextWithConnectionString.SetConnectionString(cs);
         }
 
