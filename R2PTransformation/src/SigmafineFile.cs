@@ -32,6 +32,7 @@ namespace R2PTransformation.src {
             item.IsCharge = row["IsCharge"].ToString();
 
             item.MeasLiqVol = ParseDecimal(row["MeasLiqVol"]);
+            item.MeasGasVol = ParseDecimal(row["MeasGasVol"]);
             item.TankOpenVol = ParseDecimal(row["TankOpenVol"]);
             item.TankCloseVol = ParseDecimal(row["TankCloseVol"]);
             return item;
