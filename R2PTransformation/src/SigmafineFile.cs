@@ -20,13 +20,14 @@ namespace R2PTransformation.src {
         internal static Sigmafinex FromDataRow(DataRow row) {
             Sigmafinex item = new Sigmafinex();
             item.StartTime = DateTime.Parse(row["StartTime"].ToString());
-            item.StartTime = DateTime.Parse(row["EndTime"].ToString());
+            item.EndTime = DateTime.Parse(row["EndTime"].ToString());
             item.SourceCc = row["SourceCc"].ToString();
             item.FlowCc = row["FlowCc"].ToString();
             item.Product = row["Product"].ToString();
             item.ProductDesc = row["ProductDesc"].ToString();
-            item.OpenFlag = row["OpenFlag"].ToString();
-            item.CloseFlag = row["CloseFlag"].ToString();
+            item.ProductCategory = row["ProductCategory"].ToString();
+            if (row.Table.Columns.Contains("OpenFlag")) item.OpenFlag = row["OpenFlag"].ToString();
+            if (row.Table.Columns.Contains("CloseFlag")) item.CloseFlag = row["CloseFlag"].ToString();
             item.FlowType = row["FlowType"].ToString();
             item.IsCharge = row["IsCharge"].ToString();
 
