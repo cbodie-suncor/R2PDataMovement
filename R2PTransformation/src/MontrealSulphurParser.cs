@@ -64,16 +64,14 @@ namespace R2PTransformation.src {
 
         private TagBalance GetProductionRecord(DataTable currentMonth, MontrealSulphurFile ms, DateTime day) {
             decimal quantity = 0;
-
-            if (ms.ProductCode == "2") quantity = decimal.Parse(currentMonth.Rows[day.Day + 5][16].ToString()); // column Q
-            if (ms.ProductCode == "3") quantity = decimal.Parse(currentMonth.Rows[day.Day + 5][11].ToString()); // column L
-            if (ms.ProductCode == "5") { //Caustic
-                try {
-                    quantity = decimal.Parse(currentMonth.Rows[FindRowInCaustic(ms, currentMonth, day)][8].ToString()) * -1; // column I
-                } catch (Exception ex) {
-                    return null;
-                }
+            try { 
+                if (ms.ProductCode == "2") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][16].ToString()); // column Q
+                if (ms.ProductCode == "3") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][11].ToString()); // column L
+                if (ms.ProductCode == "5") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[FindRowInCaustic(ms, currentMonth, day)][8].ToString()) * -1; // column I for Caustic
+            } catch (Exception ex) {
+                 throw new Exception("invalid format for montreal sulphur");
             }
+            if (quantity == 0) return null;
             return ms.GetNewTagBalance("MTL SP", ms.ProductCode, day, quantity);
         }
 
@@ -88,7 +86,7 @@ namespace R2PTransformation.src {
                     return row;
 
             }
-            throw new Exception("Cannot find date : " + day.ToString());
+            return 0;
         }
     }
 }

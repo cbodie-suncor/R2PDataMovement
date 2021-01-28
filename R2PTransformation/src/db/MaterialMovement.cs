@@ -39,8 +39,11 @@ namespace R2PTransformation.src.db
         DbSet<Sigmafinex> Sigmafinexes { get; set; } // sigmafinex
         DbSet<SourceUnitMap> SourceUnitMaps { get; set; } // SourceUnitMap
         DbSet<StandardUnit> StandardUnits { get; set; } // StandardUnit
+        DbSet<SuncorTransaction> SuncorTransactions { get; set; } // SuncorTransactions
         DbSet<TagBalance> TagBalances { get; set; } // TagBalance
         DbSet<TagMap> TagMaps { get; set; } // TagMap
+        DbSet<TransactionEvent> TransactionEvents { get; set; } // TransactionEvent
+        DbSet<TransactionEventDetail> TransactionEventDetails { get; set; } // TransactionEventDetail
 
         int SaveChanges();
         int SaveChanges(bool acceptAllChangesOnSuccess);
@@ -75,8 +78,11 @@ namespace R2PTransformation.src.db
         public DbSet<Sigmafinex> Sigmafinexes { get; set; } // sigmafinex
         public DbSet<SourceUnitMap> SourceUnitMaps { get; set; } // SourceUnitMap
         public DbSet<StandardUnit> StandardUnits { get; set; } // StandardUnit
+        public DbSet<SuncorTransaction> SuncorTransactions { get; set; } // SuncorTransactions
         public DbSet<TagBalance> TagBalances { get; set; } // TagBalance
         public DbSet<TagMap> TagMaps { get; set; } // TagMap
+        public DbSet<TransactionEvent> TransactionEvents { get; set; } // TransactionEvent
+        public DbSet<TransactionEventDetail> TransactionEventDetails { get; set; } // TransactionEventDetail
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -104,8 +110,11 @@ namespace R2PTransformation.src.db
             modelBuilder.ApplyConfiguration(new SigmafinexConfiguration());
             modelBuilder.ApplyConfiguration(new SourceUnitMapConfiguration());
             modelBuilder.ApplyConfiguration(new StandardUnitConfiguration());
+            modelBuilder.ApplyConfiguration(new SuncorTransactionConfiguration());
             modelBuilder.ApplyConfiguration(new TagBalanceConfiguration());
             modelBuilder.ApplyConfiguration(new TagMapConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionEventConfiguration());
+            modelBuilder.ApplyConfiguration(new TransactionEventDetailConfiguration());
         }
 
     }
@@ -137,8 +146,11 @@ namespace R2PTransformation.src.db
         public DbSet<Sigmafinex> Sigmafinexes { get; set; } // sigmafinex
         public DbSet<SourceUnitMap> SourceUnitMaps { get; set; } // SourceUnitMap
         public DbSet<StandardUnit> StandardUnits { get; set; } // StandardUnit
+        public DbSet<SuncorTransaction> SuncorTransactions { get; set; } // SuncorTransactions
         public DbSet<TagBalance> TagBalances { get; set; } // TagBalance
         public DbSet<TagMap> TagMaps { get; set; } // TagMap
+        public DbSet<TransactionEvent> TransactionEvents { get; set; } // TransactionEvent
+        public DbSet<TransactionEventDetail> TransactionEventDetails { get; set; } // TransactionEventDetail
 
         public FakeMyDbContext()
         {
@@ -149,8 +161,11 @@ namespace R2PTransformation.src.db
             Sigmafinexes = new FakeDbSet<Sigmafinex>("SigmafinexId");
             SourceUnitMaps = new FakeDbSet<SourceUnitMap>("Source", "SourceUnit");
             StandardUnits = new FakeDbSet<StandardUnit>("Name");
+            SuncorTransactions = new FakeDbSet<SuncorTransaction>("TransactionsId");
             TagBalances = new FakeDbSet<TagBalance>("Tag", "BalanceDate");
             TagMaps = new FakeDbSet<TagMap>("Tag", "Plant");
+            TransactionEvents = new FakeDbSet<TransactionEvent>("TransactionEventId");
+            TransactionEventDetails = new FakeDbSet<TransactionEventDetail>("TransactionEventDetailId");
 
         }
 
@@ -617,6 +632,12 @@ namespace R2PTransformation.src.db
         }
     }
 
+    // SuncorTransactions
+    public class SuncorTransaction
+    {
+        public int TransactionsId { get; set; } // transactions_id (Primary key)
+    }
+
     // TagBalance
     public class TagBalance
     {
@@ -665,6 +686,25 @@ namespace R2PTransformation.src.db
         /// Parent StandardUnit pointed by [TagMap].([DefaultUnit]) (FK_TagMap_StandardUnit)
         /// </summary>
         public virtual StandardUnit StandardUnit { get; set; } // FK_TagMap_StandardUnit
+    }
+
+    // TransactionEvent
+    public class TransactionEvent
+    {
+        public int TransactionEventId { get; set; } // TransactionEvent_id (Primary key)
+        public string Plant { get; set; } // plant (length: 40)
+        public string Filename { get; set; } // filename (length: 40)
+        public int? FailedRecordCount { get; set; } // failedRecordCount
+        public int? SuccessfulRecordCount { get; set; } // successfulRecordCount
+        public string ErrorMessage { get; set; } // errorMessage (length: 1000)
+    }
+
+    // TransactionEventDetail
+    public class TransactionEventDetail
+    {
+        public int TransactionEventDetailId { get; set; } // TransactionEventDetail_id (Primary key)
+        public string Tag { get; set; } // tag (length: 40)
+        public string ErrorMessage { get; set; } // errorMessage (length: 1000)
     }
 
 
@@ -794,6 +834,18 @@ namespace R2PTransformation.src.db
         }
     }
 
+    // SuncorTransactions
+    public class SuncorTransactionConfiguration : IEntityTypeConfiguration<SuncorTransaction>
+    {
+        public void Configure(EntityTypeBuilder<SuncorTransaction> builder)
+        {
+            builder.ToTable("SuncorTransactions", "dbo");
+            builder.HasKey(x => x.TransactionsId);
+
+            builder.Property(x => x.TransactionsId).HasColumnName(@"transactions_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
+        }
+    }
+
     // TagBalance
     public class TagBalanceConfiguration : IEntityTypeConfiguration<TagBalance>
     {
@@ -841,6 +893,37 @@ namespace R2PTransformation.src.db
 
             // Foreign keys
             builder.HasOne(a => a.StandardUnit).WithMany(b => b.TagMaps).HasForeignKey(c => c.DefaultUnit).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_TagMap_StandardUnit");
+        }
+    }
+
+    // TransactionEvent
+    public class TransactionEventConfiguration : IEntityTypeConfiguration<TransactionEvent>
+    {
+        public void Configure(EntityTypeBuilder<TransactionEvent> builder)
+        {
+            builder.ToTable("TransactionEvent", "dbo");
+            builder.HasKey(x => x.TransactionEventId);
+
+            builder.Property(x => x.TransactionEventId).HasColumnName(@"TransactionEvent_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
+            builder.Property(x => x.Plant).HasColumnName(@"plant").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
+            builder.Property(x => x.Filename).HasColumnName(@"filename").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
+            builder.Property(x => x.FailedRecordCount).HasColumnName(@"failedRecordCount").HasColumnType("int").IsRequired(false);
+            builder.Property(x => x.SuccessfulRecordCount).HasColumnName(@"successfulRecordCount").HasColumnType("int").IsRequired(false);
+            builder.Property(x => x.ErrorMessage).HasColumnName(@"errorMessage").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
+        }
+    }
+
+    // TransactionEventDetail
+    public class TransactionEventDetailConfiguration : IEntityTypeConfiguration<TransactionEventDetail>
+    {
+        public void Configure(EntityTypeBuilder<TransactionEventDetail> builder)
+        {
+            builder.ToTable("TransactionEventDetail", "dbo");
+            builder.HasKey(x => x.TransactionEventDetailId);
+
+            builder.Property(x => x.TransactionEventDetailId).HasColumnName(@"TransactionEventDetail_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
+            builder.Property(x => x.Tag).HasColumnName(@"tag").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
+            builder.Property(x => x.ErrorMessage).HasColumnName(@"errorMessage").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
         }
     }
 

@@ -19,7 +19,7 @@ namespace R2PTransformation.src {
         }
 
         public decimal GetDecimalValue(string v) {
-            return decimal.Parse(Values[v]);
+            return HoneywellPBFile.ParseDecimal(Values[v]);
         }
 
         public decimal InputProductCalc() {

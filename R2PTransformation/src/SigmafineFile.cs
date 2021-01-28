@@ -22,6 +22,7 @@ namespace R2PTransformation.src {
             item.StartTime = DateTime.Parse(row["StartTime"].ToString());
             item.EndTime = DateTime.Parse(row["EndTime"].ToString());
             item.SourceCc = row["SourceCc"].ToString();
+            item.DestinationCc = row["DestinationCc"].ToString();
             item.FlowCc = row["FlowCc"].ToString();
             item.Product = row["Product"].ToString();
             item.ProductDesc = row["ProductDesc"].ToString();
@@ -31,15 +32,12 @@ namespace R2PTransformation.src {
             item.FlowType = row["FlowType"].ToString();
             item.IsCharge = row["IsCharge"].ToString();
 
+            item.MeasGasLiqVol = ParseDecimal(row["MeasGasLiqVol"]);
             item.MeasLiqVol = ParseDecimal(row["MeasLiqVol"]);
             item.MeasGasVol = ParseDecimal(row["MeasGasVol"]);
             item.TankOpenVol = ParseDecimal(row["TankOpenVol"]);
             item.TankCloseVol = ParseDecimal(row["TankCloseVol"]);
             return item;
-        }
-
-        private static decimal ParseDecimal(object v) {
-            return string.IsNullOrEmpty(v.ToString()) ? 0 : decimal.Parse(v.ToString());
         }
     }
 }

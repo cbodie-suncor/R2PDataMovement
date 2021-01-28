@@ -28,16 +28,12 @@ namespace R2PTransformation {
             // var accountDate = DateTime.ParseExact("28/09/2020 13:59:00", "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
             string defaultDateTimeFormat = this.Defaults["DATETIMEFORMAT"];
             defaultDateTimeFormat = defaultDateTimeFormat.Replace("YYYY", "yyyy").Replace("DD", "dd").Replace("HH24", "HH").Replace("SS","ss").Replace("MI","mm");
-            var accountDate = DateTime.ParseExact(this.GetValue("ACCOUNT_DATE"), defaultDateTimeFormat, CultureInfo.InvariantCulture);
+            var accountDate = DateTime.ParseExact(this.Values["ACCOUNT_DATE"], defaultDateTimeFormat, CultureInfo.InvariantCulture);;
             return accountDate;
         }
 
         internal void SetValues(Dictionary<string, string> values) {
             Values = values;
-        }
-
-        private decimal GetDecimalValue(string v) {
-            return decimal.Parse(Values[v]);
         }
 
         private string GetValue(string v) {

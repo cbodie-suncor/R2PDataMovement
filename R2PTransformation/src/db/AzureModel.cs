@@ -46,7 +46,13 @@ namespace R2PTransformation.src.db {
         internal static TagMap LookupTag(string tag, string plant) {
             TagMap tm = null;
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                tm = context.TagMaps.Find(new object[] { tag, plant });
+                if (context.DoesConnectionStringExist) {
+                    tm = context.TagMaps.Find(new object[] { tag, plant });
+                    return tm ;
+                } else {
+                    // probably for Unit Testing, so use 
+                    return new TagMap() { Tag = "EP Sweet Crude Trucks", DefaultUnit = "abc", MaterialNumber = "abc", WorkCenter = "123", Plant = plant, DefaultValuationType = "asd" };
+                }
                 /*
                 if (tm == null) {
                     tm = new TagMap();
@@ -61,11 +67,23 @@ namespace R2PTransformation.src.db {
                     context.SaveChanges();
                 }
                 */
-                
+
             }
-            return tm;
         }
 
+        public static void RecordStats(SuncorProductionFile pf) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = pf.FileName, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
+                context.TransactionEvents.Add(te);
+            }
+        }
+
+        public static void RecordFailure(String plantName, string fileName, int successfulRecordCount, int failedRecordCount, string msg) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                TransactionEvent te = new TransactionEvent() { Plant = plantName, Filename = fileName, SuccessfulRecordCount = successfulRecordCount, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
+                context.TransactionEvents.Add(te);
+            }
+        }
 
         public static string UpdateTagMappings(DataTable dt) {
             string output = "";

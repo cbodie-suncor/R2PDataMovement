@@ -36,17 +36,19 @@ namespace SuncorR2P
                     foundFile.DisposeOfFile();
                 } catch (Exception ex) {
                     LogMessage(foundFile.PlantName, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
+                    AzureModel.RecordFailure(foundFile.PlantName, foundFile.AzureFileName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
                     try {
                         foundFile.DisposeOfFile(true);
                     } catch (Exception ex2) { LogSystemError(log, ex2); }
                 }
             }
 
+            /*
             try {
                 if (DateTime.Now.Minute == 20 && DateTime.Now.Hour == 0) FoundFile.ProcessCommerceCity(FoundFile.GetCurrentDay());
             } catch (Exception ex) {
                 LogMessage("GP01", "Fatal error with Commerce City : " + ex.Message);
-            }
+            }*/
         }
 
         private static void LogSystemError(ILogger log, Exception ex) {

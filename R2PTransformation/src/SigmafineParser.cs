@@ -5,9 +5,74 @@ using R2PTransformation.src.db;
 using System.Linq;
 using System.IO;
 using System.Data;
+using ExcelDataReader;
 
 namespace R2PTransformation.src {
     public class SigmafineParser {
+        public SigmafineFile LoadExcel(string fileName, string plant) {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            SigmafineFile ms = new SigmafineFile(plant); // either GP01 or GP02
+            DateTime day = GetDayFromExcelFile(fileName);
+            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
+                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+                    var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
+                        ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
+                            UseHeaderRow = true,
+                            ReadHeaderRow = rowReader => {
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                                rowReader.Read();
+                            }
+                        }
+                    });
+                    DataTableCollection table = result.Tables;
+                    DataTable currentDaySheet = table[0];
+                    foreach(DataRow row in currentDaySheet.AsEnumerable()) {
+                        string product = row[2].ToString();
+                        decimal production = 0;
+                        try {
+                            string productionStringValue = row["production"].ToString();
+                            if (string.IsNullOrEmpty(product) || product.ToLower().Contains("total") ) continue;
+                            if (string.IsNullOrEmpty(productionStringValue) || productionStringValue == "bbl") continue;
+                            production = Math.Round(SigmafineFile.ParseDecimal(productionStringValue),0);
+                            if (production == 0) continue;
+                        } catch (Exception ex) {
+                        }
+                        TagBalance tb = ms.GetNewTagBalance("Sigmafine", product, day, production);
+                        if (tb != null) ms.Products.Add(tb);
+                    }
+                }
+            }
+
+            return ms;
+        }
+
+        private DateTime GetDayFromExcelFile(string fileName) {
+            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
+                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+                    var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
+                        ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
+                        }
+                    });
+
+                    DataTableCollection table = result.Tables;
+                    DataTable currentDaySheet = table[0];  // used for productCode = 5
+                    DateTime time = DateTime.MinValue;
+                    try {
+                        time = DateTime.Parse(currentDaySheet.Rows[2][12].ToString());
+                    } catch (Exception ex) { }
+                    return time;
+                }
+            }
+        }
+
+        [Obsolete]
         public SigmafineFile Load(string fileName, string plant, DateTime dateTime) {
             SigmafineFile ms = new SigmafineFile(plant); // either GP01 or GP02
             List<Sigmafinex> sigmafineRecords = null;

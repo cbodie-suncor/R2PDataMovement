@@ -21,16 +21,17 @@ namespace R2PTransformation.src {
 
             // load current month
             DataTable currentMonthSheet = dt;
-            ms.Products.AddRange(GetProductionRecords(currentMonthSheet, ms));
+            ms.Products.AddRange(GetProductionRecords(currentMonthSheet, ms, currentDay));
             return ms;
         }
 
-        public List<TagBalance> GetProductionRecords(DataTable currentMonth, TerraNovaFile ms) {
+        public List<TagBalance> GetProductionRecords(DataTable currentMonth, TerraNovaFile ms, DateTime currentDay) {
             List<TagBalance> list = new List<TagBalance>();
             foreach (var row in currentMonth.AsEnumerable()) {
                 string productionCode = row["name"].ToString();
                 DateTime day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
-                decimal quantity = decimal.Parse(row["value"].ToString());
+                if (!TerraNovaFile.IsDayValid(day, currentDay)) continue;
+                decimal quantity = TerraNovaFile.ParseDecimal(row["value"].ToString());
                 TagBalance tm = ms.GetNewTagBalance("DPS", productionCode, day, quantity);
                 if (tm != null) list.Add(tm);
             }

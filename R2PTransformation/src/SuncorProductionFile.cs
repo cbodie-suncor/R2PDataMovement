@@ -22,6 +22,7 @@ namespace R2PTransformation.src {
         public List<TagBalance> SavedRecords;
 
         public string ExportR2PJson() {
+            if (this.SavedRecords == null) throw new Exception("Please call SuncorProductionFile.SaveRecords before ExportTR2PJson");
             var records = this.SavedRecords.Select(t => new {
                 Date = t.BalanceDate,
                 Tag = t.Tag,
@@ -73,6 +74,28 @@ namespace R2PTransformation.src {
         public void SaveRecords() {
             List<TagBalance> tb = this.GetTagBalanceRecords();
             AzureModel.SaveTagBalance(FileName, this, tb);
+        }
+
+        public static decimal ParseDecimal(object v) {
+            try {
+                return string.IsNullOrEmpty(v.ToString()) ? 0 : decimal.Parse(v.ToString());
+            } catch (Exception ex) {
+                throw ex;
+            }
+        }
+        public static bool IsDayValid(DateTime day, DateTime currentDay) {
+            if (day > currentDay) return false;
+            if (currentDay.Day <= 10) {
+                DateTime firstOfPriorMonth = new DateTime(currentDay.AddMonths(-1).Year, currentDay.AddMonths(-1).Month, 1);
+                return firstOfPriorMonth <= day; // accept dates in current and prior month
+            } else {
+                return day.Month == currentDay.Month && day.Year == currentDay.Year; // only accept dates in month
+            }
+        }
+
+        public void RecordSuccess(string fileName) {
+            AzureModel.RecordStats(this);
+            SuncorProductionFile.LogSuccess(fileName, this, SavedRecords.Count, FailedRecords.Count);
         }
 
         public delegate void DelegateLogWriter(string plant, string output);

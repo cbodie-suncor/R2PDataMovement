@@ -10,19 +10,13 @@ namespace R2PTransformation.src {
         public static void SetConnectionString(string connectionString) {
             ConnectionString = connectionString;
         }
-        // this part will help you to open the connection
-        public static SqlConnection OpenConnection() {
-            SqlConnection connection = new SqlConnection(ConnectionString);
-            connection.Open();
-            return connection;
-        }
+
+        public Boolean DoesConnectionStringExist { get { return !string.IsNullOrEmpty(ConnectionString); } }
 
         private static string ConnectionString { get; set; }
 
-        //add the connectionString to options
-
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-            if (!optionsBuilder.IsConfigured) {
+            if (!optionsBuilder.IsConfigured && !String.IsNullOrEmpty(ConnectionString)) {
                 optionsBuilder.UseSqlServer(ConnectionString);
             }
         }

@@ -57,25 +57,27 @@ namespace SuncorR2P.src {
             if (this.IsHoneywellPB)         { pf = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName); }
             if (this.IsMontrealSulphur)     { pf = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
             if (this.IsDPS)                 { pf = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.IsSigmafine)           { pf = new SigmafineParser().Load(this.TempFileName, this.PlantName, day); }
+            if (this.IsSigmafine)           { pf = new SigmafineParser().LoadExcel(this.TempFileName, this.PlantName); }
             if (this.IsTerraNova)           { pf = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.IsSarnia)              { }
             if (pf != null) {
                 pf.SaveRecords();
                 string json = pf.ExportR2PJson();
+                pf.RecordSuccess(this.AzureFullPathName);
                 AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
                 this.SuccessfulRecords = pf.SavedRecords.Count;
                 this.FailedRecords = pf.FailedRecords.Count;
-                SuncorProductionFile.LogSuccess(this.AzureFullPathName, pf, SuccessfulRecords, FailedRecords);
             }
         }
 
         public static DateTime GetCurrentDay() {
             DateTime day = DateTime.Today;
             string currentDateString = AzureFileHelper.ReadFile("system/currentDate.txt");
+            // only use the first line
             if (!String.IsNullOrEmpty(currentDateString)) {
+                string currentDateString1stLine = currentDateString.Split('\n')[0];
                 try {
-                    day = DateTime.Parse(currentDateString);
+                    day = DateTime.Parse(currentDateString1stLine);
                 } catch (Exception ex) {
                     throw new Exception("Invalid Date Format for system/currentDate.txt");
                 }
