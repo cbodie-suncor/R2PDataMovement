@@ -87,5 +87,14 @@ namespace STransformNUnit {
             AzureModel.SaveTagBalance("aaa", new HoneywellPBFile("aaa", "CP01"), items);
             Assert.IsTrue(items.Count > 0);
         }
+
+        [Test]
+        public void ProcessHoneyPBWithSave() {
+            string ROOTDIR = @"..\..\..\..\sampleFiles\honeywellPB\";
+            HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt", "CP01");
+            pf.SaveRecords();
+            string json = pf.ExportR2PJson();
+            pf.RecordSuccess("sampleHoneyPB.xlsx");
+        }
     }
 }

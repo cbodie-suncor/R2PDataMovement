@@ -75,6 +75,7 @@ namespace R2PTransformation.src.db {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = pf.FileName, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
                 context.TransactionEvents.Add(te);
+                context.SaveChanges();
             }
         }
 
