@@ -10,6 +10,7 @@ namespace R2PTransformation.src {
         public Guid BatchId;
         public string FileName;
         public string Plant;
+        public List<WarningMessage> Warnings = new List<WarningMessage>();
 
         public SuncorProductionFile(string fileName) {
             BatchId = Guid.NewGuid();
@@ -55,6 +56,8 @@ namespace R2PTransformation.src {
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
                 SuncorProductionFile.Log(this.Plant, "no TagMapping found for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
+                Warnings.Add(new WarningMessage(tb.Tag, "no TagMapping"));
+                this.FailedRecords.Add(tb);
                 return null;
             }
 
@@ -94,7 +97,7 @@ namespace R2PTransformation.src {
         }
 
         public void RecordSuccess(string fileName) {
-            AzureModel.RecordStats(this, fileName);
+            AzureModel.RecordStats(this, fileName, Warnings);
             SuncorProductionFile.LogSuccess(fileName, this, SavedRecords.Count, FailedRecords.Count);
         }
 
@@ -125,5 +128,14 @@ namespace R2PTransformation.src {
             string msg = DateTime.Now.ToUniversalTime() + ":" + info;
             LogWriter(pf.Plant, msg);
         }
+    }
+
+    public class WarningMessage {
+        public WarningMessage(string atag, string aMessage) {
+            Tag = atag;
+            Message = aMessage;
+        }
+        public string Tag;
+        public string Message;
     }
 }

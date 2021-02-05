@@ -35,18 +35,32 @@ namespace SuncorR2P {
             }
         }
 
-        private static readonly string tagMappingFile = "System/tagMappings.csv";
-        private static readonly string tagMappingFileProcessed = "System/tagMappings.processed.csv";
+        private static readonly string tagMappingFile = "System/tagMappings";
+        private static readonly string tagMappingFileProcessed = "System/tagMappings.processed";
 
-        internal static void ProcessModifiedTagMapping() {
+        internal static void ProcessModifiedTagMappings() {
+            ProcessModifiedTagMapping("AP01");
+            ProcessModifiedTagMapping("AP02");
+            ProcessModifiedTagMapping("AP03");
+            ProcessModifiedTagMapping("CP01");
+            ProcessModifiedTagMapping("CP02");
+            ProcessModifiedTagMapping("CP03");
+            ProcessModifiedTagMapping("CP04");
+            ProcessModifiedTagMapping("EP01");
+            ProcessModifiedTagMapping("GP01");
+            ProcessModifiedTagMapping("GP02");
+        }
+
+        internal static void ProcessModifiedTagMapping(string plant) {
             // add/modify/delete tags mappings
-            string tags = AzureFileHelper.ReadFile(tagMappingFile);
+            string suffix = "." + plant + ".csv";
+            string tags = AzureFileHelper.ReadFile(tagMappingFile + suffix);
             if (tags != null) {
                 DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-                string output = AzureModel.UpdateTagMappings(tm);
+                string output = AzureModel.UpdateTagMappings(plant, tm);
                 R2PLoader.LogMessage(null, "Updated the following tag mappings:\r\n" + output);
-                AzureFileHelper.WriteFile(tagMappingFileProcessed, tags, false);
-                AzureFileHelper.DeleteFile(tagMappingFile);
+                AzureFileHelper.WriteFile(tagMappingFileProcessed + "." + suffix, tags, false);
+                AzureFileHelper.DeleteFile(tagMappingFile + suffix);
             }
         }
 

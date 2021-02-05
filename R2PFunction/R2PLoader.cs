@@ -17,7 +17,7 @@ namespace SuncorR2P
             FoundFile foundFile = null;
             try {
                 SetConnection(context, log);
-                AzureFileHelper.ProcessModifiedTagMapping();
+                AzureFileHelper.ProcessModifiedTagMappings();
             } catch (Exception ex) { LogSystemError(log, ex); }
 
             while (true) {

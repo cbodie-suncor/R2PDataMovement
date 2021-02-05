@@ -693,18 +693,40 @@ namespace R2PTransformation.src.db
     {
         public int TransactionEventId { get; set; } // TransactionEvent_id (Primary key)
         public string Plant { get; set; } // plant (length: 40)
-        public string Filename { get; set; } // filename (length: 40)
+        public string Filename { get; set; } // filename (length: 500)
         public int? FailedRecordCount { get; set; } // failedRecordCount
         public int? SuccessfulRecordCount { get; set; } // successfulRecordCount
         public string ErrorMessage { get; set; } // errorMessage (length: 1000)
+        public DateTime? CreateDate { get; set; } // createDate
+
+        // Reverse navigation
+
+        /// <summary>
+        /// Child TransactionEventDetails where [TransactionEventDetail].[TransactionEvent_id] point to this entity (FK_transactioneventdetail)
+        /// </summary>
+        public virtual ICollection<TransactionEventDetail> TransactionEventDetails { get; set; } // TransactionEventDetail.FK_transactioneventdetail
+
+        public TransactionEvent()
+        {
+            CreateDate = DateTime.Now;
+            TransactionEventDetails = new List<TransactionEventDetail>();
+        }
     }
 
     // TransactionEventDetail
     public class TransactionEventDetail
     {
         public int TransactionEventDetailId { get; set; } // TransactionEventDetail_id (Primary key)
+        public int? TransactionEventId { get; set; } // TransactionEvent_id
         public string Tag { get; set; } // tag (length: 40)
         public string ErrorMessage { get; set; } // errorMessage (length: 1000)
+
+        // Foreign keys
+
+        /// <summary>
+        /// Parent TransactionEvent pointed by [TransactionEventDetail].([TransactionEventId]) (FK_transactioneventdetail)
+        /// </summary>
+        public virtual TransactionEvent TransactionEvent { get; set; } // FK_transactioneventdetail
     }
 
 
@@ -902,14 +924,15 @@ namespace R2PTransformation.src.db
         public void Configure(EntityTypeBuilder<TransactionEvent> builder)
         {
             builder.ToTable("TransactionEvent", "dbo");
-            builder.HasKey(x => x.TransactionEventId);
+            builder.HasKey(x => x.TransactionEventId).HasName("PK_TransactionEvent").IsClustered();
 
             builder.Property(x => x.TransactionEventId).HasColumnName(@"TransactionEvent_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
             builder.Property(x => x.Plant).HasColumnName(@"plant").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
-            builder.Property(x => x.Filename).HasColumnName(@"filename").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
+            builder.Property(x => x.Filename).HasColumnName(@"filename").HasColumnType("varchar(500)").IsRequired(false).IsUnicode(false).HasMaxLength(500);
             builder.Property(x => x.FailedRecordCount).HasColumnName(@"failedRecordCount").HasColumnType("int").IsRequired(false);
             builder.Property(x => x.SuccessfulRecordCount).HasColumnName(@"successfulRecordCount").HasColumnType("int").IsRequired(false);
             builder.Property(x => x.ErrorMessage).HasColumnName(@"errorMessage").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
+            builder.Property(x => x.CreateDate).HasColumnName(@"createDate").HasColumnType("datetime").IsRequired(false);
         }
     }
 
@@ -919,11 +942,15 @@ namespace R2PTransformation.src.db
         public void Configure(EntityTypeBuilder<TransactionEventDetail> builder)
         {
             builder.ToTable("TransactionEventDetail", "dbo");
-            builder.HasKey(x => x.TransactionEventDetailId);
+            builder.HasKey(x => x.TransactionEventDetailId).HasName("PK_TransactionEventDetail").IsClustered();
 
             builder.Property(x => x.TransactionEventDetailId).HasColumnName(@"TransactionEventDetail_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
+            builder.Property(x => x.TransactionEventId).HasColumnName(@"TransactionEvent_id").HasColumnType("int").IsRequired(false);
             builder.Property(x => x.Tag).HasColumnName(@"tag").HasColumnType("varchar(40)").IsRequired(false).IsUnicode(false).HasMaxLength(40);
             builder.Property(x => x.ErrorMessage).HasColumnName(@"errorMessage").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
+
+            // Foreign keys
+            builder.HasOne(a => a.TransactionEvent).WithMany(b => b.TransactionEventDetails).HasForeignKey(c => c.TransactionEventId).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_transactioneventdetail");
         }
     }
 

@@ -40,6 +40,12 @@ namespace R2PTransformation.src {
                 DateTime? day = row["transaction date"] as DateTime?;
                 if (day == null || !TerraNovaFile.IsDayValid(day.Value, currentDay)) continue;
                 decimal quantity = DPSFile.ParseDecimal(row["production"].ToString());
+                try {
+                    quantity = AzureModel.ConvertQuantityToStandardUnit(uom, quantity);
+                } catch(Exception ex) {
+                    ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
+                    continue;
+                }
                 TagBalance tm = ms.GetNewTagBalance("DPS", productionCode, day.Value, quantity);
                 if (tm != null) list.Add(tm);
             }

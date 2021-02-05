@@ -15,4 +15,6 @@ Outstanding
 - add tagmappings errors to the dashboard
 - moving the currentDate.txt to currentDate.processed.txt after 1 load (need to put this in the file as a explanation)
 - research user name stamp for files (might be possibly when the public azure storage is setup with a fileshare ie: \\pbidevarmsta001.file.core.windows.net\sap-iot-data)
+- do not create a json if no records exist to be processed
+
 
