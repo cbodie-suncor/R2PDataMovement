@@ -67,13 +67,37 @@ namespace R2PTransformation.src.db {
                     context.SaveChanges();
                 }
                 */
-
             }
         }
 
-        public static void RecordStats(SuncorProductionFile pf) {
+        internal static decimal ConvertQuantityToStandardUnit(string uom, decimal quantity) {
+            // if alread a StandarUnit, then no need to convert
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                if (!context.DoesConnectionStringExist) {
+                    // probably for Unit Testing, so use
+                    return quantity;
+                }
+
+                var found = context.StandardUnits.Find(uom);
+                if (found != null) return quantity;
+
+                // not found, so convert
+                var sourceUnitMap = context.SourceUnitMaps.Find(uom);
+                if (sourceUnitMap == null) throw new Exception("cannot find UOM mapping for " + uom);
+                var foundConversion = context.Conversions.Find(sourceUnitMap.StandardUnit);
+                if (foundConversion == null) throw new Exception("cannot find UOM conversion for " + uom); 
+                quantity = quantity * foundConversion.Factor.Value;
+            }
+            return quantity;
+        }
+
+        public static void RecordStats(SuncorProductionFile pf, List<WarningMessage> warnings) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = pf.FileName, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
+
+                foreach (var item in warnings) {
+                    te.TransactionEventDetails.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
+                }
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
@@ -86,16 +110,17 @@ namespace R2PTransformation.src.db {
             }
         }
 
-        public static string UpdateTagMappings(DataTable dt) {
+        public static string UpdateTagMappings(string plant, DataTable dt) {
             string output = "";
             List<TagMap> existingTM = null;
             List<TagMap> toAdd = new List<TagMap>();
             List<TagMap> toChange = new List<TagMap>();
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                existingTM = context.TagMaps.ToList();
+                existingTM = context.TagMaps.Where(t=>t.Plant == plant).ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
                 TagMap current = TagMapFromRow(r);
+                if (current.Tag != plant) continue;  // ignore other plant tags 
                 TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag);
                 if (found == null) {
                     toAdd.Add(current);

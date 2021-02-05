@@ -27,14 +27,14 @@ namespace STransformNUnit {
         public void LoadTagMappings() {
             string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappings.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-            var output = AzureModel.UpdateTagMappings(tm);
+            string output = AzureModel.UpdateTagMappings("GP01", tm);
             Console.WriteLine(output);
         }
         [Test]
         public void AddingSigmaTagMappings() {
             string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappingsWithSigma.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-            var output = AzureModel.UpdateTagMappings(tm);
+            var output = AzureModel.UpdateTagMappings("GP01", tm);
             Console.WriteLine(output);
         }
 

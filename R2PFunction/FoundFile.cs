@@ -52,7 +52,7 @@ namespace SuncorR2P.src {
         internal void ProcessFile() {
             SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
             SuncorProductionFile pf = null;
-            DateTime day = GetCurrentDay();
+            DateTime day = GetCurrentDay(this.PlantName);
 
             if (this.IsHoneywellPB)         { pf = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName); }
             if (this.IsMontrealSulphur)     { pf = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
@@ -62,17 +62,20 @@ namespace SuncorR2P.src {
             if (this.IsSarnia)              { }
             if (pf != null) {
                 pf.SaveRecords();
-                string json = pf.ExportR2PJson();
                 pf.RecordSuccess(this.AzureFullPathName);
-                AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
                 this.SuccessfulRecords = pf.SavedRecords.Count;
                 this.FailedRecords = pf.FailedRecords.Count;
+                if (pf.SavedRecords.Count > 0) {
+                    string json = pf.ExportR2PJson();
+                    AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
+                }
             }
         }
 
-        public static DateTime GetCurrentDay() {
+        public static DateTime GetCurrentDay(string plant) {
             DateTime day = DateTime.Today;
-            string currentDateString = AzureFileHelper.ReadFile("system/currentDate.txt");
+            string fileName = $"system/currentDate.{plant}.txt";
+            string currentDateString = AzureFileHelper.ReadFile(fileName);
             // only use the first line
             if (!String.IsNullOrEmpty(currentDateString)) {
                 string currentDateString1stLine = currentDateString.Split('\n')[0];
@@ -81,6 +84,9 @@ namespace SuncorR2P.src {
                 } catch (Exception ex) {
                     throw new Exception("Invalid Date Format for system/currentDate.txt");
                 }
+                // move the currentDate.txt to processed
+                AzureFileHelper.WriteFile(fileName.Replace(".txt", ".processed.txt"), currentDateString, false);
+                AzureFileHelper.DeleteFile(fileName);
             }
             return day;
         }
