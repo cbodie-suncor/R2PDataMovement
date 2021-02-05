@@ -62,15 +62,17 @@ namespace SuncorR2P
             .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
+            string cs = iconfig["ConnectionStrings:DataHub"];
+            /*
             //                .SetBasePath(Directory.GetCurrentDirectory())
             //                .AddJsonFile("appSettings.json", true, true).Build();
-            string cs = iconfig["ConnectionStrings:DataHub"];
 
             string aw = GetEnvironmentVariable("AzureWebJobsStorage");
             log.LogInformation($"connectionString:" + cs);
             log.LogInformation($"AW Storage:" + aw);
-//            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - Curtis" : "cs:" + cs, true);
-//            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - Curti2s" : "env:" + aw, true);
+            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - connection" : "cs:" + cs, true);
+            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);
+            */
             DBContextWithConnectionString.SetConnectionString(cs);
         }
 

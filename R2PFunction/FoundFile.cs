@@ -85,6 +85,7 @@ namespace SuncorR2P.src {
             return day;
         }
 
+        [Obsolete]
         public static void ProcessCommerceCity(DateTime day) {
             SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
             R2PLoader.LogMessage("GP01", "Processing CommerceCity East");

@@ -71,9 +71,9 @@ namespace R2PTransformation.src.db {
             }
         }
 
-        public static void RecordStats(SuncorProductionFile pf) {
+        public static void RecordStats(SuncorProductionFile pf, string filename) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = pf.FileName, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
+                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = filename, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }

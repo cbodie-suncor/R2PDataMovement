@@ -94,7 +94,7 @@ namespace R2PTransformation.src {
         }
 
         public void RecordSuccess(string fileName) {
-            AzureModel.RecordStats(this);
+            AzureModel.RecordStats(this, fileName);
             SuncorProductionFile.LogSuccess(fileName, this, SavedRecords.Count, FailedRecords.Count);
         }
 

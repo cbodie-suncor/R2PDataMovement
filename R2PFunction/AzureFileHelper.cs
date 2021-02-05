@@ -114,6 +114,7 @@ namespace SuncorR2P {
         private static void DownloadFile(ShareFileClient file, string localFilePath) {
             long fileLength = 0;
             using (Stream stream = file.OpenRead()) {
+                var properties = file.GetProperties();
                 fileLength = stream.Length;
             }
             if (fileLength == 0) {  // handle 0 length files
