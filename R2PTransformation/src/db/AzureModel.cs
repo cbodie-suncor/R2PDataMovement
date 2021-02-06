@@ -93,11 +93,18 @@ namespace R2PTransformation.src.db {
 
         public static void RecordStats(SuncorProductionFile pf, string filename, List<WarningMessage> warnings) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = pf.FileName, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
+                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = filename, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
 
                 foreach (var item in warnings) {
                     te.TransactionEventDetails.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
                 }
+                List<WarningMessage> noMappings = warnings.Where(t => t.Message == "No TagMapping").ToList();
+                List<WarningMessage> otherErrors = warnings.Where(t => t.Message != "No TagMapping").ToList();
+                te.ErrorMessage = "";
+                if (otherErrors.Count > 0) te.ErrorMessage = String.Join(",", otherErrors.Select(y => y.Message).Distinct().ToArray());
+                if (noMappings.Count > 0) te.ErrorMessage += (te.ErrorMessage.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
+                if (pf.SavedRecords.Count == 0 && te.ErrorMessage == "") te.ErrorMessage = "File rejected due to no successfuly records";
+                if (te.ErrorMessage == "") te.ErrorMessage = "File completed successfully"; 
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
@@ -120,7 +127,7 @@ namespace R2PTransformation.src.db {
             }
             foreach (DataRow r in dt.AsEnumerable()) {
                 TagMap current = TagMapFromRow(r);
-                if (current.Tag != plant) continue;  // ignore other plant tags 
+                if (current.Plant != plant) continue;  // ignore other plant tags 
                 TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag);
                 if (found == null) {
                     toAdd.Add(current);

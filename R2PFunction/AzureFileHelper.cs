@@ -58,8 +58,8 @@ namespace SuncorR2P {
             if (tags != null) {
                 DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
                 string output = AzureModel.UpdateTagMappings(plant, tm);
-                R2PLoader.LogMessage(null, "Updated the following tag mappings:\r\n" + output);
-                AzureFileHelper.WriteFile(tagMappingFileProcessed + "." + suffix, tags, false);
+                R2PLoader.LogMessage(plant, "Updated the following tag mappings:\r\n" + output);
+                AzureFileHelper.WriteFile(tagMappingFileProcessed + suffix, tags, false);
                 AzureFileHelper.DeleteFile(tagMappingFile + suffix);
             }
         }

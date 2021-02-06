@@ -67,6 +67,7 @@ namespace SuncorR2P.src {
                 this.FailedRecords = pf.FailedRecords.Count;
                 if (pf.SavedRecords.Count > 0) {
                     string json = pf.ExportR2PJson();
+                    MulesoftPush.PostProduction(json);
                     AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
                 }
             }

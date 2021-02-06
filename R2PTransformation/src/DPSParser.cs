@@ -16,6 +16,7 @@ namespace R2PTransformation.src {
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             DPSFile ms = new DPSFile(fileName, plant);
+            ms.IsCurrentDay(currentDay);
             using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
                 using (var reader = ExcelReaderFactory.CreateReader(stream)) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {

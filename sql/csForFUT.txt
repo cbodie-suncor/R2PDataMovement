@@ -1,0 +1,1 @@
+Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=db01;User ID=tempR2PIntegration;password=NorthernLights2021

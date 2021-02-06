@@ -22,6 +22,12 @@ namespace R2PTransformation.src {
         public List<TagBalance> FailedRecords;
         public List<TagBalance> SavedRecords;
 
+        public void IsCurrentDay(DateTime currentDay) {
+            if (currentDay != DateTime.Today) {
+                Warnings.Add(new WarningMessage(null, "Using " + currentDay.ToString("yyyy/MM/dd") + " as a override date"));
+            }
+        }
+
         public string ExportR2PJson() {
             if (this.SavedRecords == null) throw new Exception("Please call SuncorProductionFile.SaveRecords before ExportTR2PJson");
             var records = this.SavedRecords.Select(t => new {
@@ -56,7 +62,7 @@ namespace R2PTransformation.src {
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
                 SuncorProductionFile.Log(this.Plant, "no TagMapping found for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
-                Warnings.Add(new WarningMessage(tb.Tag, "no TagMapping"));
+                Warnings.Add(new WarningMessage(tb.Tag, "No TagMapping"));
                 this.FailedRecords.Add(tb);
                 return null;
             }

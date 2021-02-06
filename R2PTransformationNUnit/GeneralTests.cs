@@ -102,7 +102,7 @@ namespace STransformNUnit {
 //            string json = "{\n  \"BatchId\": \"76347512-0c9e-47f5-9123-b9266218404b\",\n  \"Created\": \"2019-10-01T00:00:00\",\n  \"CreatedBy\": \"AzureIot\",\n  \"TagBalance\": [\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"11234\",\n      \"Plant\": \"EP01\",\n      \"WorkCenter\": \"PRODEP01\",\n      \"ValType\": \"RTFTest2\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075\",\n      \"Uom\": \"M3\"\n    },\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"10327\",\n      \"Plant\": \"EP02\",\n      \"WorkCenter\": \"PRODEP02\",\n      \"ValType\": \"SUNCORTN\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075.4100\",\n      \"Uom\": \"M3\"\n    }\n  ]\n}";
             string json = "{\n  \"BatchId\": \"76347512-0c9e-47f5-9123-b9266218404b\",\n  \"Created\": \"2021-02-05T09:00:00\",\n  \"CreatedBy\": \"R2P\",\n  \"TagBalance\": [\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"11234\",\n      \"Plant\": \"EP01\",\n      \"WorkCenter\": \"PRODEP01\",\n      \"ValType\": \"RTFTest2\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075\",\n      \"Uom\": \"M3\"\n    },\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"10327\",\n      \"Plant\": \"EP02\",\n      \"WorkCenter\": \"PRODEP02\",\n      \"ValType\": \"SUNCORTN\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"9999.999\",\n      \"Uom\": \"M3\"\n    }\n  ]\n}";
 
-            MulesoftPush.PostProduction4(json);
+            MulesoftPush.PostProduction(json);
         }
     }
 }
