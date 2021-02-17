@@ -15,6 +15,7 @@ namespace R2PTransformation.src {
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             MontrealSulphurFile ms = new MontrealSulphurFile(fileName, plant, productCode);
+            ms.IsCurrentDay(currentDay);
             using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
                 using (var reader = ExcelReaderFactory.CreateReader(stream)) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {

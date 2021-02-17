@@ -15,31 +15,33 @@ namespace SuncorR2P
         [FunctionName("R2PLoader")]
         public static void Run([TimerTrigger("0 */1 * * * *")]TimerInfo myTimer, ExecutionContext context, ILogger log)  {  // triggering every minute
             FoundFile foundFile = null;
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             try {
                 SetConnection(context, log);
-                AzureFileHelper.ProcessModifiedTagMappings();
-            } catch (Exception ex) { LogSystemError(log, ex); }
+                AzureFileHelper.ProcessModifiedTagMappings(productVersion);
+            } catch (Exception ex) { LogSystemError(log, productVersion, ex); }
 
             while (true) {
                 foundFile = null;
                 try {
                     foundFile = AzureFileHelper.ScanForANewFile();
-                } catch (Exception ex) { LogSystemError(log, ex); }
+                } catch (Exception ex) { LogSystemError(log, productVersion, ex); }
 
                 if (foundFile == null) break;
 
                 try {
                     string msg = "Processing the file " + foundFile.PlantName + "," + foundFile.AzureFileName;
-                    log.LogInformation("*** " + msg + $" at: {DateTime.Now}");
-                    LogMessage(foundFile.PlantName, msg);
+                    log.LogInformation("*** " + msg + $" at: {DateTime.Now}" + ":" + productVersion);
+                    LogMessage(foundFile.PlantName, productVersion, msg);
                     foundFile.ProcessFile();
                     foundFile.DisposeOfFile();
+                    foundFile.RecordSuccess();
                 } catch (Exception ex) {
-                    LogMessage(foundFile.PlantName, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
-                    AzureModel.RecordFailure(foundFile.PlantName, foundFile.AzureFileName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
+                    LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
+                    AzureModel.RecordFailure(foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
                     try {
                         foundFile.DisposeOfFile(true);
-                    } catch (Exception ex2) { LogSystemError(log, ex2); }
+                    } catch (Exception ex2) { LogSystemError(log, productVersion, ex2); }
                 }
             }
 
@@ -51,37 +53,36 @@ namespace SuncorR2P
             }*/
         }
 
-        private static void LogSystemError(ILogger log, Exception ex) {
+        private static void LogSystemError(ILogger log, string version, Exception ex) {
             log.LogError(ex, $"R2PLoader failed at: {DateTime.Now}");
-            AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", ex.Message, true);
+            string msg = DateTime.Now.ToUniversalTime() + ":" + version + ":" + ex.Message;
+            AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", msg, true);
         }
 
         private static void SetConnection(ExecutionContext context, ILogger log) {
             IConfiguration iconfig = new ConfigurationBuilder()
-            .SetBasePath(context.FunctionAppDirectory)
-            .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables()
+            .AddEnvironmentVariables()  // needed for the ConnectionString - comes from local.settings.json or Azure Function Configuration 
             .Build();
             string cs = iconfig["ConnectionStrings:DataHub"];
-            /*
-            //                .SetBasePath(Directory.GetCurrentDirectory())
-            //                .AddJsonFile("appSettings.json", true, true).Build();
 
-            string aw = GetEnvironmentVariable("AzureWebJobsStorage");
-            log.LogInformation($"connectionString:" + cs);
-            log.LogInformation($"AW Storage:" + aw);
-            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - connection" : "cs:" + cs, true);
-            AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);
-            */
+            string aw = Utilities.GetEnvironmentVariable("AzureWebJobsStorage");
+//            log.LogInformation($"Connection String:" + cs);
+            //log.LogInformation($"AW Storage:" + aw);
+            //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - connection" : "cs:" + cs, true);
+            //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);
             DBContextWithConnectionString.SetConnectionString(cs);
+
+            string Url = Utilities.GetEnvironmentVariable("MuleSoftUrl");
+            string User = Utilities.GetEnvironmentVariable("MuleSoftUser");
+            string PW = Utilities.GetEnvironmentVariable("MuleSoftPassword");
+
+            log.LogInformation($"Mulesoft:" + User + ":" + PW);
+
+            MulesoftPush.SetConnection(Url, User, PW);
         }
 
-        public static string GetEnvironmentVariable(string name) {
-            return System.Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
-        }
-
-        public static void LogMessage(string plant, string msg) {
-            WriteLogFile(plant, DateTime.Now.ToUniversalTime() + ":" + msg);
+        public static void LogMessage(string plant, string version, string msg) {
+            WriteLogFile(plant, DateTime.Now.ToUniversalTime() + ":" + version + ":" + msg);
         }
 
         public static void WriteLogFile(string plant, string msg) {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -69,6 +70,11 @@ namespace R2PTransformation.src {
                 dt.Rows.Add(dr);
             }
             return dt;
+        }
+
+        // retrieves the ENV variable from the JSON file local.settings.json or from the configuraton file in Azure
+        public static string GetEnvironmentVariable(string name) {
+            return System.Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
     }
 }

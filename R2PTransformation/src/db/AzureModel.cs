@@ -95,7 +95,7 @@ namespace R2PTransformation.src.db {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = filename, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
 
-                foreach (var item in warnings) {
+                foreach (var item in warnings.Select(y=> new { Tag = y.Tag, Message = y.Message}).Distinct()) {
                     te.TransactionEventDetails.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
                 }
                 List<WarningMessage> noMappings = warnings.Where(t => t.Message == "No TagMapping").ToList();
@@ -112,8 +112,9 @@ namespace R2PTransformation.src.db {
 
         public static void RecordFailure(String plantName, string fileName, int successfulRecordCount, int failedRecordCount, string msg) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Plant = plantName, Filename = fileName, SuccessfulRecordCount = successfulRecordCount, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
+                TransactionEvent te = new TransactionEvent() { Plant = plantName, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
                 context.TransactionEvents.Add(te);
+                context.SaveChanges();
             }
         }
 

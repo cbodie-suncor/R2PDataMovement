@@ -11,9 +11,7 @@ using System.IO;
 namespace SuncorR2P {
     public class AzureFileHelper {
 
-//        public static string CONNECTIONSTRING = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
-//        public static string CONNECTIONSTRING = "DefaultEndpointsProtocol=https;AccountName=pbidevarmsta001;AccountKey=zr5ggYWe7drKizlyAR/8c2vj7j/piTUPrwBsSuYYT77lvQHAMCcHWbxCDLav2EotCkyrWV5eXoZeNB+enoi8Fg==;EndpointSuffix=core.windows.net";
-        public static string CONNECTIONSTRING = R2PLoader.GetEnvironmentVariable("AzureWebJobsStorage");
+        public static string CONNECTIONSTRING = Utilities.GetEnvironmentVariable("AzureWebJobsStorage");
         public static string SHARENAME = "sap-iot-data";
 
         public static void WriteFile(string fullPath, string output, Boolean append) {
@@ -38,27 +36,27 @@ namespace SuncorR2P {
         private static readonly string tagMappingFile = "System/tagMappings";
         private static readonly string tagMappingFileProcessed = "System/tagMappings.processed";
 
-        internal static void ProcessModifiedTagMappings() {
-            ProcessModifiedTagMapping("AP01");
-            ProcessModifiedTagMapping("AP02");
-            ProcessModifiedTagMapping("AP03");
-            ProcessModifiedTagMapping("CP01");
-            ProcessModifiedTagMapping("CP02");
-            ProcessModifiedTagMapping("CP03");
-            ProcessModifiedTagMapping("CP04");
-            ProcessModifiedTagMapping("EP01");
-            ProcessModifiedTagMapping("GP01");
-            ProcessModifiedTagMapping("GP02");
+        internal static void ProcessModifiedTagMappings(string version) {
+            ProcessModifiedTagMapping("AP01", version);
+            ProcessModifiedTagMapping("AP02", version);
+            ProcessModifiedTagMapping("AP03", version);
+            ProcessModifiedTagMapping("CP01", version);
+            ProcessModifiedTagMapping("CP02", version);
+            ProcessModifiedTagMapping("CP03", version);
+            ProcessModifiedTagMapping("CP04", version);
+            ProcessModifiedTagMapping("EP01", version);
+            ProcessModifiedTagMapping("GP01", version);
+            ProcessModifiedTagMapping("GP02", version);
         }
 
-        internal static void ProcessModifiedTagMapping(string plant) {
+        internal static void ProcessModifiedTagMapping(string plant, string version) {
             // add/modify/delete tags mappings
             string suffix = "." + plant + ".csv";
             string tags = AzureFileHelper.ReadFile(tagMappingFile + suffix);
             if (tags != null) {
                 DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
                 string output = AzureModel.UpdateTagMappings(plant, tm);
-                R2PLoader.LogMessage(plant, "Updated the following tag mappings:\r\n" + output);
+                R2PLoader.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
                 AzureFileHelper.WriteFile(tagMappingFileProcessed + suffix, tags, false);
                 AzureFileHelper.DeleteFile(tagMappingFile + suffix);
             }

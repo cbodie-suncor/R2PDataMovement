@@ -39,13 +39,11 @@ namespace R2PTransformation.src {
                 Plant = t.Plant,
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
-//                Tank = t.Tank,
-//                QuantityTimestamp = t.QuantityTimestamp,
                 BalanceDate = t.BalanceDate,
-                Quantity = t.Quantity,
-                StandardUnit = t.StandardUnit
+                Quantity = t.Quantity.Value.ToString(),
+                Uom = t.StandardUnit
             });
-            var batch = new { BatchId = this.BatchId, Batch = records.Where(t => t.Quantity != 0) };
+            var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
             return JsonConvert.SerializeObject(batch);
         }
 

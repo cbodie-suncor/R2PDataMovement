@@ -11,6 +11,7 @@ namespace SuncorR2P.src {
         public string TempFileName;
         public string AzureFileName;
         public string AzureFullPathName;
+        public SuncorProductionFile ProducitionFile; 
         public string PlantName {
             get {
                 DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
@@ -49,28 +50,31 @@ namespace SuncorR2P.src {
             File.Delete(this.TempFileName);
         }
 
-        internal void ProcessFile() {
+        public void ProcessFile() {
             SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
-            SuncorProductionFile pf = null;
+            this.ProducitionFile = null;
             DateTime day = GetCurrentDay(this.PlantName);
 
-            if (this.IsHoneywellPB)         { pf = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName); }
-            if (this.IsMontrealSulphur)     { pf = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
-            if (this.IsDPS)                 { pf = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.IsSigmafine)           { pf = new SigmafineParser().LoadExcel(this.TempFileName, this.PlantName); }
-            if (this.IsTerraNova)           { pf = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
+            if (this.IsHoneywellPB)         { this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName); }
+            if (this.IsMontrealSulphur)     { this.ProducitionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
+            if (this.IsDPS)                 { this.ProducitionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
+            if (this.IsSigmafine)           { this.ProducitionFile = new SigmafineParser().LoadExcel(this.TempFileName, this.PlantName); }
+            if (this.IsTerraNova)           { this.ProducitionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.IsSarnia)              { }
-            if (pf != null) {
-                pf.SaveRecords();
-                pf.RecordSuccess(this.AzureFullPathName);
-                this.SuccessfulRecords = pf.SavedRecords.Count;
-                this.FailedRecords = pf.FailedRecords.Count;
-                if (pf.SavedRecords.Count > 0) {
-                    string json = pf.ExportR2PJson();
+            if (this.ProducitionFile != null) {
+                this.ProducitionFile.SaveRecords();
+                this.SuccessfulRecords = this.ProducitionFile.SavedRecords.Count;
+                this.FailedRecords = this.ProducitionFile.FailedRecords.Count;
+                if (this.ProducitionFile.SavedRecords.Count > 0) {
+                    string json = this.ProducitionFile.ExportR2PJson();
                     MulesoftPush.PostProduction(json);
                     AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
                 }
             }
+        }
+
+        internal void RecordSuccess() {
+            ProducitionFile.RecordSuccess(this.AzureFullPathName);
         }
 
         public static DateTime GetCurrentDay(string plant) {
@@ -83,7 +87,7 @@ namespace SuncorR2P.src {
                 try {
                     day = DateTime.Parse(currentDateString1stLine);
                 } catch (Exception ex) {
-                    throw new Exception("Invalid Date Format for system/currentDate.txt");
+                    throw new Exception("Invalid Date Format for system/currentDate." + plant + ".txt");
                 }
                 // move the currentDate.txt to processed
                 AzureFileHelper.WriteFile(fileName.Replace(".txt", ".processed.txt"), currentDateString, false);
@@ -95,13 +99,13 @@ namespace SuncorR2P.src {
         [Obsolete]
         public static void ProcessCommerceCity(DateTime day) {
             SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
-            R2PLoader.LogMessage("GP01", "Processing CommerceCity East");
+            R2PLoader.LogMessage("GP01", "", "Processing CommerceCity East");
             SigmafineFile ms = new SigmafineParser().Load(null, "GP01", day);
             ms.SaveRecords();
             string json = ms.ExportR2PJson();
             AzureFileHelper.WriteFile("GP01/tempJsonOutput/COmmerceCityEast.json", json, false);
 
-            R2PLoader.LogMessage("GP02", "Processing CommerceCity West");
+            R2PLoader.LogMessage("GP02", "", "Processing CommerceCity West");
             ms = new SigmafineParser().Load(null, "GP02", day);
             ms.SaveRecords();
             json = ms.ExportR2PJson();

@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace STransformNUnit {
     public class TerraNovaTests {
-        string ROOTDIR = @"..\..\..\..\sampleFiles\Terra Nova\";
+        string ROOTDIR = @"..\..\..\..\sampleFiles\EP01-Terra Nova\";
         [SetUp]
         public void Setup() {
             DBContextWithConnectionString.SetConnectionString("");

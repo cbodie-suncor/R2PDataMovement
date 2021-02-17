@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using R2PTransformation;
@@ -99,9 +100,41 @@ namespace STransformNUnit {
 
         [Test]
         public void PostMulesoftTest() {
-//            string json = "{\n  \"BatchId\": \"76347512-0c9e-47f5-9123-b9266218404b\",\n  \"Created\": \"2019-10-01T00:00:00\",\n  \"CreatedBy\": \"AzureIot\",\n  \"TagBalance\": [\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"11234\",\n      \"Plant\": \"EP01\",\n      \"WorkCenter\": \"PRODEP01\",\n      \"ValType\": \"RTFTest2\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075\",\n      \"Uom\": \"M3\"\n    },\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"10327\",\n      \"Plant\": \"EP02\",\n      \"WorkCenter\": \"PRODEP02\",\n      \"ValType\": \"SUNCORTN\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075.4100\",\n      \"Uom\": \"M3\"\n    }\n  ]\n}";
-            string json = "{\n  \"BatchId\": \"76347512-0c9e-47f5-9123-b9266218404b\",\n  \"Created\": \"2021-02-05T09:00:00\",\n  \"CreatedBy\": \"R2P\",\n  \"TagBalance\": [\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"11234\",\n      \"Plant\": \"EP01\",\n      \"WorkCenter\": \"PRODEP01\",\n      \"ValType\": \"RTFTest2\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075\",\n      \"Uom\": \"M3\"\n    },\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"10327\",\n      \"Plant\": \"EP02\",\n      \"WorkCenter\": \"PRODEP02\",\n      \"ValType\": \"SUNCORTN\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"9999.999\",\n      \"Uom\": \"M3\"\n    }\n  ]\n}";
+            MulesoftPush.SetConnection("https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/production-posting", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321");
+            // good
+            string jsonGood = "{\n  \"BatchId\": \"76347512-0c9e-47f5-9123-b9266218404b\",\n  \"Created\": \"2021-02-05T09:00:00\",\n  \"CreatedBy\": \"R2P\",\n  \"TagBalance\": [\n    {\n      \"Tag\": \"EP01_OIL-STORAGE-CORR-LD\",\n      \"Material\": \"11234\",\n      \"Plant\": \"EP01\",\n      \"WorkCenter\": \"PRODEP01\",\n      \"ValType\": \"RTFTest2\",\n      \"BalanceDate\": \"2019-10-01T00:00:00\",\n      \"Quantity\": \"7075\",\n      \"Uom\": \"M3\"\n    } ]\n}";
+            string jsonFailure = "{\"BatchId\":\"890703ed-45f0-4c60-89c8-4dce394d9e53\",\"Created\": \"2021-02-05T09:00:00\", \"CreatedBy\": \"R2P\", \"TagBalance\":[{\"Date\":\"2021-02-17T00:59:00\",\"Tag\":\"BCNRL\",\"System\":\"Honeywell PB\",\"MovementType\":\"Production\",\"Material\":\"10029\",\"Plant\":\"CP04\",\"WorkCenter\":\"PRODCP04\",\"ValType\":\"SUNCOR\",\"BalanceDate\":\"2021-02-17T00:59:00\",\"Quantity\":-1113075.000,\"StandardUnit\":\"M15\"},{\"Date\":\"2021-02-17T00:59:00\",\"Tag\":\"BSUNOSP\",\"System\":\"Honeywell PB\",\"MovementType\":\"Production\",\"Material\":\"10025\",\"Plant\":\"CP04\",\"WorkCenter\":\"PRODCP04\",\"ValType\":\"SUNCOR\",\"BalanceDate\":\"2021-02-17T00:59:00\",\"Quantity\":-5000.000,\"StandardUnit\":\"M15\"}]}";
+            string json = "{\"BatchId\":\"890703ed-45f0-4c60-89c8-4dce394d9e53\",\"Created\": \"2021-02-05T09:00:00\", \"CreatedBy\": \"R2P\",\"TagBalance\":[{\"Date\":\"2021-02-17T00:59:00\",\"Tag\":\"BCNRL\",\"System\":\"Honeywell PB\",\"MovementType\":\"Production\",\"Material\":\"10029\",\"Plant\":\"CP04\",\"WorkCenter\":\"PRODCP04\",\"ValType\":\"SUNCOR\",\"BalanceDate\":\"2021-02-17T00:59:00\",\"Quantity\":\"-1113075.000\",\"Uom\":\"M15\"}]}";
 
+            MulesoftPush.PostProduction(json);
+        }
+
+        [Test]
+        public void SendBogusTagBalanceToMuleSoft() {
+            MulesoftPush.SetConnection("https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/production-posting", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321");
+
+            HoneywellPBFile pf = new HoneywellPBFile("filename", "CP04");
+            List<TagBalance> items = new List<TagBalance>();
+            var tb = new TagBalance();
+            tb.MovementType = "Production";
+            tb.System = "Honeywell PB";
+
+            tb.Tag = "asdf";
+            tb.Quantity = 44;
+            tb.Created = DateTime.Now;
+            tb.BalanceDate = DateTime.Now;
+            tb.QuantityTimestamp = DateTime.Now;
+            tb.CreatedBy = "cab";
+            tb.StandardUnit = "BBL";
+            tb.Plant = "cab";
+            tb.ValType = "cab";
+            tb.WorkCenter = "cab";
+            tb.Material = "123";
+            items.Add(tb);
+            pf.SavedRecords = new List<TagBalance>();
+            pf.SavedRecords.Add(tb);
+            var json = pf.ExportR2PJson();
+            Console.WriteLine(json);
             MulesoftPush.PostProduction(json);
         }
     }

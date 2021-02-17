@@ -3,6 +3,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
     <UserSecretsId>d2a93fe3-b53a-42a5-a1e7-972c3a22d4da</UserSecretsId>
+    <Version>1.0.14</Version>	  
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Files.Shares" Version="12.5.0" />

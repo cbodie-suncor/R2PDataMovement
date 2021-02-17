@@ -16,6 +16,7 @@ namespace R2PTransformation.src {
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             TerraNovaFile ms = new TerraNovaFile(fileName, plant);
+            ms.IsCurrentDay(currentDay);
             string fileContents = File.ReadAllText(fileName);
             DataTable dt = Utilities.ConvertTerraNovaCSVTexttoDataTable(fileContents);
 

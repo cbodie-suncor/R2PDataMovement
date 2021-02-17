@@ -1,3 +1,0 @@
-2019-10-21
-**** use the format YYYY-MM-DD
-**** This date will specify to the R2P integration loader when to process the records in the next upload.
