@@ -8,13 +8,6 @@ namespace R2PTransformation.src {
         public MontrealSulphurFile(string fileName, string plant, string productCode) : base(fileName) {
             ProductCode = productCode;
             Plant = plant;
-            Products = new List<TagBalance>();
-        }
-
-        public List<TagBalance> Products { get; set; }
-
-        public override List<TagBalance> GetTagBalanceRecords() {
-            return Products;
         }
     }
 }

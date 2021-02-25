@@ -92,7 +92,7 @@ namespace STransformNUnit {
         [Test]
         public void ProcessHoneyPBWithSave() {
             string ROOTDIR = @"..\..\..\..\sampleFiles\honeywellPB\";
-            HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt", "CP01");
+            HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt", "CP01", DateTime.Now);
             pf.SaveRecords();
             string json = pf.ExportR2PJson();
             pf.RecordSuccess("sampleHoneyPB.xlsx");

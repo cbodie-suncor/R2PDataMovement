@@ -34,38 +34,19 @@ namespace R2PTransformation.src {
             return value;
         }
 
-        internal TagBalance TagBalance() {
-            TagBalance tb = new TagBalance();
-
-            tb.MovementType = "Production";
-            tb.System = "Honeywell PB";
-
-            tb.Tag = this.GetValue("PRODUCT_CODE");
-            tb.Plant = this.ProductionFile.Plant;
-            tb.Created = DateTime.Now;
-            tb.BalanceDate = this.ProductionFile.GetAccountDate();
-            tb.QuantityTimestamp = DateTime.Now;
-            tb.CreatedBy = "DataHubProcess";
-            TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
-            if (tm == null) { 
-                SuncorProductionFile.Log(tb.Plant, "no TagMapping found for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
-                this.ProductionFile.FailedRecords.Add(tb);
-                return null;
-            }
-            tb.StandardUnit = tm.DefaultUnit;
-            tb.Plant = tm.Plant;
-            tb.ValType = tm.DefaultValuationType;
-            tb.WorkCenter = tm.WorkCenter;
-            tb.Material = tm.MaterialNumber;
+        public void TagBalance(DateTime currentDay) {
+            decimal quantity;
+            string product = this.GetValue("PRODUCT_CODE");
+            DateTime balanceDate = this.ProductionFile.GetAccountDate();
             try {
-                tb.Quantity = this.GetAMMDTQuantity();
-            }catch(Exception ex) {
-                SuncorProductionFile.Log(tb.Plant, "NET YIELD FAILED : " + ex.Message + " for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
-                this.ProductionFile.FailedRecords.Add(tb);
-                return null;
+                quantity = this.GetAMMDTQuantity();
+            } catch (Exception ex) {
+                SuncorProductionFile.Log(this.ProductionFile.Plant, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product);
+                this.ProductionFile.FailedRecords.Add(new TagBalance() { Tag=product, BalanceDate = balanceDate});
+                this.ProductionFile.Warnings.Add(new WarningMessage(product, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product));
+                return;
             }
-            tb.BatchId = ProductionFile.BatchId.ToString();
-            return tb;
+            this.ProductionFile.AddTagBalance(currentDay, "Honeywell PB",product, balanceDate,  quantity);
         }
 
         public decimal GetAMMDTQuantity() {

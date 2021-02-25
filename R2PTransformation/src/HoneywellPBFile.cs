@@ -40,15 +40,6 @@ namespace R2PTransformation {
             return Values[v];
         }
 
-        public override List<TagBalance> GetTagBalanceRecords() {
-            List<TagBalance> tbs = new List<TagBalance>();
-            foreach (var item in this.ProductionRecords()) {
-                TagBalance tb = item.TagBalance();
-                if (tb != null) tbs.Add(tb);
-            }
-            return tbs;
-        }
-
         public List<HoneywellPBProductionRecord> ProductionRecords() {
             return this.BalanceRecords.SelectMany(y => y.ProductionRecords).ToList();
         }

@@ -91,6 +91,12 @@ namespace R2PTransformation.src.db {
             return quantity;
         }
 
+        public static List<TransactionEvent> GetTransactions() {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                return context.TransactionEvents.ToList();
+            }
+        }
+
         public static void RecordStats(SuncorProductionFile pf, string filename, List<WarningMessage> warnings) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = filename, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
@@ -172,6 +178,7 @@ namespace R2PTransformation.src.db {
             return tm;
         }
 
+        /*
         public static void PersistSigmafinex(List<Sigmafinex> newItems) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 context.Sigmafinexes.RemoveRange(context.Sigmafinexes);
@@ -190,10 +197,9 @@ namespace R2PTransformation.src.db {
 
         public static List<Sigmafinex> GetCommerceCity() {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                return context.Sigmafinexes.Where(i => i.FlowCc == "East_Plt" /*&& i.StartTime == day && i.Product == "E_FCCGASOLN"*/).ToList();
+                return context.Sigmafinexes.Where(i => i.FlowCc == "East_Plt").ToList();
             }
         }
-        /*
         public static List<SigmaTransformedResult> GetCommerceCityWest(List<Sigmafinex> overrideRecords) {
             if (overrideRecords != null) return TransformRow(overrideRecords.Where(i => i.FlowCc == "West_Plt").ToList());
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {

@@ -11,14 +11,20 @@ namespace R2PTransformation.src {
         public string FileName;
         public string Plant;
         public List<WarningMessage> Warnings = new List<WarningMessage>();
+        public List<TagBalance> Products { get; set; }
+
 
         public SuncorProductionFile(string fileName) {
             BatchId = Guid.NewGuid();
             FileName = fileName;
             FailedRecords = new List<TagBalance>();
+            Products = new List<TagBalance>();
         }
 
-        public abstract List<TagBalance> GetTagBalanceRecords();
+        public virtual List<TagBalance> GetTagBalanceRecords() {
+            return Products;
+        }
+
         public List<TagBalance> FailedRecords;
         public List<TagBalance> SavedRecords;
 
@@ -47,7 +53,7 @@ namespace R2PTransformation.src {
             return JsonConvert.SerializeObject(batch);
         }
 
-        public TagBalance GetNewTagBalance(string system, string productCode, DateTime day, decimal quantity) {
+        public void AddTagBalance(DateTime currentDay, string system, string productCode, DateTime day, decimal quantity) {
             TagBalance tb = new TagBalance();
             tb.MovementType = "Production";
             tb.System = system;
@@ -62,7 +68,7 @@ namespace R2PTransformation.src {
                 SuncorProductionFile.Log(this.Plant, "no TagMapping found for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
                 Warnings.Add(new WarningMessage(tb.Tag, "No TagMapping"));
                 this.FailedRecords.Add(tb);
-                return null;
+                return;
             }
 
             tb.StandardUnit = tm.DefaultUnit;
@@ -72,7 +78,14 @@ namespace R2PTransformation.src {
             tb.Material = tm.MaterialNumber;
             tb.Quantity = Math.Round(quantity, 3);
             tb.BatchId = this.BatchId.ToString();
-            return tb;
+
+            if (!IsDayValid(day, currentDay)) {
+                this.Warnings.Add(new WarningMessage(tb.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
+                this.FailedRecords.Add(tb);
+            } else {
+                this.Products.Add(tb);
+            }
+            return;
         }
 
         private static string LogFileName = "AzureDataHubProductionLoad.log";
@@ -91,7 +104,7 @@ namespace R2PTransformation.src {
             }
         }
         public static bool IsDayValid(DateTime day, DateTime currentDay) {
-            if (day > currentDay) return false;
+            if (day.Date > currentDay.Date) return false;
             if (currentDay.Day <= 10) {
                 DateTime firstOfPriorMonth = new DateTime(currentDay.AddMonths(-1).Year, currentDay.AddMonths(-1).Month, 1);
                 return firstOfPriorMonth <= day; // accept dates in current and prior month

@@ -35,26 +35,24 @@ namespace R2PTransformation.src {
                     }
                     if (continueProcessing) {
                         for (int day = 1; day <= currentDay.Day; day++) {
-                            var item = GetProductionRecord(currentMonthSheet, ms, new DateTime(currentDay.Year, month, day));
-                            if(item != null) ms.Products.Add(item);
+                            GetProductionRecord(currentDay, currentMonthSheet, ms, new DateTime(currentDay.Year, month, day));
                         }
                     }
 
                     // load prior month as well
                     continueProcessing = true;
                     if (currentDay.Day <= 10) {
-                        currentDay = currentDay.AddMonths(-1);
-                        month = currentDay.Month;
+                        DateTime processingDay = currentDay.AddMonths(-1);
+                        month = processingDay.Month;
                         currentMonthSheet = table[1];
                         if (ms.ProductCode == "2" || ms.ProductCode == "3") {
                             currentMonthSheet = table[month];
                             int year = int.Parse(currentMonthSheet.Rows[1][0].ToString());
-                            if (year != currentDay.Year) continueProcessing = false;// don't retrieve if not matching
+                            if (year != processingDay.Year) continueProcessing = false;// don't retrieve if not matching
                         }
                         if (continueProcessing) {
-                            for (int day = 1; day <= DateTime.DaysInMonth(currentDay.Year, month); day++) {
-                                var item = GetProductionRecord(currentMonthSheet, ms, new DateTime(currentDay.Year, month, day));
-                                if (item != null) ms.Products.Add(item);
+                            for (int day = 1; day <= DateTime.DaysInMonth(processingDay.Year, month); day++) {
+                                GetProductionRecord(currentDay, currentMonthSheet, ms, new DateTime(processingDay.Year, month, day));
                             }
                         }
                     }
@@ -63,7 +61,7 @@ namespace R2PTransformation.src {
             }
         }
 
-        private TagBalance GetProductionRecord(DataTable currentMonth, MontrealSulphurFile ms, DateTime day) {
+        private void GetProductionRecord(DateTime currentDay, DataTable currentMonth, MontrealSulphurFile ms, DateTime day) {
             decimal quantity = 0;
             try { 
                 if (ms.ProductCode == "2") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][16].ToString()); // column Q
@@ -72,8 +70,7 @@ namespace R2PTransformation.src {
             } catch (Exception ex) {
                  throw new Exception("invalid format for montreal sulphur");
             }
-            if (quantity == 0) return null;
-            return ms.GetNewTagBalance("MTL SP", ms.ProductCode, day, quantity);
+            ms.AddTagBalance(currentDay, "MTL SP", ms.ProductCode, day, quantity);
         }
 
         private int FindRowInCaustic(MontrealSulphurFile ms, DataTable dt, DateTime day) {

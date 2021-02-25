@@ -1,6 +1,8 @@
 ﻿using Azure;
 using Azure.Storage.Files.Shares;
 using Azure.Storage.Files.Shares.Models;
+using Microsoft.Extensions.Logging;
+using R2PFunction;
 using R2PTransformation.src;
 using R2PTransformation.src.db;
 using SuncorR2P.src;
@@ -13,6 +15,33 @@ namespace SuncorR2P {
 
         public static string CONNECTIONSTRING = Utilities.GetEnvironmentVariable("AzureWebJobsStorage");
         public static string SHARENAME = "sap-iot-data";
+
+        public static void CheckForFilesToBeProcessed(string productVersion, ILogger log) {
+            FoundFile foundFile = null;
+            while (true) {
+                foundFile = null;
+                try {
+                    foundFile = AzureFileHelper.ScanForANewFile();
+                } catch (Exception ex) { LogHelper.LogSystemError(log, productVersion, ex); }
+
+                if (foundFile == null) break;
+
+                try {
+                    string msg = "Processing the file " + foundFile.PlantName + "," + foundFile.AzureFileName;
+                    log.LogInformation("*** " + msg + $" at: {DateTime.Now}" + ":" + productVersion);
+                    LogHelper.LogMessage(foundFile.PlantName, productVersion, msg);
+                    foundFile.ProcessFile();
+                    foundFile.DisposeOfFile();
+                    foundFile.RecordSuccess();
+                } catch (Exception ex) {
+                    LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
+                    AzureModel.RecordFailure(foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
+                    try {
+                        foundFile.DisposeOfFile(true);
+                    } catch (Exception ex2) { LogHelper.LogSystemError(log, productVersion, ex2); }
+                }
+            }
+        }
 
         public static void WriteFile(string fullPath, string output, Boolean append) {
             ShareFileClient file = new ShareFileClient(CONNECTIONSTRING, SHARENAME, fullPath);
@@ -56,7 +85,7 @@ namespace SuncorR2P {
             if (tags != null) {
                 DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
                 string output = AzureModel.UpdateTagMappings(plant, tm);
-                R2PLoader.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
+                LogHelper.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
                 AzureFileHelper.WriteFile(tagMappingFileProcessed + suffix, tags, false);
                 AzureFileHelper.DeleteFile(tagMappingFile + suffix);
             }

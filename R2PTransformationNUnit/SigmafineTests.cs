@@ -69,27 +69,27 @@ namespace STransformNUnit {
 
         [Test]
         public void testExcelLoadEP() {
-            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 EP.xls", "GP01");
+            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 EP.xls", "GP01", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportR2PJson();
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedRecords.Count > 0);
             Assert.AreEqual("EP Sweet Crude Trucks", ms.SavedRecords[0].Tag);
-            Assert.AreEqual(25474, ms.SavedRecords[0].Quantity);
+            Assert.AreEqual(25474.019, ms.SavedRecords[0].Quantity);
             //            ms.SaveRecords();
         }
 
         [Test]
         public void testExcelLoadWP() {
-            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 WP.xls", "GP02");
+            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 WP.xls", "GP02", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportR2PJson();
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedRecords.Count > 0);
             Assert.AreEqual("Asphalt Unit Crude", ms.SavedRecords[0].Tag);
-            Assert.AreEqual(36558, ms.SavedRecords[0].Quantity);
+            Assert.AreEqual(36557.741, ms.SavedRecords[0].Quantity);
             //            ms.SaveRecords();
         }
     }

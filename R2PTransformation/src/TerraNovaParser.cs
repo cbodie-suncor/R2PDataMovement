@@ -22,21 +22,17 @@ namespace R2PTransformation.src {
 
             // load current month
             DataTable currentMonthSheet = dt;
-            ms.Products.AddRange(GetProductionRecords(currentMonthSheet, ms, currentDay));
+            LoadProductionRecords(currentMonthSheet, ms, currentDay);
             return ms;
         }
 
-        public List<TagBalance> GetProductionRecords(DataTable currentMonth, TerraNovaFile ms, DateTime currentDay) {
-            List<TagBalance> list = new List<TagBalance>();
+        private void LoadProductionRecords(DataTable currentMonth, TerraNovaFile ms, DateTime currentDay) {
             foreach (var row in currentMonth.AsEnumerable()) {
                 string productionCode = row["name"].ToString();
                 DateTime day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
-                if (!TerraNovaFile.IsDayValid(day, currentDay)) continue;
                 decimal quantity = TerraNovaFile.ParseDecimal(row["value"].ToString());
-                TagBalance tm = ms.GetNewTagBalance("DPS", productionCode, day, quantity);
-                if (tm != null) list.Add(tm);
+                ms.AddTagBalance(currentDay, "OPIS", productionCode, day.AddDays(-1), quantity);
             }
-            return list;
         }
     }
 }

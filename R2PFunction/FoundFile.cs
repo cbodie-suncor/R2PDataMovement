@@ -1,21 +1,31 @@
 ﻿using Microsoft.Extensions.Configuration;
-using R2PTransformation;
+using Microsoft.Extensions.Logging;
+using Microsoft.Azure.WebJobs;
+using R2PFunction;
 using R2PTransformation.src;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace SuncorR2P.src {
     public class FoundFile {
         public string TempFileName;
         public string AzureFileName;
         public string AzureFullPathName;
-        public SuncorProductionFile ProducitionFile; 
+        public SuncorProductionFile ProducitionFile;
+
+        public string ParentDiectory {
+            get {
+                DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
+                return d.Parent.Name;
+            }
+    }
         public string PlantName {
             get {
                 DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
                 string plant = d.Parent.Name;
+                if (plant == "DENVER") {
+                    plant = AzureFullPathName.ToLower().Contains("wp") ? "GP01" : "GP02";
+                }
                 if (plant.Length != 4) throw new Exception("Can't find plant code in fileName " + AzureFileName);
                 return plant;
             }
@@ -44,21 +54,21 @@ namespace SuncorR2P.src {
         }
 
         public void DisposeOfFile(Boolean fatal = false) {
-            string destination = this.PlantName + "\\" + (this.SuccessfulRecords == 0 || fatal ? "rejected" : "archived") + "\\" + this.GetFileNameWithTimestampAppendedBeforeSuffix();
+            string destination = this.ParentDiectory + "\\" + (this.SuccessfulRecords == 0 || fatal ? "rejected" : "archived") + "\\" + this.GetFileNameWithTimestampAppendedBeforeSuffix();
             AzureFileHelper.CopyToAzureFileShare(this.TempFileName, destination);
             AzureFileHelper.DeleteFile(this.AzureFullPathName);
             File.Delete(this.TempFileName);
         }
 
         public void ProcessFile() {
-            SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
+            SuncorProductionFile.SetLogFileWriter(LogHelper.WriteLogFile);
             this.ProducitionFile = null;
             DateTime day = GetCurrentDay(this.PlantName);
 
-            if (this.IsHoneywellPB)         { this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName); }
+            if (this.IsHoneywellPB)         { this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.IsMontrealSulphur)     { this.ProducitionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
             if (this.IsDPS)                 { this.ProducitionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.IsSigmafine)           { this.ProducitionFile = new SigmafineParser().LoadExcel(this.TempFileName, this.PlantName); }
+            if (this.IsDenver)              { this.ProducitionFile = new SigmafineParser().LoadExcel(this.TempFileName, this.PlantName, day); }
             if (this.IsTerraNova)           { this.ProducitionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.IsSarnia)              { }
             if (this.ProducitionFile != null) {
@@ -96,20 +106,25 @@ namespace SuncorR2P.src {
             return day;
         }
 
-        [Obsolete]
-        public static void ProcessCommerceCity(DateTime day) {
-            SuncorProductionFile.SetLogFileWriter(R2PLoader.WriteLogFile);
-            R2PLoader.LogMessage("GP01", "", "Processing CommerceCity East");
-            SigmafineFile ms = new SigmafineParser().Load(null, "GP01", day);
-            ms.SaveRecords();
-            string json = ms.ExportR2PJson();
-            AzureFileHelper.WriteFile("GP01/tempJsonOutput/COmmerceCityEast.json", json, false);
+        public static void SetConnection(ExecutionContext context, ILogger log) {
+            IConfiguration iconfig = new ConfigurationBuilder()
+            .AddEnvironmentVariables()  // needed for the ConnectionString - comes from local.settings.json or Azure Function Configuration 
+//            .AddJsonFile("local.settings.json", true, true)
+            .Build();
+            string cs = iconfig["ConnectionStrings:DataHub"];
 
-            R2PLoader.LogMessage("GP02", "", "Processing CommerceCity West");
-            ms = new SigmafineParser().Load(null, "GP02", day);
-            ms.SaveRecords();
-            json = ms.ExportR2PJson();
-            AzureFileHelper.WriteFile("GP02/tempJsonOutput/COmmerceCityEast.json", json, false);
+            string aw = Utilities.GetEnvironmentVariable("AzureWebJobsStorage");
+            //            log.LogInformation($"Connection String:" + cs);
+            //log.LogInformation($"AW Storage:" + aw);
+            //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", cs == null ? "empty - connection" : "cs:" + cs, true);
+            //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);
+            DBContextWithConnectionString.SetConnectionString(cs);
+
+            string Url = iconfig["MuleSoftUrl"];
+            string User = iconfig["MuleSoftUser"];
+            string PW = iconfig["MuleSoftPassword"];
+
+            MulesoftPush.SetConnection(Url, User, PW);
         }
 
         public FoundFile(string azureFileName, string azureFullPathName, string tempFileName) {
@@ -121,7 +136,7 @@ namespace SuncorR2P.src {
         public Boolean IsMontrealSulphur { get { return PlantName.ToUpper() == "CP02"; } }
         public Boolean IsSarnia { get { return PlantName.ToUpper() == "CP03"; } }
         public Boolean IsDPS { get { return PlantName.ToUpper().Contains("AP"); } }
-        public Boolean IsSigmafine { get { return PlantName.ToUpper().Contains("GP"); } }
+        public Boolean IsDenver { get { return PlantName.ToUpper().Contains("GP"); } }
         public Boolean IsTerraNova { get { return PlantName.ToUpper().Contains("EP"); } }
 
         public int FailedRecords { get; internal set; }

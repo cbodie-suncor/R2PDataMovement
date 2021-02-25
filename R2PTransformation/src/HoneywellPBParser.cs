@@ -6,9 +6,10 @@ namespace R2PTransformation.src {
     public class HoneywellPBParser {
         private string Filename = "";
 
-        public HoneywellPBFile LoadFile(string fileName, string plant) {
+        public HoneywellPBFile LoadFile(string fileName, string plant, DateTime currentDay) {
             Filename = fileName;
             HoneywellPBFile pf = new HoneywellPBFile(fileName, plant);
+            pf.IsCurrentDay(currentDay);
             string fileText = File.ReadAllText(fileName);
             if (string.IsNullOrEmpty(fileText)) throw new Exception("File is empty");
             fileText = fileText.Replace("\r", "");  // only care about \n
@@ -20,6 +21,11 @@ namespace R2PTransformation.src {
             Contents balanceContents = GetTagContents(fileContents.TagContents, "<<START BALANCE REC>>");
             pf.BalanceRecords = GetBalanceRecords(defaultContents.OuterContents, pf);
 
+
+            foreach (var item in pf.ProductionRecords()) {
+                item.TagBalance(currentDay);
+            }
+
             return pf;
         }
 
@@ -30,7 +36,7 @@ namespace R2PTransformation.src {
             Dictionary<string, string> values = new Dictionary<string, string>();
             foreach (string row in contents.Split("\n")) {
                 if (String.IsNullOrEmpty(row)) continue;
-                if (row.Split(',').Length < 2) throw new Exception("Error in file:" + Filename + ", Incomplete row:" + row);
+                if (row.Split(',').Length < 2) throw new Exception("Incomplete row:" + row);
                 string key = row.Split(',')[0];
                 string value = row.Split(',')[1];
                 values.Add(key, value);
@@ -68,12 +74,10 @@ namespace R2PTransformation.src {
             while (true) {
                 ContentTag tag = GetNextFileTag(contents);
                 if (tag == null) break;
-                if (tag.Name != "BALANCE REC") throw new Exception("Error in File:" + Filename + ",tag does not match BALANCE REC:" + tag.Name);
+                if (tag.Name != "BALANCE REC") throw new Exception("Tag does not match BALANCE REC:" + tag.Name);
                 BalanceRecord br = new BalanceRecord();
                 br.SetValues(ParseCSVContents(tag.InnerContents));
                 br.ProductionRecords = GetProductionRecords(tag.InnerContents, pf);
-                //                ProductionRecord pr = new ProductionRecord(ParseCSVContents(tag.InnerContents), pf);
-                //                bals.Add(pr);
                 contents = contents.Substring(tag.End);
                 bals.Add(br);
             }
@@ -85,7 +89,7 @@ namespace R2PTransformation.src {
             while (true) {
                 ContentTag tag = GetNextFileTag(contents);
                 if (tag == null) break;
-                if (tag.Name != "PRODUCT REC") throw new Exception("Error in File:" + Filename + ",tag does not match PRODUCT REC:" + tag.Name);
+                if (tag.Name != "PRODUCT REC") throw new Exception("Tag does not match PRODUCT REC:" + tag.Name);
 
                 HoneywellPBProductionRecord pr = new HoneywellPBProductionRecord(ParseCSVContents(tag.InnerContents), pf);
                 recs.Add(pr);
@@ -100,9 +104,9 @@ namespace R2PTransformation.src {
             Contents contents = new Contents();
             int start = text.IndexOf(tagName);
             string endTag = tagName.Replace("START ", "").Replace("<<","<<END ");
-            if (start == -1) throw new Exception("Error in File:" + Filename + ",can't find initial tag:" + tag);
+            if (start == -1) throw new Exception("Cannot find initial tag:" + tag);
             int end = text.IndexOf(endTag);
-            if (end == -1) throw new Exception("Error in File:" + Filename + " can't find end tag:" + endTag);
+            if (end == -1) throw new Exception("Cannot find end tag:" + endTag);
 
             contents.TagContents = text.Substring(start + tagName.Length + 1, end - start - tagName.Length -2);
             contents.OuterContents = "";

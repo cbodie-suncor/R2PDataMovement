@@ -27,19 +27,18 @@ namespace R2PTransformation.src {
 
                     DataTableCollection table = result.Tables;
                     DataTable currentMonthSheet = table[0];
-                    ms.Products.AddRange(GetProductionRecords(currentMonthSheet, ms, currentDay));
+                    LoadProductionRecords(currentMonthSheet, ms, currentDay);
                     return ms;
                 }
             }
         }
 
-        public List<TagBalance> GetProductionRecords(DataTable currentMonth, DPSFile ms, DateTime currentDay) {
-            List<TagBalance> list = new List<TagBalance>();
+        public void LoadProductionRecords(DataTable currentMonth, DPSFile ms, DateTime currentDay) {
             foreach (var row in currentMonth.AsEnumerable()) {
                 string productionCode = row["Plant"].ToString() + "_" + row["Material Description OR Product Code in DPS"].ToString();
                 string uom = row["Display Unit of Measure"].ToString();
                 DateTime? day = row["transaction date"] as DateTime?;
-                if (day == null || !TerraNovaFile.IsDayValid(day.Value, currentDay)) continue;
+        
                 decimal quantity = DPSFile.ParseDecimal(row["production"].ToString());
                 try {
                     quantity = AzureModel.ConvertQuantityToStandardUnit(uom, quantity);
@@ -47,10 +46,8 @@ namespace R2PTransformation.src {
                     ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
                     continue;
                 }
-                TagBalance tm = ms.GetNewTagBalance("DPS", productionCode, day.Value, quantity);
-                if (tm != null) list.Add(tm);
+                ms.AddTagBalance(currentDay, "DPS", productionCode, day.Value, quantity);
             }
-            return list;
         }
     }
 }

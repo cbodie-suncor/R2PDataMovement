@@ -5,13 +5,6 @@ namespace R2PTransformation.src {
     public class TerraNovaFile : SuncorProductionFile {
         public TerraNovaFile(string fileName, string plant) : base(fileName) {
             Plant = plant;
-            Products = new List<TagBalance>();
-        }
-
-        public List<TagBalance> Products { get; set; }
-
-        public override List<TagBalance> GetTagBalanceRecords() {
-            return Products;
         }
     }
 }
