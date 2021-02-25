@@ -18,7 +18,7 @@ namespace STransformNUnit {
         public void testBase() {
             string dir = Directory.GetCurrentDirectory();
             TerraNovaFile ms = new TerraNovaParser().LoadFile(ROOTDIR + "OIL-STORAGE-CORR-LD_Raw.csv", "EP01", new DateTime(2019, 10, 03));
-            Assert.AreEqual(3, ms.GetTagBalanceRecords().Count);
+            Assert.AreEqual(4, ms.GetTagBalanceRecords().Count);
             Assert.AreEqual(7075.41, ms.GetTagBalanceRecords().Single(t=>t.BalanceDate == new DateTime(2019, 10,1)).Quantity);
         }
 
@@ -33,7 +33,7 @@ namespace STransformNUnit {
         [Test]
         public void test10daytest() {
             TerraNovaFile ms = new TerraNovaParser().LoadFile(ROOTDIR + "OIL-STORAGE-CORR-LD_Raw.csv", "EP01", new DateTime(2019, 10, 19));
-            Assert.AreEqual(18, ms.GetTagBalanceRecords().Count);
+            Assert.AreEqual(19, ms.GetTagBalanceRecords().Count);
             Assert.AreEqual(82.676, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2019, 10, 17)).Quantity);
         }
 

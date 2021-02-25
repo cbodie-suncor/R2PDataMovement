@@ -30,7 +30,7 @@ namespace SuncorR2P {
                     string msg = "Processing the file " + foundFile.PlantName + "," + foundFile.AzureFileName;
                     log.LogInformation("*** " + msg + $" at: {DateTime.Now}" + ":" + productVersion);
                     LogHelper.LogMessage(foundFile.PlantName, productVersion, msg);
-                    foundFile.ProcessFile();
+                    foundFile.ProcessFile(log, productVersion);
                     foundFile.DisposeOfFile();
                     foundFile.RecordSuccess();
                 } catch (Exception ex) {

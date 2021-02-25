@@ -16,7 +16,8 @@ namespace R2PTransformation.src {
         }
 
         // Pushes a Json payload to Mulesoft
-        public static void PostProduction(string json) {
+        public static Boolean PostProduction(string json) {
+            if (String.IsNullOrEmpty(Url)) return false;
             var byteArray = Encoding.ASCII.GetBytes(User + ":" + PW); 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
@@ -26,6 +27,8 @@ namespace R2PTransformation.src {
 //            Console.WriteLine(response.Result);
             if (response.Result.StatusCode.ToString() != "OK") 
                 throw new Exception("Mulesoft push failed : " + response.Result.ToString());
+
+            return true;
         }
     }
 }

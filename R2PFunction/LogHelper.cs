@@ -12,6 +12,11 @@ namespace R2PFunction {
             AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", msg, true);
         }
 
+        public static void LogSystemError(ILogger log, string version, string  output) {
+            log.LogError(output, $"R2PLoader failed at: {DateTime.Now}");
+            string msg = DateTime.Now.ToUniversalTime() + ":" + version + ":" + output;
+            AzureFileHelper.WriteFile("system/AzureDataHubProduction.System.log", msg, true);
+        }
         public static void LogMessage(string plant, string version, string msg) {
             WriteLogFile(plant, DateTime.Now.ToUniversalTime() + ":" + version + ":" + msg);
         }

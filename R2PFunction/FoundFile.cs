@@ -60,7 +60,7 @@ namespace SuncorR2P.src {
             File.Delete(this.TempFileName);
         }
 
-        public void ProcessFile() {
+        public void ProcessFile(ILogger log, string version) {
             SuncorProductionFile.SetLogFileWriter(LogHelper.WriteLogFile);
             this.ProducitionFile = null;
             DateTime day = GetCurrentDay(this.PlantName);
@@ -77,7 +77,10 @@ namespace SuncorR2P.src {
                 this.FailedRecords = this.ProducitionFile.FailedRecords.Count;
                 if (this.ProducitionFile.SavedRecords.Count > 0) {
                     string json = this.ProducitionFile.ExportR2PJson();
-                    MulesoftPush.PostProduction(json);
+                    if (!MulesoftPush.PostProduction(json)) {
+                        LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+
+                    }
                     AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
                 }
             }
@@ -123,6 +126,7 @@ namespace SuncorR2P.src {
             string Url = iconfig["MuleSoftUrl"];
             string User = iconfig["MuleSoftUser"];
             string PW = iconfig["MuleSoftPassword"];
+            string stop = iconfig["DoNotSendToMuleSoft"];
 
             MulesoftPush.SetConnection(Url, User, PW);
         }
