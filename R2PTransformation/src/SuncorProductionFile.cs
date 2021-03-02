@@ -152,6 +152,10 @@ namespace R2PTransformation.src {
             Tag = atag;
             Message = aMessage;
         }
+
+        public WarningMessage(string aMessage) {
+            Message = aMessage;
+        }
         public string Tag;
         public string Message;
     }

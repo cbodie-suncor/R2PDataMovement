@@ -6,10 +6,14 @@ using R2PTransformation.src;
 using R2PTransformation.src.db;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Text;
+using System.Web;
 
 namespace STransformNUnit {
     public class GeneralTests {
@@ -107,6 +111,30 @@ namespace STransformNUnit {
             string json = "{\"BatchId\":\"890703ed-45f0-4c60-89c8-4dce394d9e53\",\"Created\": \"2021-02-05T09:00:00\", \"CreatedBy\": \"R2P\",\"TagBalance\":[{\"Date\":\"2021-02-17T00:59:00\",\"Tag\":\"BCNRL\",\"System\":\"Honeywell PB\",\"MovementType\":\"Production\",\"Material\":\"10029\",\"Plant\":\"CP04\",\"WorkCenter\":\"PRODCP04\",\"ValType\":\"SUNCOR\",\"BalanceDate\":\"2021-02-17T00:59:00\",\"Quantity\":\"-1113075.000\",\"Uom\":\"M15\"}]}";
 
             MulesoftPush.PostProduction(json);
+        }
+
+        [Test]
+        public void ats() {
+            string url = "https://www1.aer.ca/GISConversionTools/WellIDConverter.aspx";
+
+            StringBuilder postData = new StringBuilder();
+            NameValueCollection myNameValueCollection = new NameValueCollection();
+
+            myNameValueCollection.Add("lsd", "1");
+            myNameValueCollection.Add("section", "1");
+            myNameValueCollection.Add("township", "1");
+            myNameValueCollection.Add("meridian", "1");
+            myNameValueCollection.Add("range", "1");
+            myNameValueCollection.Add("position", "C");
+            myNameValueCollection.Add("feet_west", "0");
+            myNameValueCollection.Add("feet_east", "0");
+
+            WebClient myWebClient = new WebClient();
+            Console.WriteLine("\nUploading to {0} ...", url);
+            myWebClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+            // 'The Upload(String,NameValueCollection)' implicitly method sets HTTP POST as the request method.            
+            byte[] responseArray = myWebClient.UploadValues(url, "POST", myNameValueCollection);
+
         }
 
         [Test]

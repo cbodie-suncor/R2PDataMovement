@@ -79,6 +79,7 @@ namespace SuncorR2P.src {
                     string json = this.ProducitionFile.ExportR2PJson();
                     if (!MulesoftPush.PostProduction(json)) {
                         LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+                        this.ProducitionFile.Warnings.Add(new WarningMessage("Json NOT sent to Mulesoft"));
 
                     }
                     AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "tempJsonOutput") + ".json", json, false);
@@ -128,7 +129,7 @@ namespace SuncorR2P.src {
             string PW = iconfig["MuleSoftPassword"];
             string stop = iconfig["DoNotSendToMuleSoft"];
 
-            MulesoftPush.SetConnection(Url, User, PW);
+            MulesoftPush.SetConnection(stop == "true" ? null : Url, User, PW);
         }
 
         public FoundFile(string azureFileName, string azureFullPathName, string tempFileName) {
