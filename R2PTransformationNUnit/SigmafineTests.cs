@@ -69,7 +69,7 @@ namespace STransformNUnit {
 
         [Test]
         public void testExcelLoadEP() {
-            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 EP.xls", "GP01", new DateTime(2021, 01, 31));
+            SuncorProductionFile ms = new SigmafineParser().LoadProductionExcel(ROOTDIR + "Jan 1 2021 EP.xls", "GP01", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportR2PJson();
             System.Console.WriteLine(json);
@@ -77,12 +77,16 @@ namespace STransformNUnit {
             Assert.IsTrue(ms.SavedRecords.Count > 0);
             Assert.AreEqual("EP Sweet Crude Trucks", ms.SavedRecords[0].Tag);
             Assert.AreEqual(25474.019, ms.SavedRecords[0].Quantity);
+            Assert.AreEqual(152064.373, ms.SavedRecords[0].OpeningInventory);
+            Assert.AreEqual(152592.354, ms.SavedRecords[0].ClosingInventory);
+            Assert.AreEqual(0, ms.SavedRecords[0].Shipment);
+            Assert.AreEqual(26002, ms.SavedRecords[0].Receipt);
             //            ms.SaveRecords();
         }
 
         [Test]
         public void testExcelLoadWP() {
-            SigmafineFile ms = new SigmafineParser().LoadExcel(ROOTDIR + "Jan 1 2021 WP.xls", "GP02", new DateTime(2021, 01, 31));
+            SuncorProductionFile ms = new SigmafineParser().LoadProductionExcel(ROOTDIR + "Jan 1 2021 WP.xls", "GP02", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportR2PJson();
             System.Console.WriteLine(json);
@@ -90,6 +94,20 @@ namespace STransformNUnit {
             Assert.IsTrue(ms.SavedRecords.Count > 0);
             Assert.AreEqual("Asphalt Unit Crude", ms.SavedRecords[0].Tag);
             Assert.AreEqual(36557.741, ms.SavedRecords[0].Quantity);
+            //            ms.SaveRecords();
+        }
+
+        [Test]
+        public void testInventoryLoad() {
+            SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(ROOTDIR + "031021 INVENTORY (with material codes).xls", "COMMERCECITY", new DateTime(2021, 03, 10));
+            ms.SavedRecords = ms.GetTagBalanceRecords();
+            string json = ms.ExportP2CJson();
+            System.Console.WriteLine(json);
+            Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
+            Assert.IsTrue(ms.SavedRecords.Count > 0);
+            Assert.AreEqual("ASPH_SOUR", ms.SavedRecords[0].Tag);
+            Assert.AreEqual("TK776", ms.SavedRecords[0].Tank);
+            Assert.AreEqual(80874.578, ms.SavedRecords[0].ClosingInventory);
             //            ms.SaveRecords();
         }
     }

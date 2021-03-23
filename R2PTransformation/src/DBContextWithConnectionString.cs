@@ -1,12 +1,13 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using R2PTransformation.src.db;
+using R2PTransformation.src.db.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace R2PTransformation.src {
-    public class DBContextWithConnectionString : MyDbContext {
+namespace R2PTransformation.src.db {
+    public class DBContextWithConnectionString : AzureContext {
         public static void SetConnectionString(string connectionString) {
             ConnectionString = connectionString;
         }

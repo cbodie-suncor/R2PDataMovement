@@ -37,6 +37,10 @@ namespace STransformNUnit {
             MontrealSulphurFile ms = new MontrealSulphurParser().LoadFile(ROOTDIR + "2 - 2020 SBS Production.xlsx", "CP02", "2", new DateTime(2020, 12, 12));
             Assert.AreEqual(12, ms.GetTagBalanceRecords().Count);
             Assert.AreEqual(19.028, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2020, 12, 12)).Quantity);
+            Assert.AreEqual(259.66, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2020, 12, 12)).OpeningInventory);
+            Assert.AreEqual(203.476, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2020, 12, 12)).ClosingInventory);
+            Assert.AreEqual(40.378, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2020, 12, 12)).Shipment);
+            Assert.AreEqual(0, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2020, 12, 12)).Receipt);
         }
 
         [Test]
@@ -51,13 +55,21 @@ namespace STransformNUnit {
             MontrealSulphurFile ms = new MontrealSulphurParser().LoadFile(ROOTDIR + "3 - 2021 Sulphur Production.xlsx", "CP02", "3", new DateTime(2021, 01, 08));
             Assert.AreEqual(8, ms.GetTagBalanceRecords().Count);
             Assert.AreEqual(30.877, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 6)).Quantity);
+            Assert.AreEqual(558.183, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 6)).OpeningInventory);
+            Assert.AreEqual(589.002, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 6)).ClosingInventory);
+            Assert.AreEqual(32.058, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 6)).Shipment);
+            Assert.AreEqual(32, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 6)).Receipt);
         }
 
         [Test]
         public void testMontrealSulphurCaustic() {
             MontrealSulphurFile ms = new MontrealSulphurParser().LoadFile(ROOTDIR + "5 - 2021 Caustic Consumption.xlsx", "CP02", "5", new DateTime(2021, 01, 13));
-            Assert.AreEqual(13, ms.GetTagBalanceRecords().Count);
+            Assert.AreEqual(6, ms.GetTagBalanceRecords().Count);
             Assert.AreEqual(-9.975, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 5)).Quantity);
+            Assert.AreEqual(72.476, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 5)).OpeningInventory);
+            Assert.AreEqual(80.955, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 5)).ClosingInventory);
+            Assert.AreEqual(18.454, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 5)).Receipt);
+            Assert.AreEqual(0, ms.GetTagBalanceRecords().Single(t => t.BalanceDate == new DateTime(2021, 1, 5)).Shipment);
         }
     }
 }

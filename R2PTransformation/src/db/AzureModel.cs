@@ -25,13 +25,29 @@ namespace R2PTransformation.src.db {
                 foreach (var item in tb) {
                     TagBalance found = context.TagBalances.Find(new object[] { item.Tag, item.BalanceDate });
                     if (found == null)
-                        batch.TagBalances.Add(item);
+                        batch.TagBalance.Add(item);
                     else
                         UpdateTagBalance(found, item);
                 }
                 context.SaveChanges();
                 pf.SavedRecords = tb;
             }
+        }
+
+        internal static void AddMaterialMovements(List<MaterialMovement> mm) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                mm.ForEach(t => {
+                    List<MaterialMovement> find = context.MaterialMovements.Where(f => f.MaterialDocument == t.MaterialDocument).ToList();
+                    if (find.Count() > 0) find.ForEach(t=> context.MaterialMovements.Remove(t));
+                });
+
+                context.AddRange(mm);
+                context.SaveChanges();
+            }
+        }
+
+        public static void RecordFileFailure(object fileType, string plantName, string azureFullPathName, int successfulRecords, int failedRecords, string message) {
+            throw new NotImplementedException();
         }
 
         private static void UpdateTagBalance(TagBalance existing, TagBalance tb) {
@@ -41,6 +57,19 @@ namespace R2PTransformation.src.db {
             existing.ValType = tb.ValType;
             existing.WorkCenter = tb.WorkCenter;
             existing.Tank = tb.Tank;
+        }
+
+        internal static TagMap ReverseLookupTag(int material, string plant) {
+            TagMap tm = null;
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                if (context.DoesConnectionStringExist) {
+                    tm = context.TagMaps.SingleOrDefault(t => t.MaterialNumber == material.ToString() && t.Plant == plant);
+                    return tm;
+                } else {
+                    // probably for Unit Testing, so use 
+                    return new TagMap() { Tag = "EP Sweet Crude Trucks", DefaultUnit = "abc", MaterialNumber = "abc", WorkCenter = "123", Plant = plant, DefaultValuationType = "asd" };
+                }
+            }
         }
 
         internal static TagMap LookupTag(string tag, string plant) {
@@ -91,41 +120,141 @@ namespace R2PTransformation.src.db {
             return quantity;
         }
 
+        public static string GetCurrentConversionsCSV() {
+            List<Conversion> cons = null;
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                cons = context.Conversions.ToList();
+            }
+            string converionContents = "Material,StandardUnit,ToUnit,Factor\r\n";
+            List<string> line = cons.Select(t => (t.Material == null ? "" : t.Material.Trim()) + "," + t.StandardUnit.Trim() + "," + t.ToUnit.Trim() + "," + t.Factor.Value.ToString().Trim()).ToList();
+            converionContents += string.Join("\r\n", line);
+            return converionContents;
+        }
+
+        public static string GetCurrentTagMapsCSV(string plant) {
+            List<TagMap> tags = null;
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                tags = context.TagMaps.Where(t => t.Plant == plant).ToList();
+            }
+            string tagContents = "Tag,Plant,WorkCenter,MaterialNumber,DefaultValuationType,DefaultUnit\r\n";
+            List<string> line = tags.Select(t => t.Tag.Trim() + "," + t.Plant.Trim() + "," + t.WorkCenter.Trim() + "," + t.MaterialNumber.Trim() + "," + t.DefaultValuationType.Trim() + "," + t.DefaultUnit.Trim()).ToList();
+            tagContents += string.Join("\r\n", line);
+            return tagContents;
+        }
+
         public static List<TransactionEvent> GetTransactions() {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 return context.TransactionEvents.ToList();
             }
         }
 
-        public static void RecordStats(SuncorProductionFile pf, string filename, List<WarningMessage> warnings) {
+        /*
+        public static void RecordMaterialMovement(string plant, List<WarningMessage> warnings, int success, int fail, string body) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Plant = pf.Plant, Filename = filename, SuccessfulRecordCount = pf.SavedRecords.Count, FailedRecordCount = pf.FailedRecords.Count };
+                TransactionEvent te = new TransactionEvent() { Type = "Material Movement", Plant = plant, Extra = body, CreateDate = DateTime.Now, SuccessfulRecordCount = success, FailedRecordCount = fail };
 
-                foreach (var item in warnings.Select(y=> new { Tag = y.Tag, Message = y.Message}).Distinct()) {
-                    te.TransactionEventDetails.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
+                foreach (var item in warnings.Select(y => new { Tag = y.Tag, Message = y.Message }).Distinct()) {
+                    te.TransactionEventDetail.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
                 }
                 List<WarningMessage> noMappings = warnings.Where(t => t.Message == "No TagMapping").ToList();
                 List<WarningMessage> otherErrors = warnings.Where(t => t.Message != "No TagMapping").ToList();
                 te.ErrorMessage = "";
                 if (otherErrors.Count > 0) te.ErrorMessage = String.Join(",", otherErrors.Select(y => y.Message).Distinct().ToArray());
                 if (noMappings.Count > 0) te.ErrorMessage += (te.ErrorMessage.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
-                if (pf.SavedRecords.Count == 0 && te.ErrorMessage == "") te.ErrorMessage = "File rejected due to no successfuly records";
-                if (te.ErrorMessage == "") te.ErrorMessage = "File completed successfully"; 
+                if (te.ErrorMessage == "") te.ErrorMessage = "Load completed successfully";
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
         }
+        */
 
-        public static void RecordFailure(String plantName, string fileName, int successfulRecordCount, int failedRecordCount, string msg) {
+        public static void RecordStats(string type, string filename, List<WarningMessage> warnings, string plant, int success, int fail, string json) {
+            if (json != null && json.Length > 5990) json = json.Substring(0, 5990);
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Plant = plantName, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
+                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plant, Filename = filename, SuccessfulRecordCount = success, FailedRecordCount = fail, Extra = json };
+                te.ErrorMessage = "";
+
+                if (warnings != null) {
+                    if (success == 0 && type != "Load TagMaps" && type != "Load Conversions") te.ErrorMessage = "File rejected due to no successfuly records";
+
+                    foreach (var item in warnings.Select(y => new { Tag = y.Tag, Message = y.Message }).Distinct()) {
+                        te.TransactionEventDetail.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
+                    }
+
+                    List<WarningMessage> noMappings = warnings.Where(t => t.Message == "No TagMapping").ToList();
+                    List<WarningMessage> otherErrors = warnings.Where(t => t.Message != "No TagMapping").ToList();
+                    if (otherErrors.Count > 0) te.ErrorMessage = String.Join(",", otherErrors.Select(y => y.Message).Distinct().ToArray());
+                    if (noMappings.Count > 0) te.ErrorMessage += (te.ErrorMessage.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
+                }
+
+                if (te.ErrorMessage == "") te.ErrorMessage = "Load completed successfully"; 
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
         }
 
-        public static string UpdateTagMappings(string plant, DataTable dt) {
-            string output = "";
+        public static void RecordStats(string type, int successfulRecords, string json) {
+            if (json.Length > 5990) json = json.Substring(0, 5990);
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = null, Filename = null, SuccessfulRecordCount = successfulRecords, FailedRecordCount = 0, Extra = json };
+                te.ErrorMessage = "File completed successfully";
+                context.TransactionEvents.Add(te);
+                context.SaveChanges();
+            }
+        }
+
+        public static void RecordFileFailure(string type, String plantName, string fileName, int successfulRecordCount, int failedRecordCount, string msg) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plantName, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
+                context.TransactionEvents.Add(te);
+                context.SaveChanges();
+            }
+        }
+
+        public static void RecordFatalLoad(string type, string plant, Exception ex, string extra) {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                if (extra != null && extra.Length > 5990) extra = extra.Substring(0, 5990);
+                TransactionEvent te = new TransactionEvent() { Type = type, Plant = plant, CreateDate = DateTime.Now, ErrorMessage = ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message), Extra = extra };
+                context.TransactionEvents.Add(te);
+                context.SaveChanges();
+            }
+        }
+
+        public static List<WarningMessage> UpdateConversions(DataTable dt) {
+            List<WarningMessage> msgs = new List<WarningMessage>();
+            List<Conversion> existing = null;
+            List<Conversion> toAdd = new List<Conversion>();
+            List<Conversion> toChange = new List<Conversion>();
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                existing = context.Conversions.ToList();
+            }
+            foreach (DataRow r in dt.AsEnumerable()) {
+                Conversion current = ConversionFromRow(r);
+                Conversion found = existing.SingleOrDefault(t => t == current);
+                if (found == null) {
+                    toAdd.Add(current);
+                    msgs.Add(new WarningMessage("adding " + current.ToString()));
+                } else {
+                    existing.Remove(found);
+                    if (UpdateConversionValues(found, current)) {
+                        toChange.Add(current);
+                        msgs.Add(new WarningMessage("updated " + current.ToString()));
+                    }
+                }
+            }
+            existing.ForEach(t => { msgs.Add(new WarningMessage("deleting " + t.ToString())); });
+
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                context.Conversions.RemoveRange(existing);
+                context.Conversions.AddRange(toAdd);
+                toChange.ForEach(chg => { UpdateConversionValues(context.Conversions.Single(t => t.Equals(chg)), chg); });
+                context.SaveChanges();
+            }
+            return msgs;
+        }
+
+        public static List<WarningMessage> UpdateTagMappings(string plant, DataTable dt) {
+            List<WarningMessage> msgs = new List<WarningMessage>();
             List<TagMap> existingTM = null;
             List<TagMap> toAdd = new List<TagMap>();
             List<TagMap> toChange = new List<TagMap>();
@@ -138,27 +267,28 @@ namespace R2PTransformation.src.db {
                 TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag);
                 if (found == null) {
                     toAdd.Add(current);
-                    output += "adding " + current.Plant + "," + current.Tag + "\r\n";
+                    msgs.Add(new WarningMessage("adding " + current.ToString()));
                 } else {
                     existingTM.Remove(found);
-                    if (UpdateValues(found, current)) {
+                    if (UpdateTagMapValues(found, current)) {
                         toChange.Add(current);
-                        output += "updated " + current.Plant + "," + current.Tag + "\r\n";
+                        msgs.Add(new WarningMessage("updated " + current.ToString()));
+//                        output += "updated " + current.ToString() + "\r\n";
                     }
                 }
             }
-            existingTM.ForEach(t => { output += "deleting " + t.Plant + "," + t.Tag + "\r\n"; });
+            existingTM.ForEach(t => { msgs.Add(new WarningMessage("deleting " + t.ToString())); });
 
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 context.TagMaps.RemoveRange(existingTM);
                 context.TagMaps.AddRange(toAdd);
-                toChange.ForEach(chg => { UpdateValues(context.TagMaps.Single(t => t.Plant == chg.Plant && t.Tag == chg.Tag), chg); });
+                toChange.ForEach(chg => { UpdateTagMapValues(context.TagMaps.Single(t => t.Plant == chg.Plant && t.Tag == chg.Tag), chg); });
                 context.SaveChanges();
             }
-            return output;
+            return msgs;
         }
 
-        private static Boolean UpdateValues(TagMap found, TagMap current) {
+        private static Boolean UpdateTagMapValues(TagMap found, TagMap current) {
             Boolean changed = false;
             if (found.WorkCenter != current.WorkCenter) { changed = true; found.WorkCenter = current.WorkCenter; }
             if (found.MaterialNumber != current.MaterialNumber) { changed = true; found.MaterialNumber = current.MaterialNumber; }
@@ -175,6 +305,22 @@ namespace R2PTransformation.src.db {
             tm.MaterialNumber = r["MaterialNumber"].ToString();
             tm.DefaultValuationType = r["DefaultValuationType"].ToString();
             tm.DefaultUnit = r["DefaultUnit"].ToString();
+            return tm;
+        }
+
+
+        private static Boolean UpdateConversionValues(Conversion found, Conversion current) {
+            Boolean changed = false;
+            if (found.Factor != current.Factor) { changed = true; found.Factor = current.Factor; }
+            return changed;
+        }
+
+        private static Conversion ConversionFromRow(DataRow r) {
+            Conversion tm = new Conversion();
+            tm.Material = r["Material"].ToString();
+            tm.StandardUnit = r["StandardUnit"].ToString();
+            tm.ToUnit = r["ToUnit"].ToString();
+            tm.Factor = SuncorProductionFile.ParseDecimal(r["Factor"].ToString());
             return tm;
         }
 

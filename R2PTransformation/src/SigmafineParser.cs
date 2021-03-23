@@ -9,11 +9,47 @@ using ExcelDataReader;
 
 namespace R2PTransformation.src {
     public class SigmafineParser {
-        public SigmafineFile LoadExcel(string fileName, string plant, DateTime currentDay) {
+        public SuncorProductionFile LoadInventoryExcel(string fileName, string plant, DateTime currentDay) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            SigmafineFile ms = new SigmafineFile(fileName, plant); // either GP01 or GP02
+            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName); // either GP01 or GP02
             ms.IsCurrentDay(currentDay);
-            DateTime day = GetDayFromExcelFile(fileName);
+            DateTime day = GetDayFromExcelHeader(fileName, 10, 5);
+            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
+                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+                    var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
+                        ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
+                            UseHeaderRow = true,
+                            ReadHeaderRow = rowReader => {
+                                for(int i=0;i<14;i++) { rowReader.Read(); }
+                            }
+                        }
+                    });
+                    DataTableCollection table = result.Tables;
+                    DataTable currentDaySheet = table[0];
+                    foreach (DataRow row in currentDaySheet.AsEnumerable()) {
+                        //                        string product = row[2].ToString();
+                        string materialCode = "", tank = "", description = "";
+                        decimal closing = 0;
+                        description = row["Column0"].ToString();
+                        tank = row["Column1"].ToString();
+                        string closingStringValue = row["volume"].ToString();
+                        materialCode = row["Material Code"].ToString();
+                        if (string.IsNullOrEmpty(description) || description.ToLower().Contains("description") || description.ToLower().Contains("total")) continue;
+//                            if (string.IsNullOrEmpty(productionStringValue) || productionStringValue == "bbl") continue;
+                        closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue), 3);
+
+                        ms.AddTagBalance(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, null, null, closing, null, null);
+                    }
+                }
+            }
+
+            return ms;
+        }
+        public SuncorProductionFile LoadProductionExcel(string fileName, string plant, DateTime currentDay) {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName); // either GP01 or GP02
+            ms.IsCurrentDay(currentDay);
+            DateTime day = GetDayFromExcelHeader(fileName, 2, 12);
             using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
                 using (var reader = ExcelReaderFactory.CreateReader(stream)) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
@@ -36,16 +72,24 @@ namespace R2PTransformation.src {
                     DataTable currentDaySheet = table[0];
                     foreach(DataRow row in currentDaySheet.AsEnumerable()) {
                         string product = row[2].ToString();
-                        decimal production = 0;
+                        decimal production = 0, opening = 0, closing = 0, sale = 0, purchase = 0;
                         try {
                             string productionStringValue = row["production"].ToString();
+                            string openingStringValue = row["opening"].ToString();
+                            string closingStringValue = row["closing"].ToString();
+                            string receiptsStringValue = row["purchase"].ToString();
+                            string shipmentsStringValue = row["sale"].ToString();
                             if (string.IsNullOrEmpty(product) || product.ToLower().Contains("total") ) continue;
                             if (string.IsNullOrEmpty(productionStringValue) || productionStringValue == "bbl") continue;
-                            production = Math.Round(SigmafineFile.ParseDecimal(productionStringValue),3);
-// removed Feb 24, 21                            if (production == 0) continue;
+                            production = Math.Round(SuncorProductionFile.ParseDecimal(productionStringValue),3);
+                            opening = Math.Round(SuncorProductionFile.ParseDecimal(openingStringValue), 3);
+                            closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue), 3);
+                            sale = Math.Round(SuncorProductionFile.ParseDecimal(shipmentsStringValue), 3);
+                            purchase = Math.Round(SuncorProductionFile.ParseDecimal(receiptsStringValue), 3);
+                            // removed Feb 24, 21                            if (production == 0) continue;
                         } catch (Exception ex) {
                         }
-                        ms.AddTagBalance(currentDay, "Sigmafine", product, day, production);
+                        ms.AddTagBalance(currentDay, "Sigmafine", "Production", product, null, day, production, opening, closing, sale, purchase);
                     }
                 }
             }
@@ -53,7 +97,7 @@ namespace R2PTransformation.src {
             return ms;
         }
 
-        private DateTime GetDayFromExcelFile(string fileName) {
+        private DateTime GetDayFromExcelHeader(string fileName, int row, int column) {
             using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
                 using (var reader = ExcelReaderFactory.CreateReader(stream)) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
@@ -65,7 +109,9 @@ namespace R2PTransformation.src {
                     DataTable currentDaySheet = table[0];  // used for productCode = 5
                     DateTime time = DateTime.MinValue;
                     try {
-                        time = DateTime.Parse(currentDaySheet.Rows[2][12].ToString());
+                        string dayString = currentDaySheet.Rows[row][column].ToString();
+                        if (dayString.Contains("-")) dayString = dayString.Substring(dayString.IndexOf("-") + 1);
+                        time = DateTime.Parse(dayString);
                     } catch (Exception ex) { }
                     return time;
                 }

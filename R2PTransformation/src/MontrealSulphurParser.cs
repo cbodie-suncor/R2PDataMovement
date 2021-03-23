@@ -62,15 +62,39 @@ namespace R2PTransformation.src {
         }
 
         private void GetProductionRecord(DateTime currentDay, DataTable currentMonth, MontrealSulphurFile ms, DateTime day) {
-            decimal quantity = 0;
-            try { 
-                if (ms.ProductCode == "2") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][16].ToString()); // column Q
-                if (ms.ProductCode == "3") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][11].ToString()); // column L
-                if (ms.ProductCode == "5") quantity = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[FindRowInCaustic(ms, currentMonth, day)][8].ToString()) * -1; // column I for Caustic
+            decimal production = 0, opening = 0, closing = 0, shipment = 0, receipt = 0;
+            try {
+                if (ms.ProductCode == "2") {
+                    production = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][16].ToString()); // column Q
+                    opening = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 4][2].ToString()) +
+                            MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 4][5].ToString()) +
+                            MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 4][8].ToString()) +
+                            MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 4][11].ToString()); // column C & F & I & M
+                    closing = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][2].ToString()) +
+                    MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][5].ToString()) +
+                            MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][8].ToString()) +
+                            MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][11].ToString()); // column C & F & I & M
+                    shipment = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][14].ToString()); // column O
+                }
+                if (ms.ProductCode == "3") {
+                    production = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][11].ToString()); // column L
+                    opening = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 4][12].ToString()); // column M
+                    closing = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][12].ToString()); // column M
+                    receipt = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][10].ToString()); // column K
+                    shipment = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[day.Day + 5][9].ToString()); // column J
+                }
+                if (ms.ProductCode == "5") {
+                    int row = FindRowInCaustic(ms, currentMonth, day);
+                    if (row == 0) return; // not found
+                    production = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[row][8].ToString()) * -1; // column I 
+                    opening = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[row-1][7].ToString()); // column H 
+                    closing = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[row][7].ToString()); // column H 
+                    receipt = MontrealSulphurFile.ParseDecimal(currentMonth.Rows[row][3].ToString()); // column D 
+                }
             } catch (Exception ex) {
                  throw new Exception("invalid format for montreal sulphur");
             }
-            ms.AddTagBalance(currentDay, "MTL SP", ms.ProductCode, day, quantity);
+            ms.AddTagBalance(currentDay, "MTL SP", "Production", ms.ProductCode, null, day, production, opening, closing, shipment, receipt);
         }
 
         private int FindRowInCaustic(MontrealSulphurFile ms, DataTable dt, DateTime day) {

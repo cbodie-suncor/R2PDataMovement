@@ -1,0 +1,23 @@
+Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021
+Server=aaasbxarmsrvuw2015.database.windows.net; Authentication=Active Directory Managed Identity; Initial Catalog=NLSandbox;
+
+CREATE USER [aaasbxarmfapuw2015] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+exec sp_addrolemember 'db_datareader', 'aaasbxarmfapuw2015';
+exec sp_addrolemember 'db_datawriter', 'aaasbxarmfapuw2015';
+
+CREATE USER pbidevarmfncuw2001 FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+exec sp_addrolemember 'db_datareader', [pbidevarmfncuw2001]
+exec sp_addrolemember 'db_datawriter', [pbidevarmfncuw2001]
+go
+
+
+
+
+In Visual Studio, select menu Tools -> NuGet Package Manger -> Package Manger Console and run the following command:
+
+Scaffold-DbContext "Server=tcp:aaasbxarmsrvuw2015.database.windows.net;Database=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Context AzureContext -table -force Conversion,SourceUnitMap,TagBalance,TagMap,TransactionEvent,TransactionEventDetail,MaterialMovement,CustodyTicket,Batch,StandardUnit
+
+

@@ -11,11 +11,11 @@ namespace R2PTransformation.src {
     public class TerraNovaParser {
         private string Filename = "";
 
-        public TerraNovaFile LoadFile(string fileName, string plant, DateTime currentDay) {
+        public SuncorProductionFile LoadFile(string fileName, string plant, DateTime currentDay) {
             Filename = fileName;
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            TerraNovaFile ms = new TerraNovaFile(fileName, plant);
+            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName);
             ms.IsCurrentDay(currentDay);
             string fileContents = File.ReadAllText(fileName);
             DataTable dt = Utilities.ConvertTerraNovaCSVTexttoDataTable(fileContents);
@@ -26,12 +26,12 @@ namespace R2PTransformation.src {
             return ms;
         }
 
-        private void LoadProductionRecords(DataTable currentMonth, TerraNovaFile ms, DateTime currentDay) {
+        private void LoadProductionRecords(DataTable currentMonth, SuncorProductionFile ms, DateTime currentDay) {
             foreach (var row in currentMonth.AsEnumerable()) {
                 string productionCode = row["name"].ToString();
                 DateTime day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
-                decimal quantity = TerraNovaFile.ParseDecimal(row["value"].ToString());
-                ms.AddTagBalance(currentDay, "OPIS", productionCode, day.AddDays(-1), quantity);
+                decimal quantity = SuncorProductionFile.ParseDecimal(row["value"].ToString());
+                ms.AddTagBalance(currentDay, "OPIS", "Production", productionCode, null, day.AddDays(-1), quantity, null, null, null, null);
             }
         }
     }

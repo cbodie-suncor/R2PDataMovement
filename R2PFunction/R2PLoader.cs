@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Web.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -8,6 +9,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using R2PFunction;
+using R2PTransformation.src;
+using R2PTransformation.src.db;
 using SuncorR2P.src;
 
 namespace SuncorR2P
@@ -18,49 +21,101 @@ namespace SuncorR2P
         public static void Run([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, ExecutionContext context, ILogger log) {  // triggering every minute
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             try {
-                FoundFile.SetConnection(context, log);
+                FoundFile.SetConnection(log);
+                FoundFile.SaveHearbeat(log);
+
                 AzureFileHelper.ProcessModifiedTagMappings(productVersion);
-            } catch (Exception ex) { LogHelper.LogSystemError(log, productVersion, ex); }
+                AzureFileHelper.ProcessConversions(productVersion);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex); 
+            }
 
             AzureFileHelper.CheckForFilesToBeProcessed(productVersion, log);
         }
 
-        [FunctionName("CustodyTicket")]
-        public static async Task<IActionResult> RunCustodyTicket(
+        [FunctionName("MaterialLedger")]
+        public static async Task<IActionResult> RunMaterialLedger(
         [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
-            //            public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequestMessage req, ILogger log) {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
-
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            log.LogInformation("C# HTTP trigger Material Ledger request processed.");
             string requestBody = String.Empty;
-            using (StreamReader streamReader = new StreamReader(req.Body)) {
-                requestBody = await streamReader.ReadToEndAsync();
+            int generatedFile = 0;
+            try {
+                FoundFile.SetConnection(log);
+                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
+                generatedFile = SimplePersistentController.PersistMaterialLedger(requestBody);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+                AzureModel.RecordFatalLoad("Material Ledger", null, ex, requestBody);
+                string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
+                return (ActionResult)new BadRequestErrorMessageResult($"Material Ledger failed." + msg);
             }
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
 
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            return (ActionResult)new OkObjectResult($"Material Ledger processed successfully {generatedFile} records");
+        }
+
+        [FunctionName("Hierarchy")]
+        public static async Task<IActionResult> RunHierarchy(
+        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            log.LogInformation("C# HTTP trigger Hierarchy request processed.");
+            string requestBody = String.Empty;
+            int generatedFile = 0;
+            try {
+                FoundFile.SetConnection(log);
+                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
+                generatedFile = SimplePersistentController.PersistHierarchy(requestBody);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+                AzureModel.RecordFatalLoad("Hierarchy", null, ex, requestBody);
+                string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
+                return (ActionResult)new BadRequestErrorMessageResult($"Hierarchy failed." + msg);
+            }
+
+            return (ActionResult)new OkObjectResult($"Hierarchy processed successfully {generatedFile} records");
+        }
+
+        [FunctionName("CustodyTicket")]
+        public static async Task<IActionResult> RunCustodyTicket([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            log.LogInformation("C# HTTP trigger Custody Ticket request processed.");
+            string requestBody = String.Empty;
+            PBFile generatedFile = null;
+            try {
+                FoundFile.SetConnection(log);
+                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync();   }
+                generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
+                AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.Contents, true);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+                AzureModel.RecordFatalLoad("CustodyTicket", null, ex, requestBody);
+                string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
+                return (ActionResult)new BadRequestErrorMessageResult($"CustodyTicket failed." + msg);
+            }
+
+            return (ActionResult)new OkObjectResult($"Custody Tickets processed successfully {generatedFile.SuccessFulRecords} records");
         }
 
         [FunctionName("MaterialMovement")]
-        public static async Task<IActionResult> RunMaterialMovement([HttpTrigger(AuthorizationLevel.Admin, "get", "post", Route = null)] HttpRequest req, ILogger log) {
-            log.LogInformation("C# HTTP trigger function processed a request.");
-
-            string name = req.Query["name"];
-
+        public static async Task<IActionResult> RunMaterialMovement([HttpTrigger(AuthorizationLevel.Anonymous/*, "get", "post", Route = null*/)] HttpRequest req, ILogger log) {
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            log.LogInformation("C# HTTP trigger MaterialMovement request processed.");
             string requestBody = String.Empty;
-            using (StreamReader streamReader = new StreamReader(req.Body)) {
-                requestBody = await streamReader.ReadToEndAsync();
-            }
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            int success = 0;
+            try {
+                FoundFile.SetConnection(log);
+                using (StreamReader streamReader = new StreamReader(req.Body)) {
+                    requestBody = await streamReader.ReadToEndAsync();
+                }
+                success = new ProductionMatDocController().Persist(requestBody);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+                AzureModel.RecordFatalLoad("MaterialMovement", null, ex, requestBody);
+                string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
+                return (ActionResult)new BadRequestErrorMessageResult($"MaterialMovement failed." + msg);
+            }            
 
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            return (ActionResult)new OkObjectResult($"MaterialMovement processed successfully {success} records");
         }
     }
 }

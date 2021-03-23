@@ -1,0 +1,4 @@
+Tag,Plant,WorkCenter,MaterialNumber,DefaultValuationType,DefaultUnit
+Upgrader_Diluent,AP01,PRO1AP01,10026,SUNCOR,L15
+Upgrader_Diluted Bitumen,AP01,PRO1AP01,10271,SUNCOR,L15
+Upgrader_Diluted Bitumen2,AP01,PRO1AP01,10271,SUNCOR,L15

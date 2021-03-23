@@ -6,24 +6,31 @@
 
   <ItemGroup>
     <Compile Remove="Program.cs" />
+    <Compile Remove="src\db\MaterialMovement.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="src\db\EF.Reverse.POCO.v3.ttinclude" />
+    <None Remove="src\db\MaterialMovement.tt" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ExcelDataReader" Version="3.6.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.10" />
+    <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="src\db\MaterialMovement.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>MaterialMovement.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
@@ -32,11 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="src\db\MaterialMovement.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>MaterialMovement.tt</DependentUpon>
-    </Compile>
+    <Folder Include="Models\" />
   </ItemGroup>
 
 </Project>

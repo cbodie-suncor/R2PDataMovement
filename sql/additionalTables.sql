@@ -5,6 +5,7 @@ create table TransactionEvent (
  TransactionEvent_id int identity,
  plant varchar(40),
  filename varchar(500),
+ type varchar(20),
  failedRecordCount int,
  successfulRecordCount int,
  errorMessage varchar(1000),
@@ -14,7 +15,7 @@ create table TransactionEvent (
 create table TransactionEventDetail (
  TransactionEventDetail_id int identity,
  TransactionEvent_id int,
- tag varchar(40),
+ tag varchar(100),
  errorMessage varchar(1000),
  CONSTRAINT [PK_TransactionEventDetail] PRIMARY KEY (TransactionEventDetail_id),
  CONSTRAINT [FK_transactioneventdetail] FOREIGN KEY([transactionevent_id]) REFERENCES [dbo].[transactionevent] ([transactionevent_id]) 
@@ -25,35 +26,36 @@ drop table MaterialMovement;
 drop table CustodyTicket;
 CREATE TABLE [MaterialMovement](
 	[MaterialMovement_id] int identity,
-	[reference] [varchar](50) NOT NULL,
-	[Tag] [varchar](50) NOT NULL,
-	[System] [varchar](50) NOT NULL,
-	[MovementType] [varchar](20) NULL,
+	materialDocument [varchar](50) NOT NULL,
 	[Material] [int] NULL,
+	[System] [varchar](50) NOT NULL,
+	[MovementType] [varchar](30) NULL,
+	[MovementTypeDesc] [varchar](800) NULL,
 	[Plant] [varchar](30) NULL,
-	[WorkCenter] [varchar](30) NULL,
-	[ValType] [varchar](30) NULL,
-	[Tank] [varchar](30) NULL,
-	[QuantityTimestamp] [datetime] NOT NULL,
-	[BalanceDate] [datetime] NOT NULL,
-	[QuantityInUnitOfEntry] [decimal](18, 4) NULL,
+	HeaderText [varchar](1000) NULL,
+	[Tag] [varchar](100) NOT NULL,
+	[PostingDate] [datetime] NOT NULL,
+	[ValuationType] [varchar](30) NULL,
+	[Quantity] [decimal](18, 4) NULL,
 	[UnitOfEntry] [varchar](10) NULL,
-	[QuantityInBaseUnit] [decimal](18, 4) NULL,
-	[BaseUnit] [varchar](10) NULL,
+	UnitOfMeasure [varchar](10) NULL,
+	[QuantityInUOE] [decimal](18, 4) NULL,
+	[QuantityInL15] [decimal](18, 4) NULL,
 	[BatchId] [varchar](50) NULL,
-	[Created] [datetime] NOT NULL,
-	[CreatedBy] [varchar](50) NOT NULL,
+	EnteredOn [datetime] NOT NULL,
+	EnteredAt [varchar](50) NOT NULL,
+	 CONSTRAINT [PK_MaterialMovement] PRIMARY KEY CLUSTERED ([MaterialMovement_id] asc)
 )
 GO
-ALTER TABLE [MaterialMovement]  WITH CHECK ADD  CONSTRAINT [FK_MaterialMovement_BasedUnit] FOREIGN KEY([BaseUnit])
-REFERENCES [StandardUnit] ([Name])
-GO
-ALTER TABLE [MaterialMovement] CHECK CONSTRAINT [FK_MaterialMovement_BasedUnit]
-GO
-ALTER TABLE [MaterialMovement]  WITH CHECK ADD  CONSTRAINT [FK_MaterialMovement_UnitOfEntry] FOREIGN KEY([UnitOfEntry])
+ALTER TABLE [MaterialMovement]  WITH CHECK ADD  CONSTRAINT [FK_MaterialMovement_UnitOfEntry] FOREIGN KEY(UnitOfEntry)
 REFERENCES [StandardUnit] ([Name])
 GO
 ALTER TABLE [MaterialMovement] CHECK CONSTRAINT [FK_MaterialMovement_UnitOfEntry]
+GO
+ALTER TABLE [MaterialMovement]  WITH CHECK ADD  CONSTRAINT [FK_MaterialMovement_UnitOfMeasure] FOREIGN KEY(UnitOfMeasure)
+REFERENCES [StandardUnit] ([Name])
+GO
+ALTER TABLE [MaterialMovement] CHECK CONSTRAINT [FK_MaterialMovement_UnitOfMeasure]
 GO
 create table CustodyTicket (
 	custodyTicket_id int identity,
@@ -80,7 +82,8 @@ create table CustodyTicket (
 	Entered_by [varchar](50) NOT NULL,
 	Document_DateTime Datetime NOT NULL,
 	Posting_DateTime Datetime NOT NULL,
-	CONSTRAINT CHK_Mode CHECK (Mode in ('Rail', 'Pipeline', 'Marine'))
+	CONSTRAINT CHK_Mode CHECK (Mode in ('Rail', 'Pipeline', 'Marine')),
+	CONSTRAINT [PK_CustodyTicket] PRIMARY KEY CLUSTERED ([CustodyTicket_id] asc)
 )
 go
 ALTER TABLE [CustodyTicket]  WITH CHECK ADD  CONSTRAINT [FK_CustodyTicket_Unit_of_Measure] FOREIGN KEY([Unit_of_Measure])
@@ -89,3 +92,26 @@ GO
 ALTER TABLE [CustodyTicket] CHECK CONSTRAINT [FK_CustodyTicket_Unit_of_Measure]
 GO
 
+alter table tagbalance add OpeningInventory decimal(18,3)
+alter table tagbalance add ClosingInventory decimal(18,3)
+alter table tagbalance add Shipment decimal(18,3)
+alter table tagbalance add Receipt decimal(18,3)
+alter table tagbalance add Confidence decimal(18,3)
+go
+alter table materialmovement add OpeningInventory decimal(18,3)
+alter table materialmovement add ClosingInventory decimal(18,3)
+alter table materialmovement add Shipment decimal(18,3)
+alter table materialmovement add Receipt decimal(18,3)
+go
+alter table transactionevent add type varchar(20)
+alter table transactionevent add extra varchar(8000)
+go
+alter table conversion add material varchar(50)
+go
+alter table MaterialMovement alter column tag varchar(100)
+alter table TransactionEventDetail alter column tag varchar(100)
+go
+ALTER TABLE [dbo].[TagMap] drop constraint [PK_TagMap]
+alter table tagmap alter column tag varchar(100) not null
+ALTER TABLE [dbo].[TagMap] add constraint [PK_TagMap]  primary key (	[Tag] ASC,	[Plant] ASC)
+go

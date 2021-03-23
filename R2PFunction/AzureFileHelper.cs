@@ -7,8 +7,10 @@ using R2PTransformation.src;
 using R2PTransformation.src.db;
 using SuncorR2P.src;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 
 namespace SuncorR2P {
     public class AzureFileHelper {
@@ -35,7 +37,7 @@ namespace SuncorR2P {
                     foundFile.RecordSuccess();
                 } catch (Exception ex) {
                     LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
-                    AzureModel.RecordFailure(foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
+                    AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
                     try {
                         foundFile.DisposeOfFile(true);
                     } catch (Exception ex2) { LogHelper.LogSystemError(log, productVersion, ex2); }
@@ -64,6 +66,7 @@ namespace SuncorR2P {
 
         private static readonly string tagMappingFile = "System/tagMappings";
         private static readonly string tagMappingFileProcessed = "System/tagMappings.processed";
+        private static readonly string tagMappingFileError = "System/tagMappings.error";
 
         internal static void ProcessModifiedTagMappings(string version) {
             ProcessModifiedTagMapping("AP01", version);
@@ -78,16 +81,67 @@ namespace SuncorR2P {
             ProcessModifiedTagMapping("GP02", version);
         }
 
+        internal static void ProcessConversions(string version) {
+            // add/modify/delete tags mappings
+            string parentDirectory = "master/";
+            string converionContents = null;
+            try {
+                converionContents = AzureFileHelper.ReadFile(parentDirectory + "conversion.csv");
+                if (converionContents != null) {
+                    DataTable tm = Utilities.ConvertCSVTexttoDataTable(converionContents);
+                    List<WarningMessage> output = AzureModel.UpdateConversions(tm);
+                    LogHelper.LogMessage(null, version, "Updated the following conversions:\r\n" + output);
+                    AzureFileHelper.WriteFile(parentDirectory + "conversion.processed.csv", converionContents, false);
+                    AzureFileHelper.DeleteFile(parentDirectory + "conversion.csv");
+                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", null, null, output.Count(), 0, null);
+
+                } else {
+                    string processed = AzureFileHelper.ReadFile(parentDirectory + "conversion.processed.csv");
+                    if (processed == null) { // create a processed file if not exists
+                        AzureFileHelper.WriteFile(parentDirectory + "conversion.processed.csv", AzureModel.GetCurrentConversionsCSV(), false);
+                    }
+                }
+            } catch (Exception ex) {
+                try {
+                    AzureModel.RecordFatalLoad("Load Conversion", null, ex, converionContents);
+                    AzureFileHelper.WriteFile(parentDirectory + "conversion.error.csv", converionContents, false);
+                    AzureFileHelper.DeleteFile(parentDirectory + "conversion.csv");
+                } catch (Exception Ignore) { }
+            }
+        }
+
         internal static void ProcessModifiedTagMapping(string plant, string version) {
             // add/modify/delete tags mappings
+            string parentDirectory = plant + "/";
+            if (plant == "GP01" || plant == "GP02") parentDirectory = "CommerceCity/";
             string suffix = "." + plant + ".csv";
-            string tags = AzureFileHelper.ReadFile(tagMappingFile + suffix);
-            if (tags != null) {
-                DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-                string output = AzureModel.UpdateTagMappings(plant, tm);
-                LogHelper.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
-                AzureFileHelper.WriteFile(tagMappingFileProcessed + suffix, tags, false);
-                AzureFileHelper.DeleteFile(tagMappingFile + suffix);
+            string tagContents = null;
+            try {
+                tagContents = AzureFileHelper.ReadFile(parentDirectory + tagMappingFile + suffix);
+                if (tagContents != null) {
+                    DataTable tm = Utilities.ConvertCSVTexttoDataTable(tagContents);
+                    List<WarningMessage> output = AzureModel.UpdateTagMappings(plant, tm);
+                    LogHelper.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
+                    AzureFileHelper.WriteFile(parentDirectory + tagMappingFileProcessed + suffix, tagContents, false);
+                    AzureFileHelper.DeleteFile(parentDirectory + tagMappingFile + suffix);
+                    AzureModel.RecordStats("Load TagMaps", parentDirectory + tagMappingFile + suffix, output, plant, output.Count(), 0, null);
+                } else {
+                    string processed = AzureFileHelper.ReadFile(parentDirectory + tagMappingFileProcessed + suffix);
+                    if (processed == null) { // create a processed file if not exists
+                        AzureFileHelper.WriteFile(parentDirectory + tagMappingFileProcessed + suffix, AzureModel.GetCurrentTagMapsCSV(plant), false);
+
+                        string currentDateString = @"2021-05-31
+****use the format YYYY - MM - DD
+****This date will specify to the R2P integration loader when to process the records in the next upload.";
+                        AzureFileHelper.WriteFile(parentDirectory + "System/currentDate." + plant + ".processed.txt", currentDateString, false);
+                    }
+                }
+            } catch (Exception ex) {
+                try {
+                    AzureModel.RecordFatalLoad("Load TagMap", plant, ex, tagContents);
+                    AzureFileHelper.WriteFile(parentDirectory + tagMappingFileError + suffix, tagContents, false);
+                    AzureFileHelper.DeleteFile(parentDirectory + tagMappingFile + suffix);
+                } catch (Exception Ignore) { }
             }
         }
 

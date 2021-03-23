@@ -1,0 +1,42 @@
+{
+  "batchId": "98347512-0c9e-47f5-9123-b9266218404b",
+
+  "materialMovement": [
+    
+    {
+      "materialDocument": "4900006761",
+      "material": "11241",
+	  "system" : "S/4 HANA",
+	  "movementType": "Production",
+      "plant": "EP01",
+	  "itemText": "",
+      "postingDate": "",
+      "valuationType": "RTFTest2",
+      "balanceDate": "2019-10-01T00:00:00",
+      "quantity": "-7075",
+      "uom": "M3",
+	  "enteredOn" : "",
+	  "enteredAt" : "",
+	  "uoe" : "",
+	  "quantityUoe": "",
+	  "quantityL15": ""	  
+    },
+	{
+      "materialDocument": "4900006762",
+      "material": "11221",
+	  "system" : "S/4 HANA",
+	  "movementType": "Production" ,
+      "plant": "EP01",
+	  "itemText": "",
+      "valuationType": "RTFTest2",
+      "balanceDate": "2019-10-01T00:00:00",
+      "quantity": "-7075",
+      "uom": "M3",
+	  "enteredOn" : "",
+	  "enteredAt" : "",
+	  "uoe" : "",
+	  "quantityUoe": "",
+	  "quantityL15": ""	  
+    }
+  ]
+}

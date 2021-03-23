@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 using NUnit.Framework;
-using R2PTransformation.src.db;
 using R2PTransformation;
 using R2PTransformation.src;
+using R2PTransformation.src.db;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -52,6 +52,17 @@ namespace STransformNUnit {
 
         [Test]
         public void LoadHoneyWell4() {
+            HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200129-005900M_EDM.txt", "CP04", new DateTime(2020, 01, 31));
+            Assert.AreEqual(38, pf.GetTagBalanceRecords().Count);
+            Assert.AreEqual(0, pf.FailedRecords.Count);
+            Assert.AreEqual(2303, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").Quantity);
+            Assert.AreEqual(2564005, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").OpeningInventory);
+            Assert.AreEqual(2464331, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").ClosingInventory);
+            Assert.AreEqual(101977, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").Shipment);
+            Assert.AreEqual(0, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").Receipt);
+        }
+        [Test]
+        public void LoadHoneyWell5() {
             HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt", "CP01", new DateTime(2020, 09, 30));
             Assert.AreEqual(129, pf.GetTagBalanceRecords().Count);
             Assert.AreEqual(800342.050M, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 9, 30) && t.Tag == "14GZ_COMB_RAFFR").Quantity);

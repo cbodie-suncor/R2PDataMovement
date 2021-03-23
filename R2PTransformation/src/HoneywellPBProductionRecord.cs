@@ -46,7 +46,7 @@ namespace R2PTransformation.src {
                 this.ProductionFile.Warnings.Add(new WarningMessage(product, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product));
                 return;
             }
-            this.ProductionFile.AddTagBalance(currentDay, "Honeywell PB",product, balanceDate,  quantity);
+            this.ProductionFile.AddTagBalance(currentDay, "Honeywell PB", "Production", product, null, balanceDate,  quantity, GetDecimalValue("OPENING_INVENTORY"), GetDecimalValue("CLOSING_INVENTORY"), GetDecimalValue("SHIP_QUANTITY"), GetDecimalValue("RECEIPT_QUANTITY"));
         }
 
         public decimal GetAMMDTQuantity() {

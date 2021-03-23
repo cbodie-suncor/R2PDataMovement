@@ -1,0 +1,29 @@
+{
+  "batchId": "98347512-0c9e-47f5-9123-b9266218404b",
+  "hierarchy": [
+  {
+    "S/4 Material": "10025",
+    "Material Description": "CSL",
+    "Material Group": "121200002",
+    "Material Group Text": "Fuels",
+    "Product Hierarchy Level 1": "10001",
+    "Product Hierarchy Level 2": "10001",
+    "Product Hierarchy Level 3": "10000008",
+    "Product Hierarchy Text Level 1": "Condensates",
+    "Product Hierarchy Text Level 2": "Condensate Sour",
+    "Product Hierarchy Text Level 3": "Condensate Sour Light"
+  },
+  {
+    "S/4 Material": "10026",
+    "Material Description": "CSH",
+    "Material Group": "121200002",
+    "Material Group Text": "Fuels",
+    "Product Hierarchy Level 1": "10001",
+    "Product Hierarchy Level 2": "10001",
+    "Product Hierarchy Level 3": "10000008",
+    "Product Hierarchy Text Level 1": "Condensates",
+    "Product Hierarchy Text Level 2": "Condensate Sour",
+    "Product Hierarchy Text Level 3": "Condensate Sour Heavy"
+  }
+]
+}

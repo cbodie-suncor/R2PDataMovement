@@ -1,9 +1,20 @@
-﻿using R2PTransformation.src.db;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using R2PTransformation.src.db;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace R2PTransformation.src {
+
+    public class PBFile {
+        public String Filename { get; set; }
+        public String Json { get; set; }
+        public String Plant{ get; set; }
+        public String AzurePath{ get; set; }
+        public String Contents { get; set; }
+        public int SuccessFulRecords { get; set; }
+    }
     public class CustodyTicketController {
         public static string FOOTER = @"<<PRODUCT MOVEMENT IFC>>
 <<END OF FILE MARKER>>
@@ -14,6 +25,24 @@ DATEFORMAT, DD/MM/YYYY
 DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
 <ENDDEFAULTS>
 ";
+
+        public static PBFile CreateHoneywellPBFile(string json) {
+            if (string.IsNullOrWhiteSpace(json)) throw new Exception("Json is empty");
+            PBFile file = new PBFile();
+
+            object data = JsonConvert.DeserializeObject(json);
+
+            List<CustodyTicket> tickets = new List<CustodyTicket>();
+            List<WarningMessage> Warnings = new List<WarningMessage>();
+            JObject batch = (JObject)data;
+            string batchId = batch["batchId"].ToString();
+            JArray custodyTickets = (JArray)batch["CustodyTicket"];
+            foreach (var item in custodyTickets) {
+                CustodyTicket ct = new CustodyTicket();
+                tickets.Add(ct);
+            }
+            return file;
+        }
 
         public static string CreateHoneywellPBFile(List<CustodyTicket> tix) {
             string doc = HEADER;

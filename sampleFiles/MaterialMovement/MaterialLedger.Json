@@ -1,0 +1,13 @@
+{
+  "batchId": "98347512-0c9e-47f5-9123-b9266218404b",
+  "MaterialLedger":[
+  {
+    "Plant": "CP01",
+    "CoCode": "1060",
+    "Posting Year": "2021",
+    "Posting Period": "4",
+    "Status": "X",
+    "Previous Period Open?": "X"
+  }
+]
+}

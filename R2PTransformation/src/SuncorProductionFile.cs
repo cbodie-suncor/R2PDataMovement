@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 
 namespace R2PTransformation.src {
-    public abstract class SuncorProductionFile {
+    public class SuncorProductionFile {
         public Guid BatchId;
         public string FileName;
         public string Plant;
@@ -14,8 +14,9 @@ namespace R2PTransformation.src {
         public List<TagBalance> Products { get; set; }
 
 
-        public SuncorProductionFile(string fileName) {
+        public SuncorProductionFile(string plant, string fileName) {
             BatchId = Guid.NewGuid();
+            Plant = plant;
             FileName = fileName;
             FailedRecords = new List<TagBalance>();
             Products = new List<TagBalance>();
@@ -52,23 +53,45 @@ namespace R2PTransformation.src {
             var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
             return JsonConvert.SerializeObject(batch);
         }
+        public string ExportP2CJson() {
+            if (this.SavedRecords == null) throw new Exception("Please call SuncorProductionFile.SaveRecords before ExportTR2PJson");
+            var records = this.SavedRecords.Select(t => new {
+                Date = t.BalanceDate,
+                Tag = t.Tag,
+                System = t.System,
+                MovementType = t.MovementType,
+                Material = t.Material,
+                Plant = t.Plant,
+                WorkCenter = t.WorkCenter,
+                ValType = t.ValType,
+                BalanceDate = t.BalanceDate,
+                Closing = t.ClosingInventory.Value.ToString(),
+                Uom = t.StandardUnit
+            });
+            var batch = new { CreatedBy = "P2C", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Closing != "") };
+            return JsonConvert.SerializeObject(batch);
+        }
 
-        public void AddTagBalance(DateTime currentDay, string system, string productCode, DateTime day, decimal quantity) {
+        public void AddTagBalance(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts) {
             TagBalance tb = new TagBalance();
-            tb.MovementType = "Production";
+            tb.MovementType = movementType;
             tb.System = system;
             tb.Tag = productCode;
             tb.Plant = this.Plant;
             tb.Created = DateTime.Now;
             tb.BalanceDate = day;
             tb.QuantityTimestamp = DateTime.Now;
-            tb.CreatedBy = "STransform";
+            tb.CreatedBy = "R2PLoader";
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
-                SuncorProductionFile.Log(this.Plant, "no TagMapping found for " + tb.BalanceDate + "," + tb.Plant + "," + tb.Tag);
                 Warnings.Add(new WarningMessage(tb.Tag, "No TagMapping"));
                 this.FailedRecords.Add(tb);
                 return;
+            }
+
+            if (movementType == "Inventory Snapshot") {
+                tb.Tank = tank;
+                tb.Confidence = 100;
             }
 
             tb.StandardUnit = tm.DefaultUnit;
@@ -76,7 +99,11 @@ namespace R2PTransformation.src {
             tb.ValType = tm.DefaultValuationType;
             tb.WorkCenter = tm.WorkCenter;
             tb.Material = tm.MaterialNumber;
-            tb.Quantity = Math.Round(quantity, 3);
+            if (quantity.HasValue) tb.Quantity = Math.Round(quantity.Value, 3);
+            if (openingInventory.HasValue) tb.OpeningInventory = Math.Round(openingInventory.Value, 3);
+            if (closingInventory.HasValue) tb.ClosingInventory = Math.Round(closingInventory.Value, 3);
+            if (shipments.HasValue) tb.Shipment = Math.Round(shipments.Value, 3);
+            if (receipts.HasValue) tb.Receipt = Math.Round(receipts.Value, 3);
             tb.BatchId = this.BatchId.ToString();
 
             if (!IsDayValid(day, currentDay)) {
@@ -88,7 +115,14 @@ namespace R2PTransformation.src {
             return;
         }
 
-        private static string LogFileName = "AzureDataHubProductionLoad.log";
+        public string ExportJson(string fileType) {
+            if (fileType == "Inventory")
+                return ExportP2CJson();
+            else
+                return ExportR2PJson();
+        }
+
+        private static string LogFileName = "AzureDataHub.log";
         private static string CRLF = "\r\n";
 
         public void SaveRecords() {
@@ -113,8 +147,8 @@ namespace R2PTransformation.src {
             }
         }
 
-        public void RecordSuccess(string fileName) {
-            AzureModel.RecordStats(this, fileName, Warnings);
+        public void RecordSuccess(string fileName, string type) {
+            AzureModel.RecordStats(type, fileName, this.Warnings, this.Plant, this.SavedRecords.Count, this.FailedRecords.Count, null);
             SuncorProductionFile.LogSuccess(fileName, this, SavedRecords.Count, FailedRecords.Count);
         }
 
@@ -155,6 +189,9 @@ namespace R2PTransformation.src {
 
         public WarningMessage(string aMessage) {
             Message = aMessage;
+        }
+        public override string ToString() {
+            return Message.ToString();
         }
         public string Tag;
         public string Message;

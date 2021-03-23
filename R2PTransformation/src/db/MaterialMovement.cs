@@ -397,8 +397,8 @@ namespace R2PTransformation.src.db
 
             Batches = new FakeDbSet<Batch>("Id");
             Conversions = new FakeDbSet<Conversion>("StandardUnit", "ToUnit");
-            CustodyTickets = new FakeDbSet<CustodyTicket>("CustodyTicketId", "S4MaterialDocument", "BolNumber", "S4Material", "SourceDataMaterialCode", "Sign", "GrossQuantitySize", "NetQuantitySize", "UnitOfMeasure", "ValuationType", "Density", "MovementPlant", "SendingPlant", "ReceivingPlant", "Temperature", "MovementType", "Mode", "LoadStartDate", "LoadStartTime", "LoadEndDateTime", "EnteredOnDateTime", "EnteredBy", "DocumentDateTime", "PostingDateTime");
-            MaterialMovements = new FakeDbSet<MaterialMovement>("MaterialMovementId", "Reference", "Tag", "System", "QuantityTimestamp", "BalanceDate", "Created", "CreatedBy");
+            CustodyTickets = new FakeDbSet<CustodyTicket>("CustodyTicketId");
+            MaterialMovements = new FakeDbSet<MaterialMovement>("MaterialMovementId");
             SourceUnitMaps = new FakeDbSet<SourceUnitMap>("Source", "SourceUnit");
             StandardUnits = new FakeDbSet<StandardUnit>("Name");
             TagBalances = new FakeDbSet<TagBalance>("Tag", "BalanceDate");
@@ -851,29 +851,29 @@ namespace R2PTransformation.src.db
     public class CustodyTicket
     {
         public int CustodyTicketId { get; set; } // custodyTicket_id (Primary key)
-        public string S4MaterialDocument { get; set; } // S4_Material_Document (Primary key) (length: 50)
-        public string BolNumber { get; set; } // BOL_Number (Primary key) (length: 50)
-        public string S4Material { get; set; } // S4_Material (Primary key) (length: 50)
-        public string SourceDataMaterialCode { get; set; } // Source_Data_Material_Code (Primary key) (length: 50)
-        public string Sign { get; set; } // Sign (Primary key) (length: 50)
-        public decimal GrossQuantitySize { get; set; } // Gross_Quantity_Size (Primary key)
-        public decimal NetQuantitySize { get; set; } // Net_Quantity_Size (Primary key)
-        public string UnitOfMeasure { get; set; } // Unit_of_Measure (Primary key) (length: 10)
-        public string ValuationType { get; set; } // Valuation_Type (Primary key) (length: 10)
-        public decimal Density { get; set; } // Density (Primary key)
-        public string MovementPlant { get; set; } // Movement_Plant (Primary key) (length: 50)
-        public string SendingPlant { get; set; } // Sending_Plant (Primary key) (length: 10)
-        public string ReceivingPlant { get; set; } // Receiving_Plant (Primary key) (length: 10)
-        public string Temperature { get; set; } // Temperature (Primary key) (length: 50)
-        public string MovementType { get; set; } // Movement_Type (Primary key) (length: 50)
-        public string Mode { get; set; } // Mode (Primary key) (length: 10)
-        public string LoadStartDate { get; set; } // Load_Start_Date (Primary key) (length: 50)
-        public string LoadStartTime { get; set; } // Load_Start_Time (Primary key) (length: 50)
-        public DateTime LoadEndDateTime { get; set; } // Load_End_DateTime (Primary key)
-        public DateTime EnteredOnDateTime { get; set; } // Entered_On_DateTime (Primary key)
-        public string EnteredBy { get; set; } // Entered_by (Primary key) (length: 50)
-        public DateTime DocumentDateTime { get; set; } // Document_DateTime (Primary key)
-        public DateTime PostingDateTime { get; set; } // Posting_DateTime (Primary key)
+        public string S4MaterialDocument { get; set; } // S4_Material_Document (length: 50)
+        public string BolNumber { get; set; } // BOL_Number (length: 50)
+        public string S4Material { get; set; } // S4_Material (length: 50)
+        public string SourceDataMaterialCode { get; set; } // Source_Data_Material_Code (length: 50)
+        public string Sign { get; set; } // Sign (length: 50)
+        public decimal GrossQuantitySize { get; set; } // Gross_Quantity_Size
+        public decimal NetQuantitySize { get; set; } // Net_Quantity_Size
+        public string UnitOfMeasure { get; set; } // Unit_of_Measure (length: 10)
+        public string ValuationType { get; set; } // Valuation_Type (length: 10)
+        public decimal Density { get; set; } // Density
+        public string MovementPlant { get; set; } // Movement_Plant (length: 50)
+        public string SendingPlant { get; set; } // Sending_Plant (length: 10)
+        public string ReceivingPlant { get; set; } // Receiving_Plant (length: 10)
+        public string Temperature { get; set; } // Temperature (length: 50)
+        public string MovementType { get; set; } // Movement_Type (length: 50)
+        public string Mode { get; set; } // Mode (length: 10)
+        public string LoadStartDate { get; set; } // Load_Start_Date (length: 50)
+        public string LoadStartTime { get; set; } // Load_Start_Time (length: 50)
+        public DateTime LoadEndDateTime { get; set; } // Load_End_DateTime
+        public DateTime EnteredOnDateTime { get; set; } // Entered_On_DateTime
+        public string EnteredBy { get; set; } // Entered_by (length: 50)
+        public DateTime DocumentDateTime { get; set; } // Document_DateTime
+        public DateTime PostingDateTime { get; set; } // Posting_DateTime
 
         // Foreign keys
 
@@ -887,36 +887,36 @@ namespace R2PTransformation.src.db
     public class MaterialMovement
     {
         public int MaterialMovementId { get; set; } // MaterialMovement_id (Primary key)
-        public string Reference { get; set; } // reference (Primary key) (length: 50)
-        public string Tag { get; set; } // Tag (Primary key) (length: 50)
-        public string System { get; set; } // System (Primary key) (length: 50)
-        public string MovementType { get; set; } // MovementType (length: 20)
+        public string MaterialDocument { get; set; } // materialDocument (length: 50)
         public int? Material { get; set; } // Material
+        public string System { get; set; } // System (length: 50)
+        public string MovementType { get; set; } // MovementType (length: 30)
+        public string MovementTypeDesc { get; set; } // MovementTypeDesc (length: 800)
         public string Plant { get; set; } // Plant (length: 30)
-        public string WorkCenter { get; set; } // WorkCenter (length: 30)
-        public string ValType { get; set; } // ValType (length: 30)
-        public string Tank { get; set; } // Tank (length: 30)
-        public DateTime QuantityTimestamp { get; set; } // QuantityTimestamp (Primary key)
-        public DateTime BalanceDate { get; set; } // BalanceDate (Primary key)
-        public decimal? QuantityInUnitOfEntry { get; set; } // QuantityInUnitOfEntry
+        public string HeaderText { get; set; } // HeaderText (length: 1000)
+        public string Tag { get; set; } // Tag (length: 50)
+        public DateTime PostingDate { get; set; } // PostingDate
+        public string ValuationType { get; set; } // ValuationType (length: 30)
+        public decimal? Quantity { get; set; } // Quantity
         public string UnitOfEntry { get; set; } // UnitOfEntry (length: 10)
-        public decimal? QuantityInBaseUnit { get; set; } // QuantityInBaseUnit
-        public string BaseUnit { get; set; } // BaseUnit (length: 10)
+        public string UnitOfMeasure { get; set; } // UnitOfMeasure (length: 10)
+        public decimal? QuantityInUoe { get; set; } // QuantityInUOE
+        public decimal? QuantityInL15 { get; set; } // QuantityInL15
         public string BatchId { get; set; } // BatchId (length: 50)
-        public DateTime Created { get; set; } // Created (Primary key)
-        public string CreatedBy { get; set; } // CreatedBy (Primary key) (length: 50)
+        public DateTime EnteredOn { get; set; } // EnteredOn
+        public string EnteredAt { get; set; } // EnteredAt (length: 50)
 
         // Foreign keys
-
-        /// <summary>
-        /// Parent StandardUnit pointed by [MaterialMovement].([BaseUnit]) (FK_MaterialMovement_BasedUnit)
-        /// </summary>
-        public virtual StandardUnit StandardUnit_BaseUnit { get; set; } // FK_MaterialMovement_BasedUnit
 
         /// <summary>
         /// Parent StandardUnit pointed by [MaterialMovement].([UnitOfEntry]) (FK_MaterialMovement_UnitOfEntry)
         /// </summary>
         public virtual StandardUnit StandardUnit_UnitOfEntry { get; set; } // FK_MaterialMovement_UnitOfEntry
+
+        /// <summary>
+        /// Parent StandardUnit pointed by [MaterialMovement].([UnitOfMeasure]) (FK_MaterialMovement_UnitOfMeasure)
+        /// </summary>
+        public virtual StandardUnit StandardUnit_UnitOfMeasure { get; set; } // FK_MaterialMovement_UnitOfMeasure
     }
 
     // SourceUnitMap
@@ -957,14 +957,14 @@ namespace R2PTransformation.src.db
         public virtual ICollection<CustodyTicket> CustodyTickets { get; set; } // CustodyTicket.FK_CustodyTicket_Unit_of_Measure
 
         /// <summary>
-        /// Child MaterialMovements where [MaterialMovement].[BaseUnit] point to this entity (FK_MaterialMovement_BasedUnit)
-        /// </summary>
-        public virtual ICollection<MaterialMovement> MaterialMovements_BaseUnit { get; set; } // MaterialMovement.FK_MaterialMovement_BasedUnit
-
-        /// <summary>
         /// Child MaterialMovements where [MaterialMovement].[UnitOfEntry] point to this entity (FK_MaterialMovement_UnitOfEntry)
         /// </summary>
         public virtual ICollection<MaterialMovement> MaterialMovements_UnitOfEntry { get; set; } // MaterialMovement.FK_MaterialMovement_UnitOfEntry
+
+        /// <summary>
+        /// Child MaterialMovements where [MaterialMovement].[UnitOfMeasure] point to this entity (FK_MaterialMovement_UnitOfMeasure)
+        /// </summary>
+        public virtual ICollection<MaterialMovement> MaterialMovements_UnitOfMeasure { get; set; } // MaterialMovement.FK_MaterialMovement_UnitOfMeasure
 
         /// <summary>
         /// Child SourceUnitMaps where [SourceUnitMap].[StandardUnit] point to this entity (FK_StandardUnit_Name)
@@ -986,8 +986,8 @@ namespace R2PTransformation.src.db
             Conversions_StandardUnit = new List<Conversion>();
             Conversions_ToUnit = new List<Conversion>();
             CustodyTickets = new List<CustodyTicket>();
-            MaterialMovements_BaseUnit = new List<MaterialMovement>();
             MaterialMovements_UnitOfEntry = new List<MaterialMovement>();
+            MaterialMovements_UnitOfMeasure = new List<MaterialMovement>();
             SourceUnitMaps = new List<SourceUnitMap>();
             TagBalances = new List<TagBalance>();
             TagMaps = new List<TagMap>();
@@ -1012,6 +1012,10 @@ namespace R2PTransformation.src.db
         public string BatchId { get; set; } // BatchId (length: 50)
         public DateTime Created { get; set; } // Created
         public string CreatedBy { get; set; } // CreatedBy (length: 50)
+        public decimal? OpeningInventory { get; set; } // OpeningInventory
+        public decimal? ClosingInventory { get; set; } // ClosingInventory
+        public decimal? Shipment { get; set; } // Shipment
+        public decimal? Receipt { get; set; } // Receipt
 
         // Foreign keys
 
@@ -1054,6 +1058,7 @@ namespace R2PTransformation.src.db
         public int? SuccessfulRecordCount { get; set; } // successfulRecordCount
         public string ErrorMessage { get; set; } // errorMessage (length: 1000)
         public DateTime? CreateDate { get; set; } // createDate
+        public string Type { get; set; } // type (length: 20)
 
         // Reverse navigation
 
@@ -1134,32 +1139,32 @@ namespace R2PTransformation.src.db
         public void Configure(EntityTypeBuilder<CustodyTicket> builder)
         {
             builder.ToTable("CustodyTicket", "dbo");
-            builder.HasKey(x => new { x.CustodyTicketId, x.S4MaterialDocument, x.BolNumber, x.S4Material, x.SourceDataMaterialCode, x.Sign, x.GrossQuantitySize, x.NetQuantitySize, x.UnitOfMeasure, x.ValuationType, x.Density, x.MovementPlant, x.SendingPlant, x.ReceivingPlant, x.Temperature, x.MovementType, x.Mode, x.LoadStartDate, x.LoadStartTime, x.LoadEndDateTime, x.EnteredOnDateTime, x.EnteredBy, x.DocumentDateTime, x.PostingDateTime });
+            builder.HasKey(x => x.CustodyTicketId).HasName("PK_CustodyTicket").IsClustered();
 
             builder.Property(x => x.CustodyTicketId).HasColumnName(@"custodyTicket_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
-            builder.Property(x => x.S4MaterialDocument).HasColumnName(@"S4_Material_Document").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.BolNumber).HasColumnName(@"BOL_Number").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.S4Material).HasColumnName(@"S4_Material").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.SourceDataMaterialCode).HasColumnName(@"Source_Data_Material_Code").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.Sign).HasColumnName(@"Sign").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.GrossQuantitySize).HasColumnName(@"Gross_Quantity_Size").HasColumnType("decimal(10,5)").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.NetQuantitySize).HasColumnName(@"Net_Quantity_Size").HasColumnType("decimal(10,5)").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.UnitOfMeasure).HasColumnName(@"Unit_of_Measure").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10).ValueGeneratedNever();
-            builder.Property(x => x.ValuationType).HasColumnName(@"Valuation_Type").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10).ValueGeneratedNever();
-            builder.Property(x => x.Density).HasColumnName(@"Density").HasColumnType("decimal(10,5)").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.MovementPlant).HasColumnName(@"Movement_Plant").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.SendingPlant).HasColumnName(@"Sending_Plant").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10).ValueGeneratedNever();
-            builder.Property(x => x.ReceivingPlant).HasColumnName(@"Receiving_Plant").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10).ValueGeneratedNever();
-            builder.Property(x => x.Temperature).HasColumnName(@"Temperature").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.MovementType).HasColumnName(@"Movement_Type").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.Mode).HasColumnName(@"Mode").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10).ValueGeneratedNever();
-            builder.Property(x => x.LoadStartDate).HasColumnName(@"Load_Start_Date").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.LoadStartTime).HasColumnName(@"Load_Start_Time").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.LoadEndDateTime).HasColumnName(@"Load_End_DateTime").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.EnteredOnDateTime).HasColumnName(@"Entered_On_DateTime").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.EnteredBy).HasColumnName(@"Entered_by").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.DocumentDateTime).HasColumnName(@"Document_DateTime").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.PostingDateTime).HasColumnName(@"Posting_DateTime").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
+            builder.Property(x => x.S4MaterialDocument).HasColumnName(@"S4_Material_Document").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.BolNumber).HasColumnName(@"BOL_Number").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.S4Material).HasColumnName(@"S4_Material").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.SourceDataMaterialCode).HasColumnName(@"Source_Data_Material_Code").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.Sign).HasColumnName(@"Sign").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.GrossQuantitySize).HasColumnName(@"Gross_Quantity_Size").HasColumnType("decimal(10,5)").IsRequired();
+            builder.Property(x => x.NetQuantitySize).HasColumnName(@"Net_Quantity_Size").HasColumnType("decimal(10,5)").IsRequired();
+            builder.Property(x => x.UnitOfMeasure).HasColumnName(@"Unit_of_Measure").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.ValuationType).HasColumnName(@"Valuation_Type").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.Density).HasColumnName(@"Density").HasColumnType("decimal(10,5)").IsRequired();
+            builder.Property(x => x.MovementPlant).HasColumnName(@"Movement_Plant").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.SendingPlant).HasColumnName(@"Sending_Plant").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.ReceivingPlant).HasColumnName(@"Receiving_Plant").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.Temperature).HasColumnName(@"Temperature").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.MovementType).HasColumnName(@"Movement_Type").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.Mode).HasColumnName(@"Mode").HasColumnType("varchar(10)").IsRequired().IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.LoadStartDate).HasColumnName(@"Load_Start_Date").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.LoadStartTime).HasColumnName(@"Load_Start_Time").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.LoadEndDateTime).HasColumnName(@"Load_End_DateTime").HasColumnType("datetime").IsRequired();
+            builder.Property(x => x.EnteredOnDateTime).HasColumnName(@"Entered_On_DateTime").HasColumnType("datetime").IsRequired();
+            builder.Property(x => x.EnteredBy).HasColumnName(@"Entered_by").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.DocumentDateTime).HasColumnName(@"Document_DateTime").HasColumnType("datetime").IsRequired();
+            builder.Property(x => x.PostingDateTime).HasColumnName(@"Posting_DateTime").HasColumnType("datetime").IsRequired();
 
             // Foreign keys
             builder.HasOne(a => a.StandardUnit).WithMany(b => b.CustodyTickets).HasForeignKey(c => c.UnitOfMeasure).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_CustodyTicket_Unit_of_Measure");
@@ -1172,31 +1177,31 @@ namespace R2PTransformation.src.db
         public void Configure(EntityTypeBuilder<MaterialMovement> builder)
         {
             builder.ToTable("MaterialMovement", "dbo");
-            builder.HasKey(x => new { x.MaterialMovementId, x.Reference, x.Tag, x.System, x.QuantityTimestamp, x.BalanceDate, x.Created, x.CreatedBy });
+            builder.HasKey(x => x.MaterialMovementId).HasName("PK_MaterialMovement").IsClustered();
 
             builder.Property(x => x.MaterialMovementId).HasColumnName(@"MaterialMovement_id").HasColumnType("int").IsRequired().ValueGeneratedOnAdd().UseIdentityColumn();
-            builder.Property(x => x.Reference).HasColumnName(@"reference").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.Tag).HasColumnName(@"Tag").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.System).HasColumnName(@"System").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
-            builder.Property(x => x.MovementType).HasColumnName(@"MovementType").HasColumnType("varchar(20)").IsRequired(false).IsUnicode(false).HasMaxLength(20);
+            builder.Property(x => x.MaterialDocument).HasColumnName(@"materialDocument").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
             builder.Property(x => x.Material).HasColumnName(@"Material").HasColumnType("int").IsRequired(false);
+            builder.Property(x => x.System).HasColumnName(@"System").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.MovementType).HasColumnName(@"MovementType").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
+            builder.Property(x => x.MovementTypeDesc).HasColumnName(@"MovementTypeDesc").HasColumnType("varchar(800)").IsRequired(false).IsUnicode(false).HasMaxLength(800);
             builder.Property(x => x.Plant).HasColumnName(@"Plant").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
-            builder.Property(x => x.WorkCenter).HasColumnName(@"WorkCenter").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
-            builder.Property(x => x.ValType).HasColumnName(@"ValType").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
-            builder.Property(x => x.Tank).HasColumnName(@"Tank").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
-            builder.Property(x => x.QuantityTimestamp).HasColumnName(@"QuantityTimestamp").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.BalanceDate).HasColumnName(@"BalanceDate").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.QuantityInUnitOfEntry).HasColumnName(@"QuantityInUnitOfEntry").HasColumnType("decimal(18,4)").IsRequired(false);
+            builder.Property(x => x.HeaderText).HasColumnName(@"HeaderText").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
+            builder.Property(x => x.Tag).HasColumnName(@"Tag").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.PostingDate).HasColumnName(@"PostingDate").HasColumnType("datetime").IsRequired();
+            builder.Property(x => x.ValuationType).HasColumnName(@"ValuationType").HasColumnType("varchar(30)").IsRequired(false).IsUnicode(false).HasMaxLength(30);
+            builder.Property(x => x.Quantity).HasColumnName(@"Quantity").HasColumnType("decimal(18,4)").IsRequired(false);
             builder.Property(x => x.UnitOfEntry).HasColumnName(@"UnitOfEntry").HasColumnType("varchar(10)").IsRequired(false).IsUnicode(false).HasMaxLength(10);
-            builder.Property(x => x.QuantityInBaseUnit).HasColumnName(@"QuantityInBaseUnit").HasColumnType("decimal(18,4)").IsRequired(false);
-            builder.Property(x => x.BaseUnit).HasColumnName(@"BaseUnit").HasColumnType("varchar(10)").IsRequired(false).IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.UnitOfMeasure).HasColumnName(@"UnitOfMeasure").HasColumnType("varchar(10)").IsRequired(false).IsUnicode(false).HasMaxLength(10);
+            builder.Property(x => x.QuantityInUoe).HasColumnName(@"QuantityInUOE").HasColumnType("decimal(18,4)").IsRequired(false);
+            builder.Property(x => x.QuantityInL15).HasColumnName(@"QuantityInL15").HasColumnType("decimal(18,4)").IsRequired(false);
             builder.Property(x => x.BatchId).HasColumnName(@"BatchId").HasColumnType("varchar(50)").IsRequired(false).IsUnicode(false).HasMaxLength(50);
-            builder.Property(x => x.Created).HasColumnName(@"Created").HasColumnType("datetime").IsRequired().ValueGeneratedNever();
-            builder.Property(x => x.CreatedBy).HasColumnName(@"CreatedBy").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50).ValueGeneratedNever();
+            builder.Property(x => x.EnteredOn).HasColumnName(@"EnteredOn").HasColumnType("datetime").IsRequired();
+            builder.Property(x => x.EnteredAt).HasColumnName(@"EnteredAt").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
 
             // Foreign keys
-            builder.HasOne(a => a.StandardUnit_BaseUnit).WithMany(b => b.MaterialMovements_BaseUnit).HasForeignKey(c => c.BaseUnit).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_MaterialMovement_BasedUnit");
             builder.HasOne(a => a.StandardUnit_UnitOfEntry).WithMany(b => b.MaterialMovements_UnitOfEntry).HasForeignKey(c => c.UnitOfEntry).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_MaterialMovement_UnitOfEntry");
+            builder.HasOne(a => a.StandardUnit_UnitOfMeasure).WithMany(b => b.MaterialMovements_UnitOfMeasure).HasForeignKey(c => c.UnitOfMeasure).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_MaterialMovement_UnitOfMeasure");
         }
     }
 
@@ -1252,6 +1257,10 @@ namespace R2PTransformation.src.db
             builder.Property(x => x.BatchId).HasColumnName(@"BatchId").HasColumnType("varchar(50)").IsRequired(false).IsUnicode(false).HasMaxLength(50);
             builder.Property(x => x.Created).HasColumnName(@"Created").HasColumnType("datetime").IsRequired();
             builder.Property(x => x.CreatedBy).HasColumnName(@"CreatedBy").HasColumnType("varchar(50)").IsRequired().IsUnicode(false).HasMaxLength(50);
+            builder.Property(x => x.OpeningInventory).HasColumnName(@"OpeningInventory").HasColumnType("decimal(18,4)").IsRequired(false);
+            builder.Property(x => x.ClosingInventory).HasColumnName(@"ClosingInventory").HasColumnType("decimal(18,4)").IsRequired(false);
+            builder.Property(x => x.Shipment).HasColumnName(@"Shipment").HasColumnType("decimal(18,4)").IsRequired(false);
+            builder.Property(x => x.Receipt).HasColumnName(@"Receipt").HasColumnType("decimal(18,4)").IsRequired(false);
 
             // Foreign keys
             builder.HasOne(a => a.Batch).WithMany(b => b.TagBalances).HasForeignKey(c => c.BatchId).OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_TagBalance_Batch");
@@ -1294,6 +1303,7 @@ namespace R2PTransformation.src.db
             builder.Property(x => x.SuccessfulRecordCount).HasColumnName(@"successfulRecordCount").HasColumnType("int").IsRequired(false);
             builder.Property(x => x.ErrorMessage).HasColumnName(@"errorMessage").HasColumnType("varchar(1000)").IsRequired(false).IsUnicode(false).HasMaxLength(1000);
             builder.Property(x => x.CreateDate).HasColumnName(@"createDate").HasColumnType("datetime").IsRequired(false);
+            builder.Property(x => x.Type).HasColumnName(@"type").HasColumnType("varchar(20)").IsRequired(false).IsUnicode(false).HasMaxLength(20);
         }
     }
 

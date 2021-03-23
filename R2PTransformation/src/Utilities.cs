@@ -52,7 +52,8 @@ namespace R2PTransformation.src {
 
         public static DataTable ConvertCSVTexttoDataTable(string txt) {
             DataTable dt = new DataTable();
-            string[] lines = txt.Split("\r\n");
+            txt = txt.Replace("\r", "");
+            string[] lines = txt.Split("\n");
             if (lines.Length < 2) return null;
 
             string[] headers = lines[0].Split(',');
@@ -75,6 +76,33 @@ namespace R2PTransformation.src {
         // retrieves the ENV variable from the JSON file local.settings.json or from the configuraton file in Azure
         public static string GetEnvironmentVariable(string name) {
             return System.Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
+        }
+
+        public static string GetHBHistory(string contents, DateTime mdtTime) {
+            string hbHistory = "";
+            // only use the first 2 lines
+            if (!String.IsNullOrEmpty(contents)) {
+                contents = contents.Replace("\r", "");
+                string nextHB = contents.Split('\n')[0].Replace("Next Heartbeat:", "");
+                string lastHB = contents.Split('\n')[1].Replace("Last Heartbeat:", ""); ;
+                if (contents.IndexOfNth("\n", 3) > 0) hbHistory = contents.Substring(contents.IndexOfNth("\n", 3) + 1);
+                if ((mdtTime - DateTime.Parse(nextHB)).TotalMinutes > 2) hbHistory += DateTime.Parse(nextHB).ToString("yyyy-MM-dd HH:mm:ss") + "\n";
+            }
+            return hbHistory;
+        }
+    }
+    public static class Utilities2 {
+        public static int IndexOfNth(this string str, string value, int nth = 0) {
+            if (nth < 0)
+                throw new ArgumentException("Can not find a negative index of substring in string. Must start with 0");
+
+            int offset = str.IndexOf(value);
+            for (int i = 0; i < nth; i++) {
+                if (offset == -1) return -1;
+                offset = str.IndexOf(value, offset + 1);
+            }
+
+            return offset;
         }
     }
 }
