@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using SuncorR2P;
 
 namespace R2PTransformation.src.db {
     public class AzureModel {
@@ -23,7 +24,7 @@ namespace R2PTransformation.src.db {
                 batch.Filename = file;
                 context.Batches.Add(batch);
                 foreach (var item in tb) {
-                    TagBalance found = context.TagBalances.Find(new object[] { item.Tag, item.BalanceDate });
+                    TagBalance found = context.TagBalances.Find(new object[] { item.Tag, item.BalanceDate, item.ValType });
                     if (found == null)
                         batch.TagBalance.Add(item);
                     else
@@ -46,17 +47,22 @@ namespace R2PTransformation.src.db {
             }
         }
 
-        public static void RecordFileFailure(object fileType, string plantName, string azureFullPathName, int successfulRecords, int failedRecords, string message) {
-            throw new NotImplementedException();
-        }
-
         private static void UpdateTagBalance(TagBalance existing, TagBalance tb) {
             existing.Quantity = tb.Quantity;
+            existing.OpeningInventory = tb.OpeningInventory;
+            existing.ClosingInventory = tb.ClosingInventory;
+            existing.Shipment = tb.Shipment;
+            existing.Receipt = tb.Receipt;
+            existing.Consumption = tb.Consumption;
+            existing.Confidence = tb.Confidence;
+            existing.MovementType = tb.MovementType;
+            existing.Material = tb.Material;
+            existing.ValType = tb.ValType;
+            existing.Tank = tb.Tank;
+
             existing.Material = tb.Material;
             existing.StandardUnit = tb.StandardUnit;
-            existing.ValType = tb.ValType;
             existing.WorkCenter = tb.WorkCenter;
-            existing.Tank = tb.Tank;
         }
 
         internal static TagMap ReverseLookupTag(int material, string plant) {
@@ -175,7 +181,7 @@ namespace R2PTransformation.src.db {
                 te.ErrorMessage = "";
 
                 if (warnings != null) {
-                    if (success == 0 && type != "Load TagMaps" && type != "Load Conversions") te.ErrorMessage = "File rejected due to no successfuly records";
+                    if (success == 0) te.ErrorMessage = "File rejected due to no successfuly records";
 
                     foreach (var item in warnings.Select(y => new { Tag = y.Tag, Message = y.Message }).Distinct()) {
                         te.TransactionEventDetail.Add(new TransactionEventDetail() { Tag = item.Tag, ErrorMessage = item.Message });
@@ -186,7 +192,7 @@ namespace R2PTransformation.src.db {
                     if (otherErrors.Count > 0) te.ErrorMessage = String.Join(",", otherErrors.Select(y => y.Message).Distinct().ToArray());
                     if (noMappings.Count > 0) te.ErrorMessage += (te.ErrorMessage.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
                 }
-
+                if (type == "Load TagMaps" || type == "Load Conversions") te.ErrorMessage = "Load completed successfully";
                 if (te.ErrorMessage == "") te.ErrorMessage = "Load completed successfully"; 
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
@@ -203,9 +209,15 @@ namespace R2PTransformation.src.db {
             }
         }
 
-        public static void RecordFileFailure(string type, String plantName, string fileName, int successfulRecordCount, int failedRecordCount, string msg) {
+        public static void RecordFileFailure(string type, String plant, string fileName, int successfulRecordCount, int failedRecordCount, Exception ex) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plantName, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, ErrorMessage = msg };
+                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plant, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, ErrorMessage = (ex.InnerException != null ? ex.Message + ":" + ex.InnerException.Message : ex.Message) };
+                if (ex is OriginalFileLockException) {
+                    // if the last message is an File Lock, do not log
+                    List<TransactionEvent> lastItems = context.TransactionEvents.Where(t => t.Type == type && t.Plant == plant && t.Filename == fileName).OrderByDescending(r => r.CreateDate).ToList();
+                    if (lastItems.Count() > 0 && lastItems[0].ErrorMessage.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return;
+                }
+
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
@@ -215,6 +227,11 @@ namespace R2PTransformation.src.db {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 if (extra != null && extra.Length > 5990) extra = extra.Substring(0, 5990);
                 TransactionEvent te = new TransactionEvent() { Type = type, Plant = plant, CreateDate = DateTime.Now, ErrorMessage = ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message), Extra = extra };
+                if (ex is OriginalFileLockException) {
+                    // if the last message is an File Lock, do not log
+                    List<TransactionEvent> lastItems = context.TransactionEvents.Where(t => t.Type == type).OrderByDescending(r => r.CreateDate).ToList();
+                    if (lastItems.Count() > 0 && lastItems[0].ErrorMessage.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return;
+                } 
                 context.TransactionEvents.Add(te);
                 context.SaveChanges();
             }
@@ -230,7 +247,7 @@ namespace R2PTransformation.src.db {
             }
             foreach (DataRow r in dt.AsEnumerable()) {
                 Conversion current = ConversionFromRow(r);
-                Conversion found = existing.SingleOrDefault(t => t == current);
+                Conversion found = existing.SingleOrDefault(t => t.Equals(current));
                 if (found == null) {
                     toAdd.Add(current);
                     msgs.Add(new WarningMessage("adding " + current.ToString()));
@@ -267,17 +284,16 @@ namespace R2PTransformation.src.db {
                 TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag);
                 if (found == null) {
                     toAdd.Add(current);
-                    msgs.Add(new WarningMessage("adding " + current.ToString()));
+                    msgs.Add(new WarningMessage("adding " + current.Tag));
                 } else {
                     existingTM.Remove(found);
                     if (UpdateTagMapValues(found, current)) {
                         toChange.Add(current);
-                        msgs.Add(new WarningMessage("updated " + current.ToString()));
-//                        output += "updated " + current.ToString() + "\r\n";
+                        msgs.Add(new WarningMessage("updated " + current.Tag));
                     }
                 }
             }
-            existingTM.ForEach(t => { msgs.Add(new WarningMessage("deleting " + t.ToString())); });
+            existingTM.ForEach(t => { msgs.Add(new WarningMessage("deleting " + t.Tag)); });
 
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 context.TagMaps.RemoveRange(existingTM);
@@ -320,7 +336,7 @@ namespace R2PTransformation.src.db {
             tm.Material = r["Material"].ToString();
             tm.StandardUnit = r["StandardUnit"].ToString();
             tm.ToUnit = r["ToUnit"].ToString();
-            tm.Factor = SuncorProductionFile.ParseDecimal(r["Factor"].ToString());
+            tm.Factor = SuncorProductionFile.ParseDecimal(r["Factor"].ToString(), "Factor");
             return tm;
         }
 

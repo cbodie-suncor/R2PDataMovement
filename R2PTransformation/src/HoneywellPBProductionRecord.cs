@@ -19,7 +19,7 @@ namespace R2PTransformation.src {
         }
 
         public decimal GetDecimalValue(string v) {
-            return HoneywellPBFile.ParseDecimal(Values[v]);
+            return HoneywellPBFile.ParseDecimal(Values[v], v);
         }
 
         public decimal InputProductCalc() {
@@ -46,7 +46,7 @@ namespace R2PTransformation.src {
                 this.ProductionFile.Warnings.Add(new WarningMessage(product, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product));
                 return;
             }
-            this.ProductionFile.AddTagBalance(currentDay, "Honeywell PB", "Production", product, null, balanceDate,  quantity, GetDecimalValue("OPENING_INVENTORY"), GetDecimalValue("CLOSING_INVENTORY"), GetDecimalValue("SHIP_QUANTITY"), GetDecimalValue("RECEIPT_QUANTITY"));
+            this.ProductionFile.AddTagBalance(currentDay, "Honeywell PB", "Production", product, null, balanceDate,  quantity, GetDecimalValue("OPENING_INVENTORY"), GetDecimalValue("CLOSING_INVENTORY"), GetDecimalValue("SHIP_QUANTITY"), GetDecimalValue("RECEIPT_QUANTITY"), GetDecimalValue("NET_CONSUMPTION"));
         }
 
         public decimal GetAMMDTQuantity() {

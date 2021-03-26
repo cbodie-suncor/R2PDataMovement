@@ -27,7 +27,7 @@ namespace R2PTransformation {
             string defaultDateTimeFormat = this.Defaults["DATETIMEFORMAT"];
             defaultDateTimeFormat = defaultDateTimeFormat.Replace("YYYY", "yyyy").Replace("DD", "dd").Replace("HH24", "HH").Replace("SS","ss").Replace("MI","mm");
             var accountDate = DateTime.ParseExact(this.Values["ACCOUNT_DATE"], defaultDateTimeFormat, CultureInfo.InvariantCulture);;
-            return accountDate;
+            return accountDate.Date;
         }
 
         internal void SetValues(Dictionary<string, string> values) {

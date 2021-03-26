@@ -58,7 +58,7 @@ namespace R2PTransformation.src.db.Models
 
             modelBuilder.Entity<Conversion>(entity =>
             {
-                entity.HasKey(e => new { e.StandardUnit, e.ToUnit });
+                entity.HasKey(e => new { e.Material, e.StandardUnit, e.ToUnit });
 
                 entity.Property(e => e.StandardUnit)
                     .HasMaxLength(10)
@@ -329,7 +329,7 @@ namespace R2PTransformation.src.db.Models
 
             modelBuilder.Entity<TagBalance>(entity =>
             {
-                entity.HasKey(e => new { e.Tag, e.BalanceDate });
+                entity.HasKey(e => new { e.Tag, e.BalanceDate, e.ValType });
 
                 entity.Property(e => e.Tag)
                     .HasMaxLength(50)

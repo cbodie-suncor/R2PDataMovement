@@ -7,6 +7,8 @@ using System.IO;
 using R2PTransformation.src.db;
 using System.Data;
 using Microsoft.Data.SqlClient;
+using static R2PTransformation.src.SarniaParser;
+using System.Collections.Generic;
 
 namespace SuncorR2P.src {
     public class FoundFile {
@@ -68,8 +70,15 @@ namespace SuncorR2P.src {
         public void DisposeOfFile(Boolean fatal = false) {
             string destination = this.ParentDiectory + "\\" + (this.SuccessfulRecords == 0 || fatal ? "rejected" : "archived") + "\\" + this.GetFileNameWithTimestampAppendedBeforeSuffix();
             AzureFileHelper.CopyToAzureFileShare(this.TempFileName, destination);
-            AzureFileHelper.DeleteFile(this.AzureFullPathName);
             File.Delete(this.TempFileName);
+        }
+
+        public void DeleteOriginalFile() {
+            try {
+                AzureFileHelper.DeleteFile(this.AzureFullPathName);
+            } catch (Exception) {
+                throw new OriginalFileLockException(this.AzureFullPathName + " has a file lock and is NOT PROCESSED");
+            }
         }
 
         public void ProcessFile(ILogger log, string version) {
@@ -77,13 +86,20 @@ namespace SuncorR2P.src {
             this.ProducitionFile = null;
             DateTime day = GetCurrentDay(this.PlantName);
 
-            if (this.IsHoneywellPB)         { this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, day); }
+            if (this.IsHoneywellPB || this.IsSarnia) {
+                this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, day);
+                if (this.IsSarnia) {
+                    FoundFile ulsd = AzureFileHelper.GetULSDFileForCP03(day);
+                    if (ulsd == null) throw new Exception("no ULSD file found for the month " + day.ToString("MMMM yyyy"));
+                    List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName, day);
+                    SarniaParser.ModifyAndAddShellSplits(this.ProducitionFile, ss);
+                }
+            }
             if (this.IsMontrealSulphur)     { this.ProducitionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
             if (this.IsDPS)                 { this.ProducitionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.IsDenver)              { this.ProducitionFile = new SigmafineParser().LoadProductionExcel(this.TempFileName, this.PlantName, day); }
             if (this.Inventory)             { this.ProducitionFile = new SigmafineParser().LoadInventoryExcel(this.TempFileName, this.PlantName, day);  }
             if (this.IsTerraNova)           { this.ProducitionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.IsSarnia)              { }
             if (this.ProducitionFile != null) {
                 this.ProducitionFile.SaveRecords();
                 this.SuccessfulRecords = this.ProducitionFile.SavedRecords.Count;

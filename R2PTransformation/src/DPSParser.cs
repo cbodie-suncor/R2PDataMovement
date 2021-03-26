@@ -26,8 +26,8 @@ namespace R2PTransformation.src {
                     });
 
                     DataTableCollection table = result.Tables;
-                    if (table.IndexOf("Azure Data Load") == -1) throw new Exception("The sheet 'Azure Data Load' does not exist");
-                    DataTable currentMonthSheet = table["Azure Data Load"];
+                    if (table.IndexOf("Azure Load") == -1) throw new Exception("The sheet 'Azure Load' does not exist");
+                    DataTable currentMonthSheet = table["Azure Load"];
                     LoadProductionRecords(currentMonthSheet, ms, currentDay);
                     return ms;
                 }
@@ -43,15 +43,25 @@ namespace R2PTransformation.src {
                     day = DateTime.FromOADate((double)row["transaction date"]);
                 }
                 if (day == null) continue;
-        
-                decimal quantity = SuncorProductionFile.ParseDecimal(row["production"].ToString());
+
+                decimal production = 0, opening = 0, closing = 0, shipments = 0, receipts = 0;
                 try {
-                    quantity = AzureModel.ConvertQuantityToStandardUnit(uom, quantity);
-                } catch(Exception ex) {
+                    production = SuncorProductionFile.ParseDecimal(row["production"].ToString(), "Production");
+                    shipments = SuncorProductionFile.ParseDecimal(row["Shipments"].ToString(), "Shipments");
+                    receipts = SuncorProductionFile.ParseDecimal(row["Receipts"].ToString(), "Receipts");
+                    opening = SuncorProductionFile.ParseDecimal(row["Beginning Inventory"].ToString(), "Beginning Inventory");
+                    closing = SuncorProductionFile.ParseDecimal(row["Ending Inventory"].ToString(), "Ending Inventory");
+
+                    production = AzureModel.ConvertQuantityToStandardUnit(uom, production);
+                    receipts = AzureModel.ConvertQuantityToStandardUnit(uom, receipts);
+                    shipments = AzureModel.ConvertQuantityToStandardUnit(uom, shipments);
+                    opening = AzureModel.ConvertQuantityToStandardUnit(uom, opening);
+                    closing = AzureModel.ConvertQuantityToStandardUnit(uom, closing);
+                } catch (Exception ex) {
                     ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
                     continue;
                 }
-                ms.AddTagBalance(currentDay, "DPS", "Production", productionCode, null, day.Value, quantity, null,null,null,null);
+                ms.AddTagBalance(currentDay, "DPS", "Production", productionCode, null, day.Value, production, opening,closing,shipments,receipts, null);
             }
         }
     }

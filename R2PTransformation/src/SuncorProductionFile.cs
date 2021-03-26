@@ -72,7 +72,7 @@ namespace R2PTransformation.src {
             return JsonConvert.SerializeObject(batch);
         }
 
-        public void AddTagBalance(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts) {
+        public void AddTagBalance(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts, decimal? consumption) {
             TagBalance tb = new TagBalance();
             tb.MovementType = movementType;
             tb.System = system;
@@ -104,6 +104,7 @@ namespace R2PTransformation.src {
             if (closingInventory.HasValue) tb.ClosingInventory = Math.Round(closingInventory.Value, 3);
             if (shipments.HasValue) tb.Shipment = Math.Round(shipments.Value, 3);
             if (receipts.HasValue) tb.Receipt = Math.Round(receipts.Value, 3);
+            if (consumption.HasValue) tb.Consumption = Math.Round(consumption.Value, 3);
             tb.BatchId = this.BatchId.ToString();
 
             if (!IsDayValid(day, currentDay)) {
@@ -130,11 +131,11 @@ namespace R2PTransformation.src {
             AzureModel.SaveTagBalance(FileName, this, tb);
         }
 
-        public static decimal ParseDecimal(object v) {
+        public static decimal ParseDecimal(object v, string columnName) {
             try {
                 return string.IsNullOrEmpty(v.ToString()) ? 0 : decimal.Parse(v.ToString());
             } catch (Exception ex) {
-                throw ex;
+                throw new Exception("Invalid Number for " + columnName);
             }
         }
         public static bool IsDayValid(DateTime day, DateTime currentDay) {

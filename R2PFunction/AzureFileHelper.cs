@@ -32,15 +32,13 @@ namespace SuncorR2P {
                     string msg = "Processing the file " + foundFile.PlantName + "," + foundFile.AzureFileName;
                     log.LogInformation("*** " + msg + $" at: {DateTime.Now}" + ":" + productVersion);
                     LogHelper.LogMessage(foundFile.PlantName, productVersion, msg);
+                    foundFile.DeleteOriginalFile();
                     foundFile.ProcessFile(log, productVersion);
-                    foundFile.DisposeOfFile();
                     foundFile.RecordSuccess();
+                    foundFile.DisposeOfFile();
                 } catch (Exception ex) {
                     LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
-                    AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex.Message);
-                    try {
-                        foundFile.DisposeOfFile(true);
-                    } catch (Exception ex2) { LogHelper.LogSystemError(log, productVersion, ex2); }
+                    AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
                 }
             }
         }
@@ -83,18 +81,16 @@ namespace SuncorR2P {
 
         internal static void ProcessConversions(string version) {
             // add/modify/delete tags mappings
-            string parentDirectory = "master/";
+            string parentDirectory = "Master/";
             string converionContents = null;
             try {
                 converionContents = AzureFileHelper.ReadFile(parentDirectory + "conversion.csv");
                 if (converionContents != null) {
+                    AzureFileHelper.ArchiveFile("Load Conversions", parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
                     DataTable tm = Utilities.ConvertCSVTexttoDataTable(converionContents);
                     List<WarningMessage> output = AzureModel.UpdateConversions(tm);
-                    LogHelper.LogMessage(null, version, "Updated the following conversions:\r\n" + output);
-                    AzureFileHelper.WriteFile(parentDirectory + "conversion.processed.csv", converionContents, false);
-                    AzureFileHelper.DeleteFile(parentDirectory + "conversion.csv");
-                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", null, null, output.Count(), 0, null);
-
+                    LogHelper.LogMessage(null, version, "Updated the following conversions:\r\n" + String.Join(",",output));
+                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", output, null, output.Count(), 0, null);
                 } else {
                     string processed = AzureFileHelper.ReadFile(parentDirectory + "conversion.processed.csv");
                     if (processed == null) { // create a processed file if not exists
@@ -103,9 +99,8 @@ namespace SuncorR2P {
                 }
             } catch (Exception ex) {
                 try {
-                    AzureModel.RecordFatalLoad("Load Conversion", null, ex, converionContents);
-                    AzureFileHelper.WriteFile(parentDirectory + "conversion.error.csv", converionContents, false);
-                    AzureFileHelper.DeleteFile(parentDirectory + "conversion.csv");
+                    AzureModel.RecordFatalLoad("Load Conversions", null, ex, converionContents);
+                    AzureFileHelper.ArchiveFile("Load Conversions", parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
                 } catch (Exception Ignore) { }
             }
         }
@@ -119,11 +114,11 @@ namespace SuncorR2P {
             try {
                 tagContents = AzureFileHelper.ReadFile(parentDirectory + tagMappingFile + suffix);
                 if (tagContents != null) {
+                    AzureFileHelper.ArchiveFile("Load TagMaps", parentDirectory + tagMappingFile + suffix, tagContents, parentDirectory + tagMappingFileProcessed + suffix);
+
                     DataTable tm = Utilities.ConvertCSVTexttoDataTable(tagContents);
                     List<WarningMessage> output = AzureModel.UpdateTagMappings(plant, tm);
-                    LogHelper.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + output);
-                    AzureFileHelper.WriteFile(parentDirectory + tagMappingFileProcessed + suffix, tagContents, false);
-                    AzureFileHelper.DeleteFile(parentDirectory + tagMappingFile + suffix);
+                    LogHelper.LogMessage(plant, version, "Updated the following tag mappings:\r\n" + String.Join(",", output));
                     AzureModel.RecordStats("Load TagMaps", parentDirectory + tagMappingFile + suffix, output, plant, output.Count(), 0, null);
                 } else {
                     string processed = AzureFileHelper.ReadFile(parentDirectory + tagMappingFileProcessed + suffix);
@@ -145,6 +140,19 @@ namespace SuncorR2P {
             }
         }
 
+        private static void ArchiveFile(string type, string originalPath, string contents, string archivedFileAndPath) {
+            try {
+                AzureFileHelper.DeleteFile(originalPath);
+            } catch (Exception ex) {
+                throw new OriginalFileLockException(originalPath + " has a file lock and is NOT PROCESSED");
+            }
+            try {
+                AzureFileHelper.WriteFile(archivedFileAndPath, contents, false);
+            } catch (Exception ex) {
+                throw new Exception("Can not create archive file " + archivedFileAndPath);
+            }
+        }
+
         private static Stream GenerateStreamFromString(string s) {
             var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
@@ -160,21 +168,59 @@ namespace SuncorR2P {
             return text;
         }
 
-        public static FoundFile ScanForANewFile() {
+        public static FoundFile GetULSDFileForCP03(DateTime month) {
             ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
+            ShareFileItem tfile = null;
             foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
                 if (item.Name == "System") continue;
-                if (item.IsDirectory) {
-                    var subDirectory = share.GetRootDirectoryClient().GetSubdirectoryClient(item.Name);
-                    ShareDirectoryClient dir = subDirectory.GetSubdirectoryClient("immediateScan");
-                    if (!dir.Exists()) continue;
-                    foreach (var file in dir.GetFilesAndDirectories()) {
-                        if (!file.IsDirectory) {
-                            string tempFileName = Path.GetTempFileName();
-                            DownloadFile(dir.GetFileClient(file.Name), tempFileName);
-                            return new FoundFile(/*item.Name, */file.Name, dir.Path + "/" + file.Name, tempFileName);
+                if (item.Name == "Master") continue;
+                if (item.Name != "CP03") continue;
+
+                try {
+                    if (item.IsDirectory) {
+                        var subDirectory = share.GetRootDirectoryClient().GetSubdirectoryClient(item.Name);
+                        ShareDirectoryClient dir = subDirectory.GetSubdirectoryClient("ulsd");
+                        if (!dir.Exists()) continue;
+                        foreach (var file in dir.GetFilesAndDirectories()) {
+                            tfile = file;
+                            if (!file.IsDirectory) {
+                                if (!file.Name.Contains(month.Year.ToString())) continue;
+                                if (!file.Name.ToLower().Contains(month.ToString("MMMM").ToLower())) continue;
+                                string tempFileName = Path.GetTempFileName();
+                                DownloadFile(dir.GetFileClient(file.Name), tempFileName);
+                                return new FoundFile(/*item.Name, */file.Name, dir.Path + "/" + file.Name, tempFileName);
+                            }
                         }
                     }
+                } catch (Exception ex) {
+                    throw new Exception(item.Name + ":" + (tfile != null ? tfile.Name : "") + " " + ex.Message);
+                }
+            }
+            return null;
+        }
+
+        public static FoundFile ScanForANewFile() {
+            ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
+            ShareFileItem tfile = null;
+            foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
+                if (item.Name == "System") continue;
+                if (item.Name == "Master") continue;
+                try {
+                    if (item.IsDirectory) {
+                        var subDirectory = share.GetRootDirectoryClient().GetSubdirectoryClient(item.Name);
+                        ShareDirectoryClient dir = subDirectory.GetSubdirectoryClient("immediateScan");
+                        if (!dir.Exists()) continue;
+                        foreach (var file in dir.GetFilesAndDirectories()) {
+                            tfile = file; 
+                            if (!file.IsDirectory) {
+                                string tempFileName = Path.GetTempFileName();
+                                DownloadFile(dir.GetFileClient(file.Name), tempFileName);
+                                return new FoundFile(/*item.Name, */file.Name, dir.Path + "/" + file.Name, tempFileName);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    throw new Exception(item.Name + ":" + (tfile != null ? tfile.Name : "") + " " + ex.Message);
                 }
             }
             return null;

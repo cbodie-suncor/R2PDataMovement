@@ -1,12 +1,24 @@
 changes to 1.0.15
 =================
 - added Inventory Snapsnot for Commerce City, uses the name to determine what file type (either production or inventory)
-- added Material Movements listening url : 
+- added the following listening urls : 
+The following are the Sandbox URLs:
+CustodyTicket:   https://aaasbxarmfapuw2015.azurewebsites.net/api/CustodyTicket
+Hierarchy:   https://aaasbxarmfapuw2015.azurewebsites.net/api/Hierarchy
+MaterialLedger:   https://aaasbxarmfapuw2015.azurewebsites.net/api/MaterialLedger
+MaterialMovement: https://aaasbxarmfapuw2015.azurewebsites.net/api/MaterialMovement
+
+  The following are the Test URLs:  
+CustodyTicket:   https://pbidevarmfncuw2001.azurewebsites.net/api/CustodyTicket
+Hierarchy:   https://pbidevarmfncuw2001.azurewebsites.net/api/Hierarchy
+MaterialLedger:   https://pbidevarmfncuw2001.azurewebsites.net/api/MaterialLedger
+MaterialMovement: https://pbidevarmfncuw2001.azurewebsites.net/api/MaterialMovement
+
 - improved logging
 - changed directory name of Denver to Commerce City
-- added OI, CI, shipments and receipts to MS, Commerce City, 
-- added CustodyTickets 
-- changed directory structure
+- added OI, CI, shipments and receipts for Variance Rpt changes
+- added CustodyTickets for Edmonton, Montreal) - not tested
+- changed directory structure (diagnostics, moved system to plant directories)
 - created new parameters in Azure console for Production Mulesoft push and Inventory Mulesoft push
 - added a heartbeat.txt file to indicate when next poll is (and if any HB have been missed)
-- Oilsands production file need to have the data in the sheet 'Azure Data Sheet'
+- Oilsands production file need to have the data in the sheet 'Azure Load'

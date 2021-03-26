@@ -60,6 +60,7 @@ namespace STransformNUnit {
             Assert.AreEqual(2464331, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").ClosingInventory);
             Assert.AreEqual(101977, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").Shipment);
             Assert.AreEqual(0, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "MGO").Receipt);
+            Assert.AreEqual(36266, pf.GetTagBalanceRecords().Single(t => t.BalanceDate.Date == new DateTime(2020, 1, 29) && t.Tag == "PEFLGNF").Consumption);
         }
         [Test]
         public void LoadHoneyWell5() {

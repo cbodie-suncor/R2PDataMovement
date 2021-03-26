@@ -30,6 +30,7 @@ namespace R2PTransformation.src.db {
         public decimal? Shipment { get; set; }
         public decimal? Receipt { get; set; }
         public decimal? Confidence { get; set; }
+        public decimal? Consumption { get; set; }
         public virtual Batch Batch { get; set; }
         public virtual StandardUnit StandardUnitNavigation { get; set; }
     }

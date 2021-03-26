@@ -35,10 +35,14 @@ namespace R2PTransformation.src {
                         string closingStringValue = row["volume"].ToString();
                         materialCode = row["Material Code"].ToString();
                         if (string.IsNullOrEmpty(description) || description.ToLower().Contains("description") || description.ToLower().Contains("total")) continue;
-//                            if (string.IsNullOrEmpty(productionStringValue) || productionStringValue == "bbl") continue;
-                        closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue), 3);
+                        try { 
+                            closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue, "Closing"), 3);
+                        } catch (Exception ex) {
+                            ms.Warnings.Add(new WarningMessage(tank, ex.Message));
+                            continue;
+                        }
 
-                        ms.AddTagBalance(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, null, null, closing, null, null);
+                        ms.AddTagBalance(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, null, null, closing, null, null, null);
                     }
                 }
             }
@@ -81,15 +85,16 @@ namespace R2PTransformation.src {
                             string shipmentsStringValue = row["sale"].ToString();
                             if (string.IsNullOrEmpty(product) || product.ToLower().Contains("total") ) continue;
                             if (string.IsNullOrEmpty(productionStringValue) || productionStringValue == "bbl") continue;
-                            production = Math.Round(SuncorProductionFile.ParseDecimal(productionStringValue),3);
-                            opening = Math.Round(SuncorProductionFile.ParseDecimal(openingStringValue), 3);
-                            closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue), 3);
-                            sale = Math.Round(SuncorProductionFile.ParseDecimal(shipmentsStringValue), 3);
-                            purchase = Math.Round(SuncorProductionFile.ParseDecimal(receiptsStringValue), 3);
-                            // removed Feb 24, 21                            if (production == 0) continue;
+                            production = Math.Round(SuncorProductionFile.ParseDecimal(productionStringValue, "Production"),3);
+                            opening = Math.Round(SuncorProductionFile.ParseDecimal(openingStringValue, "Opening"), 3);
+                            closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue, "Closing"), 3);
+                            sale = Math.Round(SuncorProductionFile.ParseDecimal(shipmentsStringValue, "Sale"), 3);
+                            purchase = Math.Round(SuncorProductionFile.ParseDecimal(receiptsStringValue, "Purchase"), 3);
                         } catch (Exception ex) {
+                            ms.Warnings.Add(new WarningMessage(product, ex.Message));
+                            continue;
                         }
-                        ms.AddTagBalance(currentDay, "Sigmafine", "Production", product, null, day, production, opening, closing, sale, purchase);
+                        ms.AddTagBalance(currentDay, "Sigmafine", "Production", product, null, day, production, opening, closing, sale, purchase, null);
                     }
                 }
             }
@@ -108,11 +113,9 @@ namespace R2PTransformation.src {
                     DataTableCollection table = result.Tables;
                     DataTable currentDaySheet = table[0];  // used for productCode = 5
                     DateTime time = DateTime.MinValue;
-                    try {
-                        string dayString = currentDaySheet.Rows[row][column].ToString();
-                        if (dayString.Contains("-")) dayString = dayString.Substring(dayString.IndexOf("-") + 1);
-                        time = DateTime.Parse(dayString);
-                    } catch (Exception ex) { }
+                    string dayString = currentDaySheet.Rows[row][column].ToString();
+                    if (dayString.Contains("-")) dayString = dayString.Substring(dayString.IndexOf("-") + 1);
+                    time = DateTime.Parse(dayString);
                     return time;
                 }
             }

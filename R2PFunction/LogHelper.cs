@@ -9,13 +9,13 @@ namespace R2PFunction {
         public static void LogSystemError(ILogger log, string version, Exception ex) {
             log.LogError(ex, $"R2PLoader failed at: {DateTime.Now}");
             string msg = DateTime.Now.ToUniversalTime() + ":" + version + ":" + ex.Message + (ex.InnerException == null ? "" : ex.InnerException.Message);
-            AzureFileHelper.WriteFile("master/AzureDataLoader.log", msg, true);
+            AzureFileHelper.WriteFile("Master/AzureDataLoader.log", msg, true);
         }
 
         public static void LogSystemError(ILogger log, string version, string  output) {
             log.LogError(output, $"R2PLoader failed at: {DateTime.Now}");
             string msg = DateTime.Now.ToUniversalTime() + ":" + version + ":" + output;
-            AzureFileHelper.WriteFile("master/AzureDataLoader.log", msg, true);
+            AzureFileHelper.WriteFile("Master/AzureDataLoader.log", msg, true);
         }
         public static void LogMessage(string plant, string version, string msg) {
             WriteLogFile(plant, DateTime.Now.ToUniversalTime() + ":" + version + ":" + msg);
@@ -27,7 +27,7 @@ namespace R2PFunction {
             if (!string.IsNullOrEmpty(plant))
                 AzureFileHelper.WriteFile(parentDirectory + "/system/" + "AzureDataLoader." + parentDirectory + ".log", msg, true);
             else
-                AzureFileHelper.WriteFile("master/AzureDataLoader.log", msg, true);
+                AzureFileHelper.WriteFile("Master/AzureDataLoader.log", msg, true);
         }
     }
 }

@@ -22,6 +22,14 @@ namespace STransformNUnit {
         }
 
         [Test]
+        public void testAP01_2() {
+            SuncorProductionFile ms = new DPSParser().LoadFile(ROOTDIR + "Base Plant Sample_AP01withInventories.xlsx", "AP01", new DateTime(2021, 03, 25));
+            Assert.AreEqual(25, ms.GetTagBalanceRecords().Count);
+            Assert.AreEqual(2540.972, ms.GetTagBalanceRecords().Single(y=>y.BalanceDate == new DateTime(2021,3,25)).ClosingInventory);
+            Assert.AreEqual(81, ms.GetTagBalanceRecords().Single(y => y.BalanceDate == new DateTime(2021, 3, 25)).Quantity);
+        }
+
+        [Test]
         public void testAP02() {
             SuncorProductionFile ms = new DPSParser().LoadFile(ROOTDIR + "Firebag Sample_AP02.xlsx", "AP02", new DateTime(2020, 10, 31));
             Assert.AreEqual(3, ms.GetTagBalanceRecords().Count);

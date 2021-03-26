@@ -29,9 +29,17 @@ namespace R2PTransformation.src {
         private void LoadProductionRecords(DataTable currentMonth, SuncorProductionFile ms, DateTime currentDay) {
             foreach (var row in currentMonth.AsEnumerable()) {
                 string productionCode = row["name"].ToString();
-                DateTime day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
-                decimal quantity = SuncorProductionFile.ParseDecimal(row["value"].ToString());
-                ms.AddTagBalance(currentDay, "OPIS", "Production", productionCode, null, day.AddDays(-1), quantity, null, null, null, null);
+                DateTime day;
+                decimal quantity = 0;
+                try {
+                    day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
+                    quantity = SuncorProductionFile.ParseDecimal(row["value"].ToString(), "Production");
+                } catch (Exception ex) {
+                    ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
+                    continue;
+                }
+
+                ms.AddTagBalance(currentDay, "OPIS", "Production", productionCode, null, day.AddDays(-1), quantity, null, null, null, null, null);
             }
         }
     }
