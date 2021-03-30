@@ -95,7 +95,7 @@ namespace R2PTransformation.src {
             foreach (var item in pf.Products) {
                 ShellSplit shell = splits.FirstOrDefault(t => t.Day == item.BalanceDate && t.ProductCode == item.Tag);
                 if (shell == null && splits.Where(y=>y.ProductCode == item.Tag).Count() > 0) {
-                    pf.Warnings.Add(new WarningMessage(item.Tag, "No matching ULSD record was for " + item.BalanceDate.ToString("yyyy-MM-dd")));
+                    pf.Warnings.Add(new WarningMessage(MessageType.Error, item.Tag, "No matching ULSD record was for " + item.BalanceDate.ToString("yyyy-MM-dd")));
                     continue;
                 }
 

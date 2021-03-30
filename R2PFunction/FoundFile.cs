@@ -108,7 +108,7 @@ namespace SuncorR2P.src {
                     string json = this.ProducitionFile.ExportJson(this.FileType);
                     if (!MulesoftPush.PostProduction(json)) {
                         LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
-                        this.ProducitionFile.Warnings.Add(new WarningMessage("Json NOT sent to Mulesoft"));
+                        this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
 
                     }
                     AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);

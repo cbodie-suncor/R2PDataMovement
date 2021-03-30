@@ -76,7 +76,7 @@ namespace SuncorR2P
         }
 
         [FunctionName("CustodyTicket")]
-        public static async Task<IActionResult> RunCustodyTicket([HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
+        public static async Task<IActionResult> RunCustodyTicket([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Custody Ticket request processed.");
             string requestBody = String.Empty;

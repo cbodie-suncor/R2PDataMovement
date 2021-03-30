@@ -20,7 +20,7 @@ namespace R2PTransformation.src.db {
         public string Filename { get; set; }
         public int? FailedRecordCount { get; set; }
         public int? SuccessfulRecordCount { get; set; }
-        public string ErrorMessage { get; set; }
+        public string Message { get; set; }
         public DateTime? CreateDate { get; set; }
         public string Type { get; set; }
         public string Extra { get; set; }

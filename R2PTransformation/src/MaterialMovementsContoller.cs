@@ -41,7 +41,7 @@ namespace R2PTransformation.src {
                 sm.EnteredAt = GetStringValue(item["enteredAt"]) == null ? "R2PLoader" : GetStringValue(item["enteredAt"]);
                 TagMap tm = AzureModel.ReverseLookupTag(sm.Material.Value, sm.Plant);
                 if (tm == null) {
-                    Warnings.Add(new WarningMessage(sm.Material.ToString(), "No TagMapping"));
+                    Warnings.Add(new WarningMessage(MessageType.Info, sm.Material.ToString(), "No TagMapping"));
                 } else {
                     sm.Tag = tm.Tag;
                     mm.Add(sm);

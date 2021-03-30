@@ -12,8 +12,9 @@ namespace R2PTransformation.src.db {
     {
         public int TransactionEventDetailId { get; set; }
         public int? TransactionEventId { get; set; }
+        public string Type { get; set; }
         public string Tag { get; set; }
-        public string ErrorMessage { get; set; }
+        public string Message { get; set; }
 
         public virtual TransactionEvent TransactionEvent { get; set; }
     }

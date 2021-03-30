@@ -58,7 +58,7 @@ namespace R2PTransformation.src {
                     opening = AzureModel.ConvertQuantityToStandardUnit(uom, opening);
                     closing = AzureModel.ConvertQuantityToStandardUnit(uom, closing);
                 } catch (Exception ex) {
-                    ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
+                    ms.Warnings.Add(new WarningMessage(MessageType.Error, productionCode, ex.Message));
                     continue;
                 }
                 ms.AddTagBalance(currentDay, "DPS", "Production", productionCode, null, day.Value, production, opening,closing,shipments,receipts, null);

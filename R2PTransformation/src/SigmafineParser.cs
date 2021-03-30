@@ -38,7 +38,7 @@ namespace R2PTransformation.src {
                         try { 
                             closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue, "Closing"), 3);
                         } catch (Exception ex) {
-                            ms.Warnings.Add(new WarningMessage(tank, ex.Message));
+                            ms.Warnings.Add(new WarningMessage(MessageType.Error, tank, ex.Message));
                             continue;
                         }
 
@@ -91,7 +91,7 @@ namespace R2PTransformation.src {
                             sale = Math.Round(SuncorProductionFile.ParseDecimal(shipmentsStringValue, "Sale"), 3);
                             purchase = Math.Round(SuncorProductionFile.ParseDecimal(receiptsStringValue, "Purchase"), 3);
                         } catch (Exception ex) {
-                            ms.Warnings.Add(new WarningMessage(product, ex.Message));
+                            ms.Warnings.Add(new WarningMessage(MessageType.Error, product, ex.Message));
                             continue;
                         }
                         ms.AddTagBalance(currentDay, "Sigmafine", "Production", product, null, day, production, opening, closing, sale, purchase, null);

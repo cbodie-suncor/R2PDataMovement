@@ -448,9 +448,9 @@ namespace R2PTransformation.src.db.Models
                     .HasColumnName("createDate")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.ErrorMessage)
-                    .HasColumnName("errorMessage")
-                    .HasMaxLength(1000)
+                entity.Property(e => e.Message)
+                    .HasColumnName("Message")
+                    .HasMaxLength(3000)
                     .IsUnicode(false);
 
                 entity.Property(e => e.FailedRecordCount).HasColumnName("failedRecordCount");
@@ -477,9 +477,9 @@ namespace R2PTransformation.src.db.Models
             {
                 entity.Property(e => e.TransactionEventDetailId).HasColumnName("TransactionEventDetail_id");
 
-                entity.Property(e => e.ErrorMessage)
-                    .HasColumnName("errorMessage")
-                    .HasMaxLength(1000)
+                entity.Property(e => e.Message)
+                    .HasColumnName("Message")
+                    .HasMaxLength(3000)
                     .IsUnicode(false);
 
                 entity.Property(e => e.Tag)

@@ -31,7 +31,7 @@ namespace R2PTransformation.src {
 
         public void IsCurrentDay(DateTime currentDay) {
             if (currentDay != DateTime.Today) {
-                Warnings.Add(new WarningMessage(null, "Using " + currentDay.ToString("yyyy/MM/dd") + " as a override date"));
+                Warnings.Add(new WarningMessage(MessageType.Info, "Using " + currentDay.ToString("yyyy/MM/dd") + " as a override date"));
             }
         }
 
@@ -84,7 +84,7 @@ namespace R2PTransformation.src {
             tb.CreatedBy = "R2PLoader";
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
-                Warnings.Add(new WarningMessage(tb.Tag, "No TagMapping"));
+                Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "No TagMapping"));
                 this.FailedRecords.Add(tb);
                 return;
             }
@@ -108,7 +108,7 @@ namespace R2PTransformation.src {
             tb.BatchId = this.BatchId.ToString();
 
             if (!IsDayValid(day, currentDay)) {
-                this.Warnings.Add(new WarningMessage(tb.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
+                this.Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
                 this.FailedRecords.Add(tb);
             } else {
                 this.Products.Add(tb);
@@ -182,18 +182,25 @@ namespace R2PTransformation.src {
         }
     }
 
+    public enum MessageType {
+        Info,
+        Error
+    }
+
     public class WarningMessage {
-        public WarningMessage(string atag, string aMessage) {
+        public WarningMessage(MessageType type, string atag, string aMessage) {
             Tag = atag;
             Message = aMessage;
+            Type = type;
         }
 
-        public WarningMessage(string aMessage) {
+        public WarningMessage(MessageType type, string aMessage) {
             Message = aMessage;
         }
         public override string ToString() {
             return Message.ToString();
         }
+        public MessageType Type;
         public string Tag;
         public string Message;
     }

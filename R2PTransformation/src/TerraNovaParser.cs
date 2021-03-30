@@ -35,7 +35,7 @@ namespace R2PTransformation.src {
                     day = DateTime.ParseExact(row["ts"].ToString().Substring(0, 9), "dd-MMM-yy", CultureInfo.InvariantCulture);
                     quantity = SuncorProductionFile.ParseDecimal(row["value"].ToString(), "Production");
                 } catch (Exception ex) {
-                    ms.Warnings.Add(new WarningMessage(productionCode, ex.Message));
+                    ms.Warnings.Add(new WarningMessage(MessageType.Error, productionCode, ex.Message));
                     continue;
                 }
 
