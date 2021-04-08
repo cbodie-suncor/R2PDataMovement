@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System.Linq;
 using System.IO;
 using System.Data;
@@ -29,20 +29,20 @@ namespace R2PTransformation.src {
                     foreach (DataRow row in currentDaySheet.AsEnumerable()) {
                         //                        string product = row[2].ToString();
                         string materialCode = "", tank = "", description = "";
-                        decimal closing = 0;
+                        decimal quantity = 0;
                         description = row["Column0"].ToString();
                         tank = row["Column1"].ToString();
-                        string closingStringValue = row["volume"].ToString();
+                        string quantityStringValue = row["volume"].ToString();
                         materialCode = row["Material Code"].ToString();
                         if (string.IsNullOrEmpty(description) || description.ToLower().Contains("description") || description.ToLower().Contains("total")) continue;
                         try { 
-                            closing = Math.Round(SuncorProductionFile.ParseDecimal(closingStringValue, "Closing"), 3);
+                            quantity = Math.Round(SuncorProductionFile.ParseDecimal(quantityStringValue, "Closing"), 3);
                         } catch (Exception ex) {
                             ms.Warnings.Add(new WarningMessage(MessageType.Error, tank, ex.Message));
                             continue;
                         }
 
-                        ms.AddTagBalance(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, null, null, closing, null, null, null);
+                        ms.AddInventory(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, quantity);
                     }
                 }
             }

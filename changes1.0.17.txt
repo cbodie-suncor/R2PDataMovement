@@ -1,0 +1,23 @@
+- added the 2 tables :ProductHierarchy and MaterialLedger
+- removed tank from tagBalance
+- added table InventorySnapshots to split out Inventory from TagBalance
+- added listening URL 
+- secured the following urls with an API key:
+CustodyTicket:  https://pbidevarmfncuw2001.azurewebsites.net/api/CustodyTicket
+Hierarchy:  https://pbidevarmfncuw2001.azurewebsites.net/api/Hierarchy
+Inventory:  https://pbidevarmfncuw2001.azurewebsites.net/api/Inventory
+MaterialLedger:  https://pbidevarmfncuw2001.azurewebsites.net/api/MaterialLedger
+MaterialMovement:  https://pbidevarmfncuw2001.azurewebsites.net/api/MaterialMovement
+
+- added a type column (either error or info) to transactioneventdetail
+- changed createDate --> lastUpdate in tagblance
+- added ULSD split processing for CP03 (sarnia)
+: ULSD files will reside in sap-iot-data/CP03/ulsd and not be removed
+: ULSD files can be edited in-place
+: 10 day pivot will apply to ULSD files 
+: if a Honeywell PB file is dropped in the immedateScan directory, a corresponding ulsd must exist (otherwise an error occurs)
+: if ULSD file is modified and corresponding tagBalance records exists, then the tagbalance for Shell and Suncor will be re-calced and sent to S4
+-
+
+- with errors Inventory Snapshot files, place the file in the rejected folder 
+- corrected issue with file 031021 INVENTORY (with material codes)_WP.xls (was thinking it was a production file)

@@ -1,20 +1,15 @@
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using R2PTransformation.src;
 using R2PTransformation;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Web;
-using R2PTransformation.src.db.Models;
 
 namespace STransformNUnit {
     public class GeneralTests {
@@ -51,7 +46,7 @@ Missed Heartbeats
 
         [Test]
         public void LoadTagMappings() {
-            string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappings.csv");
+            string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappings.GP01.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
             List<WarningMessage> output = AzureModel.UpdateTagMappings("GP01", tm);
             Console.WriteLine(String.Join(',', output.Select(t=>t.ToString()) ));
@@ -89,8 +84,7 @@ Missed Heartbeats
                 Plant = t.Plant,
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
-                Tank = t.Tank,
-                QuantityTimestamp = t.QuantityTimestamp,
+                QuantityTimestamp = t.LastUpdated,
                 BalanceDate = t.BalanceDate,
                 Quantity = t.Quantity,
                 StandardUnit = t.StandardUnit
@@ -107,9 +101,8 @@ Missed Heartbeats
             tb.System = "Honeywell PB";
 
             tb.Tag = "asdf";
-            tb.Created = DateTime.Now;
+            tb.LastUpdated = DateTime.Now;
             tb.BalanceDate = DateTime.Now;
-            tb.QuantityTimestamp = DateTime.Now;
             tb.CreatedBy = "cab";
             tb.StandardUnit = "BBL";
             tb.Plant = "cab";
@@ -127,8 +120,8 @@ Missed Heartbeats
             string ROOTDIR = @"..\..\..\..\sampleFiles\honeywellPB\";
             HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt", "CP01", DateTime.Now);
             pf.SaveRecords();
-            string json = pf.ExportR2PJson();
-            pf.RecordSuccess("sampleHoneyPB.xlsx", "R2PLoad");
+            string json = pf.ExportProductionJson();
+            pf.RecordSuccess("sampleHoneyPB.xlsx", "R2PLoad", 2);
         }
 
         [Test]
@@ -177,9 +170,8 @@ Missed Heartbeats
 
             tb.Tag = "asdf";
             tb.Quantity = 44;
-            tb.Created = DateTime.Now;
+            tb.LastUpdated = DateTime.Now;
             tb.BalanceDate = DateTime.Now;
-            tb.QuantityTimestamp = DateTime.Now;
             tb.CreatedBy = "cab";
             tb.StandardUnit = "BBL";
             tb.Plant = "cab";
@@ -189,7 +181,7 @@ Missed Heartbeats
             items.Add(tb);
             pf.SavedRecords = new List<TagBalance>();
             pf.SavedRecords.Add(tb);
-            var json = pf.ExportR2PJson();
+            var json = pf.ExportProductionJson();
             Console.WriteLine(json);
             MulesoftPush.PostProduction(json);
         }

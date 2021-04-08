@@ -4,7 +4,7 @@ using System.Data;
 using System.IO;
 using System.Text;
 using ExcelDataReader;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 
 namespace R2PTransformation.src {
     public class MontrealSulphurParser {

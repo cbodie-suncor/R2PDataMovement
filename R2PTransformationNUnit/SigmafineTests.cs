@@ -1,6 +1,6 @@
 using NUnit.Framework;
 using R2PTransformation.src;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System;
 using System.Data;
 using System.Globalization;
@@ -12,7 +12,9 @@ namespace STransformNUnit {
         string ROOTDIR = @"..\..\..\..\sampleFiles\CommerceCity\";
         [SetUp]
         public void Setup() {
-            DBContextWithConnectionString.SetConnectionString("");
+//            DBContextWithConnectionString.SetConnectionString("");
+            DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
+
         }
         /*  THSE TESTS ARE OBSOLETE....  WAS RELEVANT WHEN ACCESS THE SuncorReports database in denver, but decided to use the output from Crystal Reports 
         [Test]
@@ -71,7 +73,7 @@ namespace STransformNUnit {
         public void testExcelLoadEP() {
             SuncorProductionFile ms = new SigmafineParser().LoadProductionExcel(ROOTDIR + "Jan 1 2021 EP.xls", "GP01", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
-            string json = ms.ExportR2PJson();
+            string json = ms.ExportProductionJson();
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedRecords.Count > 0);
@@ -88,7 +90,7 @@ namespace STransformNUnit {
         public void testExcelLoadWP() {
             SuncorProductionFile ms = new SigmafineParser().LoadProductionExcel(ROOTDIR + "Jan 1 2021 WP.xls", "GP02", new DateTime(2021, 01, 31));
             ms.SavedRecords = ms.GetTagBalanceRecords();
-            string json = ms.ExportR2PJson();
+            string json = ms.ExportProductionJson();
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedRecords.Count > 0);
@@ -100,14 +102,30 @@ namespace STransformNUnit {
         [Test]
         public void testInventoryLoad() {
             SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(ROOTDIR + "031021 INVENTORY (with material codes).xls", "COMMERCECITY", new DateTime(2021, 03, 10));
-            ms.SavedRecords = ms.GetTagBalanceRecords();
-            string json = ms.ExportP2CJson();
+            AzureModel.SaveInventory("asb", ms, ms.Inventory);
+//            ms.SavedRecords = ms.GetTagBalanceRecords();
+            string json = ms.ExportInventory();
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
-            Assert.IsTrue(ms.SavedRecords.Count > 0);
-            Assert.AreEqual("ASPH_SOUR", ms.SavedRecords[0].Tag);
-            Assert.AreEqual("TK776", ms.SavedRecords[0].Tank);
-            Assert.AreEqual(80874.578, ms.SavedRecords[0].ClosingInventory);
+            Assert.IsTrue(ms.SavedInventoryRecords.Count > 0);
+            Assert.AreEqual("ASPH_SOUR", ms.Inventory[0].Tag);
+//            Assert.AreEqual("TK776", ms.SavedRecords[0].Tank);
+            Assert.AreEqual(80874.578, ms.Inventory[0].Quantity);
+            //            ms.SaveRecords();
+        }
+
+        [Test]
+        public void testInventoryLoad2() {
+            SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(ROOTDIR + "031021 INVENTORY (with material codes)_WP.xls", "COMMERCECITY", new DateTime(2021, 03, 10));
+            AzureModel.SaveInventory("asb", ms, ms.Inventory);
+            //            ms.SavedRecords = ms.GetTagBalanceRecords();
+            string json = ms.ExportInventory();
+            System.Console.WriteLine(json);
+            Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
+            Assert.IsTrue(ms.SavedInventoryRecords.Count > 0);
+            Assert.AreEqual("ASPH_SOUR", ms.Inventory[0].Tag);
+            //            Assert.AreEqual("TK776", ms.SavedRecords[0].Tank);
+            Assert.AreEqual(80874.578, ms.Inventory[0].Quantity);
             //            ms.SaveRecords();
         }
     }

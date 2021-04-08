@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -11,7 +11,7 @@ namespace R2PTransformation.src {
 
         public SimplePersistentController() {     }
 
-        public static int PersistHierarchy(string requestBody) {
+        public static int PersistInventory(string requestBody) {
             if (string.IsNullOrWhiteSpace(requestBody)) throw new Exception("Json is empty");
             object data = JsonConvert.DeserializeObject(requestBody);
 
@@ -21,20 +21,55 @@ namespace R2PTransformation.src {
             string batchId = batch["batchId"].ToString();
             int successfulRecords = 0;
 
-            AzureModel.RecordStats("Hierarchy", successfulRecords, requestBody);
+            AzureModel.RecordStats("Inventory", successfulRecords, requestBody);
+            return mm.Count;
+        }
+
+        public static int PersistHierarchy(string requestBody) {
+            if (string.IsNullOrWhiteSpace(requestBody)) throw new Exception("Json is empty");
+            JObject data = (JObject)JsonConvert.DeserializeObject(requestBody);
+            JArray items = (JArray)data["hierarchy"];
+            List<ProductHierarchy> mm = new List<ProductHierarchy>();
+            foreach (JObject item in items) {
+                mm.Add(new ProductHierarchy() {
+                    S4material = SuncorProductionFile.ParseInt(item, "S/4 Material"),
+                    MaterialDescription = item["Material Description"].ToString(),
+                    MaterialGroup = item["Material Group"].ToString(),
+                    MaterialGroupText = item["Material Group Text"].ToString(),
+                    ProductHierarchyLevel1Code = item["Product Hierarchy Level 1"].ToString(),
+                    ProductHierarchyLevel2Code = item["Product Hierarchy Level 2"].ToString(),
+                    ProductHierarchyLevel3Code = item["Product Hierarchy Level 3"].ToString(),
+                    ProductHierarchyLevel1Text = item["Product Hierarchy Text Level 1"].ToString(),
+                    ProductHierarchyLevel2Text = item["Product Hierarchy Text Level 2"].ToString(),
+                    ProductHierarchyLevel3Text = item["Product Hierarchy Text Level 3"].ToString(),
+                }); ;
+            }
+
+            string batchId = data["batchId"].ToString();
+            AzureModel.AddProductHierarchy(mm);
+
+            AzureModel.RecordStats("ProductHierarchy", mm.Count, requestBody);
             return mm.Count;
         }
 
         public static int PersistMaterialLedger(string requestBody) {
             if (string.IsNullOrWhiteSpace(requestBody)) throw new Exception("Json is empty");
-            object data = JsonConvert.DeserializeObject(requestBody);
+            JObject data = (JObject) JsonConvert.DeserializeObject(requestBody);
+            List<MaterialLedger> mm = new List<MaterialLedger>();
+            JArray items = (JArray)data["MaterialLedger"];
+            foreach (JObject item in items) {
+                mm.Add(new MaterialLedger() {
+                    Plant = item["Plant"].ToString(),
+                    CoCode = item["CoCode"].ToString(),
+                    PostingYear = SuncorProductionFile.ParseInt(item, "Posting Year"),
+                    //PostingPeriod = SuncorProductionFile.ParseInt(item, "Posting Period"),
+                    Status = item["Status"].ToString(),
+                    PreviousPeriodOpen = item["Previous Period Open?"].ToString(),
+                });
+            }
 
-            List<MaterialMovement> mm = new List<MaterialMovement>();
-            JObject batch = (JObject)data;
-            string batchId = batch["batchId"].ToString();
-            int successfulRecords = 0;
-
-            AzureModel.RecordStats("Hierarchy", successfulRecords, requestBody);
+            AzureModel.AddMaterialLedger(mm);
+            AzureModel.RecordStats("MaterialLedger", mm.Count, requestBody);
 
             return 0;
         }

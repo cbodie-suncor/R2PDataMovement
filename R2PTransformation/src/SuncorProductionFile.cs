@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
-using R2PTransformation.src.db;
+using Newtonsoft.Json.Linq;
+using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,22 +13,24 @@ namespace R2PTransformation.src {
         public string Plant;
         public List<WarningMessage> Warnings = new List<WarningMessage>();
         public List<TagBalance> Products { get; set; }
-
+        public List<InventorySnapshot> Inventory { get; set; }
 
         public SuncorProductionFile(string plant, string fileName) {
             BatchId = Guid.NewGuid();
             Plant = plant;
             FileName = fileName;
-            FailedRecords = new List<TagBalance>();
+            FailedRecords = 0;
             Products = new List<TagBalance>();
+            Inventory = new List<InventorySnapshot>();
         }
 
         public virtual List<TagBalance> GetTagBalanceRecords() {
             return Products;
         }
 
-        public List<TagBalance> FailedRecords;
+        public int FailedRecords;
         public List<TagBalance> SavedRecords;
+        public List<InventorySnapshot> SavedInventoryRecords;
 
         public void IsCurrentDay(DateTime currentDay) {
             if (currentDay != DateTime.Today) {
@@ -35,7 +38,7 @@ namespace R2PTransformation.src {
             }
         }
 
-        public string ExportR2PJson() {
+        public string ExportProductionJson() {
             if (this.SavedRecords == null) throw new Exception("Please call SuncorProductionFile.SaveRecords before ExportTR2PJson");
             var records = this.SavedRecords.Select(t => new {
                 Date = t.BalanceDate,
@@ -53,10 +56,10 @@ namespace R2PTransformation.src {
             var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
             return JsonConvert.SerializeObject(batch);
         }
-        public string ExportP2CJson() {
-            if (this.SavedRecords == null) throw new Exception("Please call SuncorProductionFile.SaveRecords before ExportTR2PJson");
-            var records = this.SavedRecords.Select(t => new {
-                Date = t.BalanceDate,
+        public string ExportInventory() {
+            if (this.SavedInventoryRecords == null) throw new Exception("Please call SuncorProductionFile.SaveInventory before ExportInventory");
+            var records = this.SavedInventoryRecords.Select(t => new {
+                Date = t.QuantityTimestamp,
                 Tag = t.Tag,
                 System = t.System,
                 MovementType = t.MovementType,
@@ -64,12 +67,47 @@ namespace R2PTransformation.src {
                 Plant = t.Plant,
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
-                BalanceDate = t.BalanceDate,
-                Closing = t.ClosingInventory.Value.ToString(),
+                BalanceDate = t.QuantityTimestamp,
+                Closing = t.Quantity.Value.ToString(),
                 Uom = t.StandardUnit
             });
             var batch = new { CreatedBy = "P2C", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Closing != "") };
             return JsonConvert.SerializeObject(batch);
+        }
+
+        public void AddInventory(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity) {
+            InventorySnapshot inv = new InventorySnapshot();
+            inv.MovementType = movementType;
+            inv.System = system;
+            inv.Tag = productCode;
+            inv.Plant = this.Plant;
+            inv.LastUpdated = DateTime.Now;
+            inv.QuantityTimestamp = day;
+            inv.CreatedBy = "R2PLoader";
+            TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant);
+            if (tm == null) {
+                Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "No TagMapping"));
+                this.FailedRecords++;
+                return;
+            }
+
+            inv.Confidence = 100;
+            inv.StandardUnit = tm.DefaultUnit;
+            inv.Tank = tank;
+            inv.Plant = tm.Plant;
+            inv.ValType = tm.DefaultValuationType;
+            inv.WorkCenter = tm.WorkCenter;
+            inv.Material = tm.MaterialNumber;
+            if (quantity.HasValue) inv.Quantity = Math.Round(quantity.Value, 3);
+            inv.BatchId = this.BatchId.ToString();
+
+            if (!IsDayValid(day, currentDay)) {
+                this.Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
+                this.FailedRecords++;
+            } else {
+                this.Inventory.Add(inv);
+            }
+            return;
         }
 
         public void AddTagBalance(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts, decimal? consumption) {
@@ -78,20 +116,14 @@ namespace R2PTransformation.src {
             tb.System = system;
             tb.Tag = productCode;
             tb.Plant = this.Plant;
-            tb.Created = DateTime.Now;
+            tb.LastUpdated = DateTime.Now;
             tb.BalanceDate = day;
-            tb.QuantityTimestamp = DateTime.Now;
             tb.CreatedBy = "R2PLoader";
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
                 Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "No TagMapping"));
-                this.FailedRecords.Add(tb);
+                this.FailedRecords++;
                 return;
-            }
-
-            if (movementType == "Inventory Snapshot") {
-                tb.Tank = tank;
-                tb.Confidence = 100;
             }
 
             tb.StandardUnit = tm.DefaultUnit;
@@ -109,19 +141,21 @@ namespace R2PTransformation.src {
 
             if (!IsDayValid(day, currentDay)) {
                 this.Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
-                this.FailedRecords.Add(tb);
+                this.FailedRecords++;
             } else {
                 this.Products.Add(tb);
             }
             return;
         }
 
+        /*
         public string ExportJson(string fileType) {
             if (fileType == "Inventory")
                 return ExportP2CJson();
             else
                 return ExportR2PJson();
         }
+        */
 
         private static string LogFileName = "AzureDataHub.log";
         private static string CRLF = "\r\n";
@@ -131,6 +165,13 @@ namespace R2PTransformation.src {
             AzureModel.SaveTagBalance(FileName, this, tb);
         }
 
+        public static int ParseInt(JObject item, string columnName) {
+            try {
+                return string.IsNullOrEmpty(item[columnName].ToString()) ? 0 : int.Parse(item[columnName].ToString());
+            } catch (Exception ex) {
+                throw new Exception("Invalid Number for " + columnName);
+            }
+        }
         public static decimal ParseDecimal(object v, string columnName) {
             try {
                 return string.IsNullOrEmpty(v.ToString()) ? 0 : decimal.Parse(v.ToString());
@@ -148,9 +189,9 @@ namespace R2PTransformation.src {
             }
         }
 
-        public void RecordSuccess(string fileName, string type) {
-            AzureModel.RecordStats(type, fileName, this.Warnings, this.Plant, this.SavedRecords.Count, this.FailedRecords.Count, null);
-            SuncorProductionFile.LogSuccess(fileName, this, SavedRecords.Count, FailedRecords.Count);
+        public void RecordSuccess(string fileName, string type, int successCount) {
+            AzureModel.RecordStats(type, fileName, this.Warnings, this.Plant, successCount, this.FailedRecords, null);
+            SuncorProductionFile.LogSuccess(fileName, this, successCount, FailedRecords);
         }
 
         public delegate void DelegateLogWriter(string plant, string output);

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System.Linq;
 using System.IO;
 using System.Data;
@@ -22,7 +22,7 @@ namespace R2PTransformation.src {
             }
         }
 
-        public static List<ShellSplit> LoadULSDSplits(string fileName, DateTime currentDay) {
+        public static List<ShellSplit> LoadULSDSplits(string fileName) {
             List<ShellSplit> splits = new List<ShellSplit>();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             List<String> productCodes = GetProductCodes(fileName);
@@ -90,28 +90,47 @@ namespace R2PTransformation.src {
             return products;
         }
 
-        public static void ModifyAndAddShellSplits(SuncorProductionFile pf, List<ShellSplit> splits) {
+        public static int UpdateShellSplits(List<ShellSplit> ss, DateTime currentDate) {
+            int changes = 0;
+            if (ss.Count == 0) return 0;
+            List<TagBalance> tbs = AzureModel.GetAllTagBalances().Where(t => t.Plant == "CP03" && t.BalanceDate >= ss.Min(r => r.Day) && t.BalanceDate >= ss.Max(r => r.Day)).ToList();
+            foreach (var group in tbs.GroupBy(y => y.BalanceDate)) {
+                TagBalance presplit = group.SingleOrDefault(e => e.ValType == "Presplit");
+                TagBalance shell = group.SingleOrDefault(e => e.ValType == "Shell");
+                TagBalance suncor = group.SingleOrDefault(e => e.ValType == "SUNCOR");
+                ShellSplit split = ss.SingleOrDefault(e => e.Day == group.Key);
+                if (presplit == null || shell == null || suncor == null || split == null) continue;
+                if (shell.Quantity != shell.Quantity) changes++;
+                if (suncor.Quantity != (presplit.Quantity - shell.Quantity)) changes++;
+                shell.Quantity = shell.Quantity;
+                suncor.Quantity = presplit.Quantity - shell.Quantity;
+            }
+            if (changes> 0) {
+                AzureModel.SaveTagBalance(tbs);
+                var file = new SuncorProductionFile("CP03", null);
+                file.Products = tbs;
+                file.ExportProductionJson();
+            }
+            return changes;
+        }
+
+        public static void ApplyShellSplits(SuncorProductionFile pf, List<ShellSplit> splits) {
             List<TagBalance> additionalItems = new List<TagBalance>();
-            foreach (var item in pf.Products) {
-                ShellSplit shell = splits.FirstOrDefault(t => t.Day == item.BalanceDate && t.ProductCode == item.Tag);
-                if (shell == null && splits.Where(y=>y.ProductCode == item.Tag).Count() > 0) {
-                    pf.Warnings.Add(new WarningMessage(MessageType.Error, item.Tag, "No matching ULSD record was for " + item.BalanceDate.ToString("yyyy-MM-dd")));
+            foreach (var presplit in pf.Products) {
+                ShellSplit shell = splits.FirstOrDefault(t => t.Day == presplit.BalanceDate && t.ProductCode == presplit.Tag);
+                if (shell == null && splits.Where(y=>y.ProductCode == presplit.Tag).Count() > 0) {
+                    pf.Warnings.Add(new WarningMessage(MessageType.Error, presplit.Tag, "No matching ULSD record was for " + presplit.BalanceDate.ToString("yyyy-MM-dd")));
                     continue;
                 }
 
-/*                if (shell.Volume > item.Quantity) {
-                    pf.Warnings.Add(new WarningMessage(item.Tag, "Shell split is greater than AMMDT Quantity for " + item.BalanceDate.ToString("yyyy-MM-dd")));
-                    continue;
-                }
-*/
-                TagBalance suncorTB = CloneTag(item);
-                suncorTB.ValType = item.ValType;  // Suncor valType comes from the TagMap table
-                suncorTB.Quantity = item.Quantity - shell.Volume;
+                TagBalance suncorTB = CloneTag(presplit);
+                suncorTB.ValType = presplit.ValType;  // Suncor valType comes from the TagMap table, which always should be SUNCOR
+                suncorTB.Quantity = presplit.Quantity - shell.Volume;
                 additionalItems.Add(suncorTB);
 
-                item.ValType = "Presplit";
+                presplit.ValType = "Presplit";
 
-                TagBalance shellTB = CloneTag(item);
+                TagBalance shellTB = CloneTag(presplit);
                 shellTB.ValType = "Shell";
                 shellTB.Quantity = shell.Volume;
                 additionalItems.Add(shellTB);
@@ -122,11 +141,11 @@ namespace R2PTransformation.src {
         private static TagBalance CloneTag(TagBalance item) {
             TagBalance newItem = new TagBalance(){ Tag = item.Tag,
                 System = item.System, MovementType = item.MovementType, Material = item.Material,
-                Plant = item.Plant, WorkCenter = item.WorkCenter, ValType = item.ValType, Tank = item.Tank,
-                QuantityTimestamp = item.QuantityTimestamp, BalanceDate = item.BalanceDate, Quantity = item.Quantity,
-                StandardUnit = item.StandardUnit, BatchId = item.BatchId, Created = item.Created, CreatedBy = item.CreatedBy,
+                Plant = item.Plant, WorkCenter = item.WorkCenter, ValType = item.ValType, 
+                BalanceDate = item.BalanceDate, Quantity = item.Quantity,
+                StandardUnit = item.StandardUnit, BatchId = item.BatchId, LastUpdated = item.LastUpdated, CreatedBy = item.CreatedBy,
                 OpeningInventory = item.OpeningInventory, ClosingInventory = item.ClosingInventory, Shipment = item.Shipment,
-                Consumption = item.Consumption, Receipt = item.Receipt, Confidence = item.Confidence
+                Consumption = item.Consumption, Receipt = item.Receipt
             };
             return newItem;
         }

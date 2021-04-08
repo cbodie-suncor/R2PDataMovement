@@ -4,13 +4,14 @@ using Azure.Storage.Files.Shares.Models;
 using Microsoft.Extensions.Logging;
 using R2PFunction;
 using R2PTransformation.src;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using SuncorR2P.src;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using static R2PTransformation.src.SarniaParser;
 
 namespace SuncorR2P {
     public class AzureFileHelper {
@@ -39,6 +40,7 @@ namespace SuncorR2P {
                 } catch (Exception ex) {
                     LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
                     AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
+                    foundFile.DisposeOfFile();
                 }
             }
         }
@@ -166,6 +168,18 @@ namespace SuncorR2P {
             StreamReader reader = new StreamReader(stream);
             string text = reader.ReadToEnd();
             return text;
+        }
+
+        internal static void UpdateULSDSplits(DateTime currentDay) {
+            try {
+                FoundFile ulsd = GetULSDFileForCP03(currentDay);
+                if (ulsd == null) return;
+                List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
+                int changes = SarniaParser.UpdateShellSplits(ss, currentDay);
+                AzureModel.RecordStats("Load ULSD", ulsd.AzureFileName, null, "CP03", changes, 0, null);
+            } catch (Exception ex) {
+                AzureModel.RecordFatalLoad("Load TagMap", "CP03", ex, null);
+            }
         }
 
         public static FoundFile GetULSDFileForCP03(DateTime month) {

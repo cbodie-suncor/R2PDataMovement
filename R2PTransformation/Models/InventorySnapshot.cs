@@ -7,25 +7,22 @@ using System.Collections.Generic;
 
 namespace R2PTransformation.Models
 {
-    public partial class TagBalance
+    public partial class InventorySnapshot
     {
         public string Tag { get; set; }
+        public string Tank { get; set; }
         public string System { get; set; }
         public string MovementType { get; set; }
         public string Material { get; set; }
         public string Plant { get; set; }
         public string WorkCenter { get; set; }
         public string ValType { get; set; }
-        public DateTime BalanceDate { get; set; }
+        public DateTime QuantityTimestamp { get; set; }
         public decimal? Quantity { get; set; }
         public string StandardUnit { get; set; }
         public string BatchId { get; set; }
         public string CreatedBy { get; set; }
-        public decimal? OpeningInventory { get; set; }
-        public decimal? ClosingInventory { get; set; }
-        public decimal? Shipment { get; set; }
-        public decimal? Receipt { get; set; }
-        public decimal? Consumption { get; set; }
+        public decimal? Confidence { get; set; }
         public DateTime? LastUpdated { get; set; }
 
         public virtual Batch Batch { get; set; }

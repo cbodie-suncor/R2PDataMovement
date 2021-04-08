@@ -2,12 +2,13 @@
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using R2PTransformation.src;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using Microsoft.Extensions.Primitives;
 
 namespace R2PTransformationNUnit {
     public class MaterialMovementTest {
@@ -37,12 +38,12 @@ namespace R2PTransformationNUnit {
         [Test]
         public void SimpleMaterialMovementSend() {
             HttpClient client = new HttpClient();
-            //            var byteArray = Encoding.ASCII.GetBytes(User + ":" + PW);
-            //        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
             string json = File.ReadAllText(ROOTDIR + "sample2e.json");
             var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
             var response = client.PostAsync(baseTestURL + "MaterialMovement", data);
-            //            Console.WriteLine(response.Result);
+            Console.WriteLine(response.Result);
             string output = response.Result.Content.ReadAsStringAsync().Result;
             Console.WriteLine(output);
 
@@ -55,6 +56,8 @@ namespace R2PTransformationNUnit {
             HttpClient client = new HttpClient();
             string json = File.ReadAllText(ROOTDIR + "Hierarchy.json");
             var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
             var response = client.PostAsync(baseTestURL + "Hierarchy", data);
             string output = response.Result.Content.ReadAsStringAsync().Result;
             Console.WriteLine(output);
@@ -68,6 +71,8 @@ namespace R2PTransformationNUnit {
             HttpClient client = new HttpClient();
             string json = File.ReadAllText(ROOTDIR + "MaterialLedger.json");
             var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
             var response = client.PostAsync(baseTestURL + "MaterialLedger", data);
             string output = response.Result.Content.ReadAsStringAsync().Result;
             Console.WriteLine(output);
@@ -81,6 +86,8 @@ namespace R2PTransformationNUnit {
             HttpClient client = new HttpClient();
             string json = File.ReadAllText(ROOTDIR + "CustodyTicketProdMatDoc.json");
             var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
             var response = client.PostAsync(baseTestURL + "CustodyTicket", data);
             string output = response.Result.Content.ReadAsStringAsync().Result;
             Console.WriteLine(output);

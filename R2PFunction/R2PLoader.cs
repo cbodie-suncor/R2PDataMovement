@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using R2PFunction;
 using R2PTransformation.src;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using SuncorR2P.src;
 
 namespace SuncorR2P
@@ -26,6 +26,7 @@ namespace SuncorR2P
 
                 AzureFileHelper.ProcessModifiedTagMappings(productVersion);
                 AzureFileHelper.ProcessConversions(productVersion);
+                AzureFileHelper.UpdateULSDSplits(DateTime.Now);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex); 
             }
@@ -34,8 +35,7 @@ namespace SuncorR2P
         }
 
         [FunctionName("MaterialLedger")]
-        public static async Task<IActionResult> RunMaterialLedger(
-        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
+        public static async Task<IActionResult> RunMaterialLedger([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Material Ledger request processed.");
             string requestBody = String.Empty;
@@ -54,9 +54,28 @@ namespace SuncorR2P
             return (ActionResult)new OkObjectResult($"Material Ledger processed successfully {generatedFile} records");
         }
 
+        [FunctionName("Inventory")]
+        public static async Task<IActionResult> RunInventory([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            log.LogInformation("C# HTTP trigger Inventory request processed.");
+            string requestBody = String.Empty;
+            int generatedFile = 0;
+            try {
+                FoundFile.SetConnection(log);
+                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
+                generatedFile = SimplePersistentController.PersistInventory(requestBody);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+                AzureModel.RecordFatalLoad("Inventory", null, ex, requestBody);
+                string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
+                return (ActionResult)new BadRequestErrorMessageResult($"Inventory failed." + msg);
+            }
+
+            return (ActionResult)new OkObjectResult($"Inventory processed successfully {generatedFile} records");
+        }
+
         [FunctionName("Hierarchy")]
-        public static async Task<IActionResult> RunHierarchy(
-        [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req, ILogger log) {
+        public static async Task<IActionResult> RunHierarchy([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Hierarchy request processed.");
             string requestBody = String.Empty;
@@ -85,6 +104,8 @@ namespace SuncorR2P
                 FoundFile.SetConnection(log);
                 using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync();   }
                 generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
+                LogHelper.LogSystemError(log, productVersion, "writing file to " + generatedFile.AzurePath);
+                LogHelper.LogSystemError(log, productVersion, "wcontents to " + generatedFile.Contents);
                 AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.Contents, true);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
@@ -97,7 +118,7 @@ namespace SuncorR2P
         }
 
         [FunctionName("MaterialMovement")]
-        public static async Task<IActionResult> RunMaterialMovement([HttpTrigger(AuthorizationLevel.Anonymous/*, "get", "post", Route = null*/)] HttpRequest req, ILogger log) {
+        public static async Task<IActionResult> RunMaterialMovement([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger MaterialMovement request processed.");
             string requestBody = String.Empty;

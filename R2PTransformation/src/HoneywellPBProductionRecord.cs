@@ -1,4 +1,4 @@
-﻿using R2PTransformation.src.db;
+﻿using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,7 +42,7 @@ namespace R2PTransformation.src {
                 quantity = this.GetAMMDTQuantity();
             } catch (Exception ex) {
                 SuncorProductionFile.Log(this.ProductionFile.Plant, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product);
-                this.ProductionFile.FailedRecords.Add(new TagBalance() { Tag=product, BalanceDate = balanceDate});
+                this.ProductionFile.FailedRecords++;
                 this.ProductionFile.Warnings.Add(new WarningMessage(MessageType.Error, product, "NET YIELD FAILED : " + ex.Message + " for " + balanceDate + "," + this.ProductionFile.Plant + "," + product));
                 return;
             }

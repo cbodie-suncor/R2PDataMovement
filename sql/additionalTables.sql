@@ -115,3 +115,35 @@ ALTER TABLE [dbo].[TagMap] drop constraint [PK_TagMap]
 alter table tagmap alter column tag varchar(100) not null
 ALTER TABLE [dbo].[TagMap] add constraint [PK_TagMap]  primary key (	[Tag] ASC,	[Plant] ASC)
 go
+ drop table ProductHierarchy
+ go
+ CREATE TABLE [ProductHierarchy](
+	[S4Material] [int] not NULL,
+	[MaterialDescription] [varchar](100) NULL,
+	[MaterialGroup] [varchar](50) NULL,
+	[MaterialGroupText] [varchar](100) NULL,
+	[ProductHierarchyLevel1Code] [varchar](50) NULL,
+	[ProductHierarchyLevel1Text] [varchar](100) NULL,
+	[ProductHierarchyLevel2Code] [varchar](50) NULL,
+	[ProductHierarchyLevel2Text] [varchar](100) NULL,
+	[ProductHierarchyLevel3Code] [varchar](50) NULL,
+	[ProductHierarchyLevel3Text] [varchar](100) NULL,
+	EnteredOn [datetime] NOT NULL default getdate(),
+	EnteredAt [varchar](50) NULL,
+	 CONSTRAINT [PK_ProductHierarchy] PRIMARY KEY CLUSTERED ([S4Material] asc)
+)
+GO
+
+ drop table MaterialLedger
+ go
+ 
+  CREATE TABLE [MaterialLedger](
+	[Plant] [varchar](20) not NULL,
+	[CoCode] [varchar](20) not NULL,
+	[PostingYear] int not NULL,
+	[PostingPeriod] int NULL,
+	[Status] [varchar](5) NULL,
+	[PreviousPeriodOpen] [varchar](10) NULL,
+	 CONSTRAINT [PK_MaterialLedger] PRIMARY KEY CLUSTERED (plant, CoCode)
+)
+go

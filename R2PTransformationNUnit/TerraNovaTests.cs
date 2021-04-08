@@ -1,6 +1,6 @@
 using NUnit.Framework;
 using R2PTransformation.src;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System;
 using System.Globalization;
 using System.IO;

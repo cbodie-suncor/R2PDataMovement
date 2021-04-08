@@ -4,7 +4,7 @@ using R2PFunction;
 using R2PTransformation.src;
 using System;
 using System.IO;
-using R2PTransformation.src.db;
+using R2PTransformation.Models;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using static R2PTransformation.src.SarniaParser;
@@ -29,14 +29,13 @@ namespace SuncorR2P.src {
                 DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
                 string plant = d.Parent.Name;
                 if (plant == "DENVER" || plant.ToUpper() == "COMMERCECITY") {
-                    if (AzureFullPathName.ToLower().Contains("wp")) {
+                    if (AzureFullPathName.ToLower().Contains("inventory")) {
+                        plant = "COMMERCECITY";
+                        Inventory = true;
+                    } else if (AzureFullPathName.ToLower().Contains("wp")) {
                         plant = "GP01";
                     } else if (AzureFullPathName.ToLower().Contains("ep")) {
                         plant = "GP02";
-                    } else if (AzureFullPathName.ToLower().Contains("inventory")) {
-                        plant = "COMMERCECITY";
-                        Inventory = true;
-                        return plant;
                     } else {
                         throw new Exception("Invalid file for CommerceCity " + AzureFileName);
                     }
@@ -91,8 +90,14 @@ namespace SuncorR2P.src {
                 if (this.IsSarnia) {
                     FoundFile ulsd = AzureFileHelper.GetULSDFileForCP03(day);
                     if (ulsd == null) throw new Exception("no ULSD file found for the month " + day.ToString("MMMM yyyy"));
-                    List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName, day);
-                    SarniaParser.ModifyAndAddShellSplits(this.ProducitionFile, ss);
+                    List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
+                    // optional load prior month if < day 10
+                    if (day.Day <= 10) {
+                        FoundFile ulsd2 = AzureFileHelper.GetULSDFileForCP03(day.AddMonths(-1));
+                        List<ShellSplit> ss2 = SarniaParser.LoadULSDSplits(ulsd2.TempFileName);
+                        ss.AddRange(ss2);
+                    }
+                    SarniaParser.ApplyShellSplits(this.ProducitionFile, ss);
                 }
             }
             if (this.IsMontrealSulphur)     { this.ProducitionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
@@ -101,23 +106,39 @@ namespace SuncorR2P.src {
             if (this.Inventory)             { this.ProducitionFile = new SigmafineParser().LoadInventoryExcel(this.TempFileName, this.PlantName, day);  }
             if (this.IsTerraNova)           { this.ProducitionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
             if (this.ProducitionFile != null) {
-                this.ProducitionFile.SaveRecords();
-                this.SuccessfulRecords = this.ProducitionFile.SavedRecords.Count;
-                this.FailedRecords = this.ProducitionFile.FailedRecords.Count;
-                if (this.ProducitionFile.SavedRecords.Count > 0) {
-                    string json = this.ProducitionFile.ExportJson(this.FileType);
-                    if (!MulesoftPush.PostProduction(json)) {
-                        LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
-                        this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                this.FailedRecords = this.ProducitionFile.FailedRecords;
 
+                if (this.Inventory) {
+                    AzureModel.SaveInventory(this.ProducitionFile.FileName, this.ProducitionFile, this.ProducitionFile.Inventory);
+                    this.SuccessfulRecords = this.ProducitionFile.SavedInventoryRecords.Count;
+                    if (this.ProducitionFile.SavedInventoryRecords.Count > 0) {
+                        string json = this.ProducitionFile.ExportInventory();
+                        /*
+                        if (!MulesoftPush.PostProduction(json)) {
+                            LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+                            this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                        }
+                        */
+                        AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
                     }
-                    AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
+
+                } else {
+                    this.ProducitionFile.SaveRecords();
+                    this.SuccessfulRecords = this.ProducitionFile.SavedRecords.Count;
+                    if (this.ProducitionFile.SavedRecords.Count > 0) {
+                        string json = this.ProducitionFile.ExportProductionJson();
+                        if (!MulesoftPush.PostProduction(json)) {
+                            LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+                            this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                        }
+                        AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
+                    }
                 }
             }
         }
 
         internal void RecordSuccess() {
-            ProducitionFile.RecordSuccess(this.AzureFullPathName, this.FileType);
+            ProducitionFile.RecordSuccess(this.AzureFullPathName, this.FileType, this.Inventory ? this.ProducitionFile.SavedInventoryRecords.Count : this.ProducitionFile.SavedRecords.Count);
         }
 
 
