@@ -63,8 +63,8 @@ Missed Heartbeats
         public void LoadConversions() {
             string converts = File.ReadAllText(@"..\..\..\..\sampleFiles\conversion.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(converts);
-            List<WarningMessage> output = AzureModel.UpdateConversions(tm);
-            Console.WriteLine(String.Join(',', output.Select(t => t.ToString())));
+            int changes = AzureModel.UpdateConversions(tm);
+            Console.WriteLine("update " + changes + " rows");
         }
 
         [Test]

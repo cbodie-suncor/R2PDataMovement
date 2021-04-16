@@ -1,0 +1,3 @@
+- added the tank field back to the inventory json 
+- added bulk load for conversion (to handle 100,000s of conversion rows)
+- ULSD change (adapt ULSD updates to use currentDate.CP03.txt)

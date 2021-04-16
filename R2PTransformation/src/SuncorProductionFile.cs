@@ -61,6 +61,7 @@ namespace R2PTransformation.src {
             var records = this.SavedInventoryRecords.Select(t => new {
                 Date = t.QuantityTimestamp,
                 Tag = t.Tag,
+                Tank = t.Tank,
                 System = t.System,
                 MovementType = t.MovementType,
                 Material = t.Material,
@@ -75,14 +76,14 @@ namespace R2PTransformation.src {
             return JsonConvert.SerializeObject(batch);
         }
 
-        public void AddInventory(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity) {
+        public void AddInventory(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime balanceDate, decimal? quantity) {
             InventorySnapshot inv = new InventorySnapshot();
             inv.MovementType = movementType;
             inv.System = system;
             inv.Tag = productCode;
             inv.Plant = this.Plant;
             inv.LastUpdated = DateTime.Now;
-            inv.QuantityTimestamp = day;
+            inv.QuantityTimestamp = balanceDate;
             inv.CreatedBy = "R2PLoader";
             TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant);
             if (tm == null) {
@@ -101,8 +102,8 @@ namespace R2PTransformation.src {
             if (quantity.HasValue) inv.Quantity = Math.Round(quantity.Value, 3);
             inv.BatchId = this.BatchId.ToString();
 
-            if (!IsDayValid(day, currentDay)) {
-                this.Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
+            if (!IsDayValid(balanceDate, currentDay)) {
+                this.Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "Invalid Date " + balanceDate.ToString("yyyy/MM/dd")));
                 this.FailedRecords++;
             } else {
                 this.Inventory.Add(inv);
@@ -110,14 +111,14 @@ namespace R2PTransformation.src {
             return;
         }
 
-        public void AddTagBalance(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime day, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts, decimal? consumption) {
+        public void AddTagBalance(DateTime processingDate, string movementType, string system, string productCode, string tank, DateTime balanceDate, decimal? quantity, decimal? openingInventory, decimal? closingInventory, decimal? shipments, decimal? receipts, decimal? consumption) {
             TagBalance tb = new TagBalance();
             tb.MovementType = movementType;
             tb.System = system;
             tb.Tag = productCode;
             tb.Plant = this.Plant;
             tb.LastUpdated = DateTime.Now;
-            tb.BalanceDate = day;
+            tb.BalanceDate = balanceDate;
             tb.CreatedBy = "R2PLoader";
             TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
             if (tm == null) {
@@ -139,23 +140,14 @@ namespace R2PTransformation.src {
             if (consumption.HasValue) tb.Consumption = Math.Round(consumption.Value, 3);
             tb.BatchId = this.BatchId.ToString();
 
-            if (!IsDayValid(day, currentDay)) {
-                this.Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "Invalid Date " + day.ToString("yyyy/MM/dd")));
+            if (!IsDayValid(balanceDate, processingDate)) {
+                this.Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "Invalid Date " + balanceDate.ToString("yyyy/MM/dd")));
                 this.FailedRecords++;
             } else {
                 this.Products.Add(tb);
             }
             return;
         }
-
-        /*
-        public string ExportJson(string fileType) {
-            if (fileType == "Inventory")
-                return ExportP2CJson();
-            else
-                return ExportR2PJson();
-        }
-        */
 
         private static string LogFileName = "AzureDataHub.log";
         private static string CRLF = "\r\n";
@@ -165,9 +157,9 @@ namespace R2PTransformation.src {
             AzureModel.SaveTagBalance(FileName, this, tb);
         }
 
-        public static int ParseInt(JObject item, string columnName) {
+        public static int ParseInt(Object v, string columnName) {
             try {
-                return string.IsNullOrEmpty(item[columnName].ToString()) ? 0 : int.Parse(item[columnName].ToString());
+                return string.IsNullOrEmpty(v.ToString()) ? 0 : int.Parse(v.ToString());
             } catch (Exception ex) {
                 throw new Exception("Invalid Number for " + columnName);
             }
@@ -179,13 +171,30 @@ namespace R2PTransformation.src {
                 throw new Exception("Invalid Number for " + columnName);
             }
         }
-        public static bool IsDayValid(DateTime day, DateTime currentDay) {
-            if (day.Date > currentDay.Date) return false;
-            if (currentDay.Day <= 10) {
-                DateTime firstOfPriorMonth = new DateTime(currentDay.AddMonths(-1).Year, currentDay.AddMonths(-1).Month, 1);
-                return firstOfPriorMonth <= day; // accept dates in current and prior month
+
+        public static double ParseDouble(object v, string columnName) {
+            try {
+                return string.IsNullOrEmpty(v.ToString()) ? 0 : double.Parse(v.ToString());
+            } catch (Exception ex) {
+                throw new Exception("Invalid Number for " + columnName);
+            }
+        }
+
+        public static DateTime ParseDateTime(object v, string columnName) {
+            try {
+                return DateTime.Parse(v.ToString());
+            } catch (Exception ex) {
+                throw new Exception("Invalid Date for " + columnName + ":'" + (v == null ? "" : v.ToString()) + "'");
+            }
+        }
+
+        public static bool IsDayValid(DateTime balanceDate, DateTime processingDate) {
+            if (balanceDate.Date > processingDate.Date) return false;
+            if (processingDate.Day <= 10) {
+                DateTime firstOfPriorMonth = new DateTime(processingDate.AddMonths(-1).Year, processingDate.AddMonths(-1).Month, 1);
+                return firstOfPriorMonth <= balanceDate; // accept dates in current and prior month
             } else {
-                return day.Month == currentDay.Month && day.Year == currentDay.Year; // only accept dates in month
+                return balanceDate.Month == processingDate.Month && balanceDate.Year == processingDate.Year; // only accept dates in month
             }
         }
 

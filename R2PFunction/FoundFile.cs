@@ -15,7 +15,7 @@ namespace SuncorR2P.src {
         public string TempFileName;
         public string AzureFileName;
         public string AzureFullPathName;
-        public SuncorProductionFile ProducitionFile;
+        public SuncorProductionFile ProductionFile;
         public Boolean Inventory = false;
 
         public string ParentDiectory {
@@ -82,37 +82,35 @@ namespace SuncorR2P.src {
 
         public void ProcessFile(ILogger log, string version) {
             SuncorProductionFile.SetLogFileWriter(LogHelper.WriteLogFile);
-            this.ProducitionFile = null;
-            DateTime day = GetCurrentDay(this.PlantName);
+            this.ProductionFile = null;
+            DateTime processingDate = GetCurrentDay(this.PlantName, true);
 
             if (this.IsHoneywellPB || this.IsSarnia) {
-                this.ProducitionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, day);
+                this.ProductionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, processingDate);
                 if (this.IsSarnia) {
-                    FoundFile ulsd = AzureFileHelper.GetULSDFileForCP03(day);
-                    if (ulsd == null) throw new Exception("no ULSD file found for the month " + day.ToString("MMMM yyyy"));
-                    List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
-                    // optional load prior month if < day 10
-                    if (day.Day <= 10) {
-                        FoundFile ulsd2 = AzureFileHelper.GetULSDFileForCP03(day.AddMonths(-1));
-                        List<ShellSplit> ss2 = SarniaParser.LoadULSDSplits(ulsd2.TempFileName);
-                        ss.AddRange(ss2);
+                    DateTime balancingDate = ((R2PTransformation.HoneywellPBFile)this.ProductionFile).GetAccountDate();
+
+                    if (SuncorProductionFile.IsDayValid(balancingDate, processingDate)) {
+                        FoundFile ulsd = AzureFileHelper.GetULSDFileForCP03(balancingDate);
+                        if (ulsd == null) throw new Exception("no ULSD file found for the month " + balancingDate.ToString("MMMM yyyy"));
+                        List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
+                        SarniaParser.ApplyShellSplits(this.ProductionFile, ss);
                     }
-                    SarniaParser.ApplyShellSplits(this.ProducitionFile, ss);
                 }
             }
-            if (this.IsMontrealSulphur)     { this.ProducitionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, day); }
-            if (this.IsDPS)                 { this.ProducitionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.IsDenver)              { this.ProducitionFile = new SigmafineParser().LoadProductionExcel(this.TempFileName, this.PlantName, day); }
-            if (this.Inventory)             { this.ProducitionFile = new SigmafineParser().LoadInventoryExcel(this.TempFileName, this.PlantName, day);  }
-            if (this.IsTerraNova)           { this.ProducitionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, day); }
-            if (this.ProducitionFile != null) {
-                this.FailedRecords = this.ProducitionFile.FailedRecords;
+            if (this.IsMontrealSulphur)     { this.ProductionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, processingDate); }
+            if (this.IsDPS)                 { this.ProductionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, processingDate); }
+            if (this.IsDenver)              { this.ProductionFile = new SigmafineParser().LoadProductionExcel(this.TempFileName, this.PlantName, processingDate); }
+            if (this.Inventory)             { this.ProductionFile = new SigmafineParser().LoadInventoryExcel(this.TempFileName, this.PlantName, processingDate);  }
+            if (this.IsTerraNova)           { this.ProductionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, processingDate); }
+            if (this.ProductionFile != null) {
+                this.FailedRecords = this.ProductionFile.FailedRecords;
 
                 if (this.Inventory) {
-                    AzureModel.SaveInventory(this.ProducitionFile.FileName, this.ProducitionFile, this.ProducitionFile.Inventory);
-                    this.SuccessfulRecords = this.ProducitionFile.SavedInventoryRecords.Count;
-                    if (this.ProducitionFile.SavedInventoryRecords.Count > 0) {
-                        string json = this.ProducitionFile.ExportInventory();
+                    AzureModel.SaveInventory(this.ProductionFile.FileName, this.ProductionFile, this.ProductionFile.Inventory);
+                    this.SuccessfulRecords = this.ProductionFile.SavedInventoryRecords.Count;
+                    if (this.ProductionFile.SavedInventoryRecords.Count > 0) {
+                        string json = this.ProductionFile.ExportInventory();
                         /*
                         if (!MulesoftPush.PostProduction(json)) {
                             LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
@@ -123,13 +121,13 @@ namespace SuncorR2P.src {
                     }
 
                 } else {
-                    this.ProducitionFile.SaveRecords();
-                    this.SuccessfulRecords = this.ProducitionFile.SavedRecords.Count;
-                    if (this.ProducitionFile.SavedRecords.Count > 0) {
-                        string json = this.ProducitionFile.ExportProductionJson();
+                    this.ProductionFile.SaveRecords();
+                    this.SuccessfulRecords = this.ProductionFile.SavedRecords.Count;
+                    if (this.ProductionFile.SavedRecords.Count > 0) {
+                        string json = this.ProductionFile.ExportProductionJson();
                         if (!MulesoftPush.PostProduction(json)) {
                             LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
-                            this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                            this.ProductionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
                         }
                         AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
                     }
@@ -138,9 +136,8 @@ namespace SuncorR2P.src {
         }
 
         internal void RecordSuccess() {
-            ProducitionFile.RecordSuccess(this.AzureFullPathName, this.FileType, this.Inventory ? this.ProducitionFile.SavedInventoryRecords.Count : this.ProducitionFile.SavedRecords.Count);
+            ProductionFile.RecordSuccess(this.AzureFullPathName, this.FileType, this.Inventory ? this.ProductionFile.SavedInventoryRecords.Count : this.ProductionFile.SavedRecords.Count);
         }
-
 
         internal static void SaveHearbeat(ILogger log) {
             string fileName = $"/master/heatbeat.txt";
@@ -157,7 +154,7 @@ namespace SuncorR2P.src {
                 hbHistory, false);
         }
 
-        public static DateTime GetCurrentDay(string plant) {
+        public static DateTime GetCurrentDay(string plant, Boolean cleanUpFile) {
             DateTime day = DateTime.Today;
             string parentDirectory = plant;
             if (plant == "GP01" || plant == "GP02") parentDirectory = "CommerceCity";
@@ -171,11 +168,18 @@ namespace SuncorR2P.src {
                 } catch (Exception ex) {
                     throw new Exception("Invalid Date Format for system/currentDate." + plant + ".txt");
                 }
-                // move the currentDate.txt to processed
+                if (cleanUpFile) CleanUpCurrentDateFile(plant);
+            }
+            return day;
+        }
+
+        public static void CleanUpCurrentDateFile(string plant) {
+            string fileName = plant + $"/system/currentDate.{plant}.txt";
+            string currentDateString = AzureFileHelper.ReadFile(fileName);
+            if (!String.IsNullOrEmpty(currentDateString)) {
                 AzureFileHelper.WriteFile(fileName.Replace(".txt", ".processed.txt"), currentDateString, false);
                 AzureFileHelper.DeleteFile(fileName);
             }
-            return day;
         }
 
         public static void SetConnection(ILogger log) {
@@ -197,7 +201,7 @@ namespace SuncorR2P.src {
 
             MulesoftPush.SetConnection(ProductionUrl, ProductionUser, ProductionPW, InventoryUrl, InventoryUser, InventoryPW);
         }
-
+        /*
         private static void TestConectivity(ILogger log, string cs) {
             try {
                 string aw = Utilities.GetEnvironmentVariable("AzureWebJobsStorage");
@@ -217,7 +221,7 @@ namespace SuncorR2P.src {
             AzureFileHelper.WriteFile("system/" + ".AzureDataHubS.log", cs == null ? "empty - connection" : "cs:" + cs, true);
             //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);        }
         }
-
+        */
         public FoundFile(string azureFileName, string azureFullPathName, string tempFileName) {
             this.AzureFileName = azureFileName;
             this.TempFileName = tempFileName;

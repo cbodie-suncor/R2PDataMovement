@@ -1,0 +1,2 @@
+- added the tank field back to the inventory json 
+- corrected 

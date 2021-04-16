@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using R2PTransformation.src;
 using SuncorR2P;
@@ -29,7 +31,7 @@ namespace R2PTransformation.Models {
                 batch.Filename = file;
                 context.Batch.Add(batch);
                 foreach (var item in inv) {
-                    InventorySnapshot found = context.InventorySnapshot.Find(new object[] { item.Tag, item.ValType, item.QuantityTimestamp, item.Tank,  });
+                    InventorySnapshot found = context.InventorySnapshot.Find(new object[] { item.Tag, item.ValType, item.QuantityTimestamp, item.Tank, });
                     if (found == null)
                         batch.InventorySnapshot.Add(item);
                     else
@@ -75,7 +77,7 @@ namespace R2PTransformation.Models {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 mm.ForEach(t => {
                     List<MaterialMovement> find = context.MaterialMovement.Where(f => f.MaterialDocument == t.MaterialDocument).ToList();
-                    if (find.Count() > 0) find.ForEach(t=> context.MaterialMovement.Remove(t));
+                    if (find.Count() > 0) find.ForEach(t => context.MaterialMovement.Remove(t));
                 });
 
                 context.AddRange(mm);
@@ -148,10 +150,10 @@ namespace R2PTransformation.Models {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 if (context.DoesConnectionStringExist) {
                     if (plant == "COMMERCECITY") {
-                        tm = context.TagMap.SingleOrDefault(t=>t.Tag == tag && (t.Plant == "GP01" || t.Plant == "GP02"));
-                    } else 
+                        tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && (t.Plant == "GP01" || t.Plant == "GP02"));
+                    } else
                         tm = context.TagMap.Find(new object[] { tag, plant });
-                    return tm ;
+                    return tm;
                 } else {
                     // probably for Unit Testing, so use 
                     return new TagMap() { Tag = "EP Sweet Crude Trucks", DefaultUnit = "abc", MaterialNumber = "abc", WorkCenter = "123", Plant = plant, DefaultValuationType = "asd" };
@@ -188,7 +190,7 @@ namespace R2PTransformation.Models {
                 var sourceUnitMap = context.SourceUnitMap.Find(uom);
                 if (sourceUnitMap == null) throw new Exception("cannot find UOM mapping for " + uom);
                 var foundConversion = context.Conversion.Find(sourceUnitMap.StandardUnit);
-                if (foundConversion == null) throw new Exception("cannot find UOM conversion for " + uom); 
+                if (foundConversion == null) throw new Exception("cannot find UOM conversion for " + uom);
                 quantity = quantity * foundConversion.Factor.Value;
             }
             return quantity;
@@ -261,7 +263,7 @@ namespace R2PTransformation.Models {
                     if (noMappings.Count > 0) te.Message += (te.Message.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
                 }
                 if (type == "Load TagMaps" || type == "Load Conversions") te.Message = "Load completed successfully";
-                if (te.Message == "") te.Message = "Load completed successfully"; 
+                if (te.Message == "") te.Message = "Load completed successfully";
                 context.TransactionEvent.Add(te);
                 context.SaveChanges();
             }
@@ -277,18 +279,25 @@ namespace R2PTransformation.Models {
             }
         }
 
-        public static void RecordFileFailure(string type, String plant, string fileName, int successfulRecordCount, int failedRecordCount, Exception ex) {
+        public static Boolean RecordFileFailure(string type, String plant, string fileName, int successfulRecordCount, int failedRecordCount, Exception ex) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plant, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, Message = (ex.InnerException != null ? ex.Message + ":" + ex.InnerException.Message : ex.Message) };
                 if (ex is OriginalFileLockException) {
                     // if the last message is an File Lock, do not log
                     List<TransactionEvent> lastItems = context.TransactionEvent.Where(t => t.Type == type && t.Plant == plant && t.Filename == fileName).OrderByDescending(r => r.CreateDate).ToList();
-                    if (lastItems.Count() > 0 && lastItems[0].Message.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return;
+                    if (lastItems.Count() > 0 && lastItems[0].Message.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return false;
+                }
+
+                if (ex.Message.Contains("no ULSD file found for the month")) {
+                    // if the last message is an File Lock, do not log
+                    List<TransactionEvent> lastItems = context.TransactionEvent.Where(t => t.Type == type && t.Plant == plant && t.Filename == fileName && t.Message.Contains("no ULSD file found for the month")).OrderByDescending(r => r.CreateDate).ToList();
+                    if (lastItems.Count() > 0 && lastItems[0].Message.Contains("no ULSD file found for the month") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return false;
                 }
 
                 context.TransactionEvent.Add(te);
                 context.SaveChanges();
             }
+            return true;
         }
 
         public static void RecordFatalLoad(string type, string plant, Exception ex, string extra) {
@@ -299,43 +308,61 @@ namespace R2PTransformation.Models {
                     // if the last message is an File Lock, do not log
                     List<TransactionEvent> lastItems = context.TransactionEvent.Where(t => t.Type == type).OrderByDescending(r => r.CreateDate).ToList();
                     if (lastItems.Count() > 0 && lastItems[0].Message.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return;
-                } 
+                }
                 context.TransactionEvent.Add(te);
                 context.SaveChanges();
             }
         }
 
-        public static List<WarningMessage> UpdateConversions(DataTable dt) {
-            List<WarningMessage> msgs = new List<WarningMessage>();
+        public static int UpdateConversions(DataTable dt) {
             List<Conversion> existing = null;
-            List<Conversion> toAdd = new List<Conversion>();
-            List<Conversion> toChange = new List<Conversion>();
+  
+            string cs = DBContextWithConnectionString.ConnectionString;
+            DataTable dt2 = GetDataTableFromSqlServer(cs, "select * from conversion where 1=0");
+            dt2.TableName = "conversion";
+
+            List<Conversion> csv = new List<Conversion>();
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 existing = context.Conversion.ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
-                Conversion current = ConversionFromRow(r);
-                Conversion found = existing.SingleOrDefault(t => t.Equals(current));
-                if (found == null) {
-                    toAdd.Add(current);
-                    msgs.Add(new WarningMessage(MessageType.Info, "adding " + current.ToString()));
-                } else {
-                    existing.Remove(found);
-                    if (UpdateConversionValues(found, current)) {
-                        toChange.Add(current);
-                        msgs.Add(new WarningMessage(MessageType.Info, "updated " + current.ToString()));
-                    }
+                Conversion current = null;
+                try {
+                    current = ConversionFromRow(r);
+                    csv.Add(current);
+                    dt2.Rows.Add(current.ToArray());
+                } catch (Exception ex) {
+                    throw new Exception("Invalid conversion record " + String.Join(',', r.ItemArray) + " " + ex.Message); //.Select(y => y.ToString()).ToArray().Join(","));
                 }
             }
-            existing.ForEach(t => { msgs.Add(new WarningMessage(MessageType.Info, "deleting " + t.ToString())); });
 
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                context.Conversion.RemoveRange(existing);
-                context.Conversion.AddRange(toAdd);
-                toChange.ForEach(chg => { UpdateConversionValues(context.Conversion.Single(t => t.Equals(chg)), chg); });
+                List<String> existingUnits = context.StandardUnit.Select(u => u.Name).ToList();
+                List<String> additionalStandarUnits = csv.Select(t => t.StandardUnit).Distinct().Where(y => !existingUnits.Contains(y)).ToList();
+                List<String> additionalToUnits = csv.Select(t => t.ToUnit).Distinct().Where(y => !existingUnits.Contains(y) && !additionalStandarUnits.Contains(y)).ToList();
+                context.StandardUnit.AddRange(additionalStandarUnits.Select(n => new StandardUnit() { Name = n }));
+                context.StandardUnit.AddRange(additionalToUnits.Select(n => new StandardUnit() { Name = n }));
                 context.SaveChanges();
+                context.Database.ExecuteSqlCommand("truncate table conversion");
             }
-            return msgs;
+
+            DBContextWithConnectionString.BulkLoadConversion(cs, dt2);
+            return dt2.Rows.Count;
+        }
+
+        private static Boolean UpdateConversionValues(Conversion found, Conversion current) {
+            Boolean changed = false;
+            if (found.Factor != current.Factor) { changed = true; found.Factor = current.Factor; }
+            return changed;
+        }
+
+        private static Conversion ConversionFromRow(DataRow r) {
+            Conversion tm = new Conversion();
+            tm.Material = r["Material"].ToString();
+            tm.StandardUnit = r["StandardUnit"].ToString();
+            tm.ToUnit = r["ToUnit"].ToString();
+            tm.Factor = (decimal)SuncorProductionFile.ParseDouble(r["Factor"].ToString(), "Factor");
+            return tm;
         }
 
         public static List<WarningMessage> UpdateTagMappings(string plant, DataTable dt) {
@@ -344,7 +371,7 @@ namespace R2PTransformation.Models {
             List<TagMap> toAdd = new List<TagMap>();
             List<TagMap> toChange = new List<TagMap>();
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                existingTM = context.TagMap.Where(t=>t.Plant == plant).ToList();
+                existingTM = context.TagMap.Where(t => t.Plant == plant).ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
                 TagMap current = TagMapFromRow(r);
@@ -392,22 +419,6 @@ namespace R2PTransformation.Models {
             return tm;
         }
 
-
-        private static Boolean UpdateConversionValues(Conversion found, Conversion current) {
-            Boolean changed = false;
-            if (found.Factor != current.Factor) { changed = true; found.Factor = current.Factor; }
-            return changed;
-        }
-
-        private static Conversion ConversionFromRow(DataRow r) {
-            Conversion tm = new Conversion();
-            tm.Material = r["Material"].ToString();
-            tm.StandardUnit = r["StandardUnit"].ToString();
-            tm.ToUnit = r["ToUnit"].ToString();
-            tm.Factor = SuncorProductionFile.ParseDecimal(r["Factor"].ToString(), "Factor");
-            return tm;
-        }
-
         /*
         public static void PersistSigmafinex(List<Sigmafinex> newItems) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
@@ -437,8 +448,18 @@ namespace R2PTransformation.Models {
                 return TransformRow(items);
             }
         }*/
-    }
 
+
+        public static DataTable GetDataTableFromSqlServer(String cs, string strSQL) {
+            DateTime start = DateTime.Now;
+            DbDataAdapter adapter = new SqlDataAdapter(strSQL, cs);
+            DataSet ds = new DataSet();
+            adapter.SelectCommand.CommandTimeout = 120;
+            adapter.Fill(ds);
+            return ds.Tables[0];
+        }
+    }
+    /*
     public class SigmaTransformedResult {
         public DateTime Day;
         public string Plant;
@@ -461,6 +482,20 @@ namespace R2PTransformation.Models {
             this.IsCharge = isCharge;
         }
 
-        public decimal Production {  get { return Math.Round((VolRec - VolShip + VolOpen - VolClose) * (IsCharge ? -1 : 1), 0); } }
+        public decimal Production { get { return Math.Round((VolRec - VolShip + VolOpen - VolClose) * (IsCharge ? -1 : 1), 0); } }
+    }*/
+
+    public partial class Conversion {
+        public override string ToString() {
+            return Material + "," + StandardUnit + "," + ToUnit;
+        }
+        public Object[] ToArray() {
+            Object[] newArray = new object[4];
+            newArray[0] = Material;
+            newArray[1] = StandardUnit;
+            newArray[2] = ToUnit;
+            newArray[3] = Factor;
+            return newArray;
+        }
     }
 }

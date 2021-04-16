@@ -1,10 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using R2PTransformation.Models;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Globalization;
 
 namespace R2PTransformation.src {
     public class SuncorController {
@@ -17,13 +12,6 @@ namespace R2PTransformation.src {
             value = jToken.ToString();
             if (string.IsNullOrWhiteSpace(value)) return null;
             return value.Trim();
-        }
-
-        protected static decimal? GetDecimalValue(JToken jToken) {
-            decimal? value = null;
-            if (jToken.ToString() == "") return value;
-
-            return (decimal)jToken;
         }
     }
 }

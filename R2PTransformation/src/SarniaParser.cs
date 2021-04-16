@@ -90,28 +90,28 @@ namespace R2PTransformation.src {
             return products;
         }
 
-        public static int UpdateShellSplits(List<ShellSplit> ss, DateTime currentDate) {
-            int changes = 0;
-            if (ss.Count == 0) return 0;
-            List<TagBalance> tbs = AzureModel.GetAllTagBalances().Where(t => t.Plant == "CP03" && t.BalanceDate >= ss.Min(r => r.Day) && t.BalanceDate >= ss.Max(r => r.Day)).ToList();
-            foreach (var group in tbs.GroupBy(y => y.BalanceDate)) {
+        public static SuncorProductionFile UpdateShellSplits(List<ShellSplit> ss) {
+            var pf = new SuncorProductionFile("CP03", null);
+            if (ss.Count == 0) return pf;
+            List<TagBalance> changedTBS = new List<TagBalance>();
+            List<TagBalance> tbs = AzureModel.GetAllTagBalances().Where(t => t.Plant == "CP03" && t.BalanceDate >= ss.Min(r => r.Day) && t.BalanceDate <= ss.Max(r => r.Day)).ToList();
+            foreach (var group in tbs.GroupBy(y => new { y.BalanceDate, y.Tag })) {
                 TagBalance presplit = group.SingleOrDefault(e => e.ValType == "Presplit");
                 TagBalance shell = group.SingleOrDefault(e => e.ValType == "Shell");
                 TagBalance suncor = group.SingleOrDefault(e => e.ValType == "SUNCOR");
-                ShellSplit split = ss.SingleOrDefault(e => e.Day == group.Key);
+                ShellSplit split = ss.SingleOrDefault(e => e.Day == group.Key.BalanceDate && e.ProductCode == group.Key.Tag);
                 if (presplit == null || shell == null || suncor == null || split == null) continue;
-                if (shell.Quantity != shell.Quantity) changes++;
-                if (suncor.Quantity != (presplit.Quantity - shell.Quantity)) changes++;
-                shell.Quantity = shell.Quantity;
-                suncor.Quantity = presplit.Quantity - shell.Quantity;
+                if (split.Volume != shell.Quantity) {
+                    /* changedTBS.Add(presplit); NOT SENT BY DESIGN */ changedTBS.Add(suncor); changedTBS.Add(shell);
+                    shell.Quantity = split.Volume;
+                    suncor.Quantity = presplit.Quantity - split.Volume;
+                }
             }
-            if (changes> 0) {
+            if (changedTBS .Count > 0) {
                 AzureModel.SaveTagBalance(tbs);
-                var file = new SuncorProductionFile("CP03", null);
-                file.Products = tbs;
-                file.ExportProductionJson();
+                pf.SavedRecords = changedTBS;
             }
-            return changes;
+            return pf;
         }
 
         public static void ApplyShellSplits(SuncorProductionFile pf, List<ShellSplit> splits) {

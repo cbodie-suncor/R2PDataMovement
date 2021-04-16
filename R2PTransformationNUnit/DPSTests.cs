@@ -17,7 +17,7 @@ namespace STransformNUnit {
 
         [Test]
         public void testAP01() {
-            SuncorProductionFile ms = new DPSParser().LoadFile(ROOTDIR + "Base Plant Sample_AP01.xlsx", "AP01", new DateTime(2020, 10, 25));
+            SuncorProductionFile ms = new DPSParser().LoadFile(ROOTDIR + "Base Plant Sample_AP01_V2.xlsx", "AP01", new DateTime(2020, 10, 25));
             Assert.AreEqual(9, ms.GetTagBalanceRecords().Count);
         }
 

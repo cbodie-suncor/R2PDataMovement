@@ -21,10 +21,11 @@ namespace SuncorR2P {
 
         public static void CheckForFilesToBeProcessed(string productVersion, ILogger log) {
             FoundFile foundFile = null;
+            Boolean errorState = false;
             while (true) {
                 foundFile = null;
                 try {
-                    foundFile = AzureFileHelper.ScanForANewFile();
+                    foundFile = AzureFileHelper.ScanForANewFile(errorState);
                 } catch (Exception ex) { LogHelper.LogSystemError(log, productVersion, ex); }
 
                 if (foundFile == null) break;
@@ -38,9 +39,14 @@ namespace SuncorR2P {
                     foundFile.RecordSuccess();
                     foundFile.DisposeOfFile();
                 } catch (Exception ex) {
-                    LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
-                    AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
-                    foundFile.DisposeOfFile();
+                    errorState = true;
+                    Boolean result = AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
+                    if (result) LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
+                    if (foundFile.PlantName == "CP03" && ex.Message.Contains("no ULSD file found for the month")) {  // do not delete the NPUpld file if no ULSD file 
+                        AzureFileHelper.CopyToAzureFileShare(foundFile.TempFileName, foundFile.AzureFullPathName);
+                        File.Delete(foundFile.TempFileName);
+                    } else
+                        foundFile.DisposeOfFile();
                 }
             }
         }
@@ -90,9 +96,9 @@ namespace SuncorR2P {
                 if (converionContents != null) {
                     AzureFileHelper.ArchiveFile("Load Conversions", parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
                     DataTable tm = Utilities.ConvertCSVTexttoDataTable(converionContents);
-                    List<WarningMessage> output = AzureModel.UpdateConversions(tm);
-                    LogHelper.LogMessage(null, version, "Updated the following conversions:\r\n" + String.Join(",",output));
-                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", output, null, output.Count(), 0, null);
+                    int changes = AzureModel.UpdateConversions(tm);
+                    LogHelper.LogMessage(null, version, $"Loaded {changes} conversions");
+                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", null, null, changes, 0, null);
                 } else {
                     string processed = AzureFileHelper.ReadFile(parentDirectory + "conversion.processed.csv");
                     if (processed == null) { // create a processed file if not exists
@@ -170,19 +176,37 @@ namespace SuncorR2P {
             return text;
         }
 
-        internal static void UpdateULSDSplits(DateTime currentDay) {
+        internal static bool UpdateULSDSplits(ILogger log, string version) {
+            DateTime currentDate = FoundFile.GetCurrentDay("CP03", false);
+            Boolean changes = UpdateULSDSplits(log, version, currentDate);
+            if (currentDate.Day <= 10) changes = changes || UpdateULSDSplits(log, version, currentDate.AddMonths(-1));
+            return changes;
+        }
+
+        internal static bool UpdateULSDSplits(ILogger log, string version, DateTime currentDay) {
             try {
                 FoundFile ulsd = GetULSDFileForCP03(currentDay);
-                if (ulsd == null) return;
+                if (ulsd == null) return false;
                 List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
-                int changes = SarniaParser.UpdateShellSplits(ss, currentDay);
-                AzureModel.RecordStats("Load ULSD", ulsd.AzureFileName, null, "CP03", changes, 0, null);
+                SuncorProductionFile pf = SarniaParser.UpdateShellSplits(ss);
+                if (pf.SavedRecords != null) {
+                    string json = pf.ExportProductionJson();
+                    if (!MulesoftPush.PostProduction(json)) {
+                        LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+                        pf.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                    }
+                    AzureFileHelper.WriteFile(ulsd.AzureFullPathName.Replace("ulsd", "diagnostic") + ".json", json, false);
+                    AzureModel.RecordStats("Load ULSD", ulsd.AzureFileName, null, "CP03", pf.SavedRecords.Count, 0, null);
+                    return true;
+                }
             } catch (Exception ex) {
-                AzureModel.RecordFatalLoad("Load TagMap", "CP03", ex, null);
+                AzureModel.RecordFatalLoad("Load ULSD", "CP03", ex, null);
             }
+            return false;
         }
 
         public static FoundFile GetULSDFileForCP03(DateTime month) {
+            List<MatchingFile> matchingFiles = new List<MatchingFile>();
             ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
             ShareFileItem tfile = null;
             foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
@@ -200,10 +224,18 @@ namespace SuncorR2P {
                             if (!file.IsDirectory) {
                                 if (!file.Name.Contains(month.Year.ToString())) continue;
                                 if (!file.Name.ToLower().Contains(month.ToString("MMMM").ToLower())) continue;
-                                string tempFileName = Path.GetTempFileName();
-                                DownloadFile(dir.GetFileClient(file.Name), tempFileName);
-                                return new FoundFile(/*item.Name, */file.Name, dir.Path + "/" + file.Name, tempFileName);
+                                ShareFileProperties fileProperties = dir.GetFileClient(file.Name).GetProperties();
+                                matchingFiles.Add(new MatchingFile(file.Name, fileProperties.LastModified.DateTime));
                             }
+
+                            if (matchingFiles.Count() == 0) return null;  
+
+                            // if more than 1 file matches year/month, then grab the latest (last changed)
+                            matchingFiles.OrderByDescending(t => t.LastModified);
+
+                            string tempFileName = Path.GetTempFileName();
+                            DownloadFile(dir.GetFileClient(matchingFiles[0].Filename), tempFileName);
+                            return new FoundFile(file.Name, dir.Path + "/" + file.Name, tempFileName);
                         }
                     }
                 } catch (Exception ex) {
@@ -213,7 +245,7 @@ namespace SuncorR2P {
             return null;
         }
 
-        public static FoundFile ScanForANewFile() {
+        public static FoundFile ScanForANewFile(Boolean errorState) {
             ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
             ShareFileItem tfile = null;
             foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
@@ -223,6 +255,8 @@ namespace SuncorR2P {
                     if (item.IsDirectory) {
                         var subDirectory = share.GetRootDirectoryClient().GetSubdirectoryClient(item.Name);
                         ShareDirectoryClient dir = subDirectory.GetSubdirectoryClient("immediateScan");
+                        if (errorState && dir.Path.Contains("CP03")) continue;  // this is to bypass CP03 files on error with ulsd.  this exception requires the NPxxx.txt file to stay in immediateScan without a matching ULSD file
+
                         if (!dir.Exists()) continue;
                         foreach (var file in dir.GetFilesAndDirectories()) {
                             tfile = file; 
@@ -283,4 +317,13 @@ namespace SuncorR2P {
             }
         }
     }
- }
+public class MatchingFile {
+    public MatchingFile(string filename, DateTime lastModified) {
+        Filename = filename;
+        LastModified = lastModified;
+    }
+
+    public string Filename { get; set; }
+    public DateTime LastModified { get; set; }
+}
+}

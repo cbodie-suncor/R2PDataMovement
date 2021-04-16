@@ -20,18 +20,22 @@ namespace SuncorR2P
         [FunctionName("R2PLoader")]
         public static void Run([TimerTrigger("0 */1 * * * *")] TimerInfo myTimer, ExecutionContext context, ILogger log) {  // triggering every minute
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            Boolean ULSDChanges = false;
             try {
                 FoundFile.SetConnection(log);
                 FoundFile.SaveHearbeat(log);
 
                 AzureFileHelper.ProcessModifiedTagMappings(productVersion);
                 AzureFileHelper.ProcessConversions(productVersion);
-                AzureFileHelper.UpdateULSDSplits(DateTime.Now);
+                ULSDChanges = AzureFileHelper.UpdateULSDSplits(log, productVersion);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex); 
             }
 
             AzureFileHelper.CheckForFilesToBeProcessed(productVersion, log);
+            if (ULSDChanges) {
+                FoundFile.CleanUpCurrentDateFile("CP03");
+            }
         }
 
         [FunctionName("MaterialLedger")]

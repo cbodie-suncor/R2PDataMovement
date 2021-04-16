@@ -36,6 +36,15 @@ namespace R2PTransformationNUnit {
         }
 
         [Test]
+        public void JsonTest3() {
+            //            DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
+            DBContextWithConnectionString.SetConnectionString("Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021");
+            string json = File.ReadAllText(ROOTDIR + "sample3.json");
+            new ProductionMatDocController().Persist(json);
+            Assert.True(1 == 1); ;
+        }
+
+        [Test]
         public void SimpleMaterialMovementSend() {
             HttpClient client = new HttpClient();
             string json = File.ReadAllText(ROOTDIR + "sample2e.json");

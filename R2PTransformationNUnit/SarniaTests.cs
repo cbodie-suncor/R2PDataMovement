@@ -47,7 +47,7 @@ namespace STransformNUnit {
 
         [Test]
         public void HoneywellPBLoadAndTestSplit() {
-            DateTime currentDay = new DateTime(2021, 3, 25);
+            DateTime currentDay = new DateTime(2021, 4, 04);
             HoneywellPBFile pf = new HoneywellPBParser().LoadFile(ROOTDIR + "NPUpld-20210104.txt", "CP03", currentDay);
             List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ROOTDIR + "PHD Sarnia ULSD Processing - March2021 rev2_WITH LOGIC_V2.xlsm");
             Assert.AreEqual(-102164224, pf.GetTagBalanceRecords().Single(t => t.Tag == "DIESEL").Quantity);

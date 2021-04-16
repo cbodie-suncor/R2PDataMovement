@@ -24,21 +24,21 @@ namespace R2PTransformation.src {
             foreach (var item in materialMovements) {
                 MaterialMovement sm = new MaterialMovement();
                 sm.MaterialDocument = GetStringValue(item["materialDocument"]);
-                sm.Material = (int)item["material"];
-                sm.System = GetStringValue(item["system"]);
-                sm.MovementType = GetStringValue(item["movementType"]);
+                sm.Material         = SuncorProductionFile.ParseInt(item["material"], "material");;
+                sm.System           = GetStringValue(item["system"]);
+                sm.MovementType     = GetStringValue(item["movementType"]);
                 sm.MovementTypeDesc = GetStringValue(item["movementTypeDesc"]);
-                sm.Plant = GetStringValue(item["plant"]);
-                sm.HeaderText = GetStringValue(item["headerText"]);
-                sm.PostingDate = (DateTime)item["postingDate"];
-                sm.ValuationType = GetStringValue(item["valuationType"]);
-                sm.Quantity = GetDecimalValue(item["quantity"]);
-                sm.QuantityInUoe = GetDecimalValue(item["quantityUoe"]);
-                sm.QuantityInL15 = GetDecimalValue(item["quantityL15"]);
-                sm.UnitOfEntry = GetStringValue(item["uoe"]);
-                sm.UnitOfMeasure = GetStringValue(item["uom"]);
-                sm.EnteredOn = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime) item["enteredOn"];
-                sm.EnteredAt = GetStringValue(item["enteredAt"]) == null ? "R2PLoader" : GetStringValue(item["enteredAt"]);
+                sm.Plant            = GetStringValue(item["plant"]);
+                sm.HeaderText       = GetStringValue(item["headerText"]);
+                sm.PostingDate      = SuncorProductionFile.ParseDateTime(item["postingDate"], "postingDate");
+                sm.ValuationType    = GetStringValue(item["valuationType"]);
+                sm.Quantity         = SuncorProductionFile.ParseDecimal(item["quantity"], "quantity");
+                sm.QuantityInUoe    = SuncorProductionFile.ParseDecimal(item["quantityUoe"], "quantityUoe");
+                sm.QuantityInL15    = SuncorProductionFile.ParseDecimal(item["quantityL15"], "quantityL15");
+                sm.UnitOfEntry      = GetStringValue(item["uoe"]);
+                sm.UnitOfMeasure    = GetStringValue(item["uom"]);
+                sm.EnteredOn        = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime) item["enteredOn"];
+                sm.EnteredAt        = GetStringValue(item["enteredAt"]) == null ? "R2PLoader" : GetStringValue(item["enteredAt"]);
                 TagMap tm = AzureModel.ReverseLookupTag(sm.Material.Value, sm.Plant);
                 if (tm == null) {
                     Warnings.Add(new WarningMessage(MessageType.Info, sm.Material.ToString(), "No TagMapping"));

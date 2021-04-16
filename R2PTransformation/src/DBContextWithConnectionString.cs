@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace R2PTransformation.Models {
@@ -17,12 +18,29 @@ namespace R2PTransformation.Models {
 
         public Boolean DoesConnectionStringExist { get { return !string.IsNullOrEmpty(ConnectionString); } }
 
-        private static string ConnectionString { get; set; }
+        public static string ConnectionString { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             if (!optionsBuilder.IsConfigured && !String.IsNullOrEmpty(ConnectionString)) {
                 optionsBuilder.UseSqlServer(ConnectionString);
             }
+        }
+
+        public static void BulkLoadConversion(string cs, DataTable dt) {
+            if (dt == null) { throw new ArgumentNullException(nameof(dt)); }
+
+            using (var connection = new SqlConnection(cs)) {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction()) {
+                    using (var sqlBulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.TableLock, transaction)) {
+                        sqlBulkCopy.DestinationTableName = dt.TableName;
+                        sqlBulkCopy.BatchSize = 10000;
+                        sqlBulkCopy.WriteToServer(dt);
+                    }
+                    transaction.Commit();
+                }
+            }
+            return;
         }
     }
 }

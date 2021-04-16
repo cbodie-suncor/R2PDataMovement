@@ -32,7 +32,7 @@ namespace R2PTransformation.src {
             List<ProductHierarchy> mm = new List<ProductHierarchy>();
             foreach (JObject item in items) {
                 mm.Add(new ProductHierarchy() {
-                    S4material = SuncorProductionFile.ParseInt(item, "S/4 Material"),
+                    S4material = SuncorProductionFile.ParseInt(item["S/4 Material"], "S/4 Material"),
                     MaterialDescription = item["Material Description"].ToString(),
                     MaterialGroup = item["Material Group"].ToString(),
                     MaterialGroupText = item["Material Group Text"].ToString(),
