@@ -38,7 +38,43 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
             string batchId = batch["batchId"].ToString();
             JArray custodyTickets = (JArray)batch["CustodyTicket"];
             foreach (var item in custodyTickets) {
-                CustodyTicket ct = new CustodyTicket();
+                CustodyTicket ct = new CustodyTicket() {
+                    /*
+                    S4MaterialDocument = item["materialDocument"].ToString(),
+                    //version = item["version"].ToString(),
+                    //batchId = item["batchId"].ToString(),
+                    BolNumber = item["bolNumber"].ToString(),
+                    meterial = item["meterial"].ToString(),
+                    movementTypeDesc = item["movementTypeDesc"].ToString(),
+                    Sign = item["sign"].ToString(),
+                    GrossQuantitySize = item["grossQuantitySize"].ToString(),
+                    NetQuantitySize = item["netQuantitySize"].ToString(),
+                    mass = item["mass"].ToString(),
+                    baseUom = item["baseUom"].ToString(),
+                    ValuationType = item["valuationType"].ToString(),
+                    Density = item["density"].ToString(),
+                    densityUOM = item["densityUOM"].ToString(),
+                    origin = item["origin"].ToString(),
+                    destination = item["destination"].ToString(),
+                    plant = item["plant"].ToString(),
+                    temperature = item["temperature"].ToString(),
+                    temperatureUom = item["temperatureUom"].ToString(),
+                    movementType = item["movementType"].ToString(),
+                    mode = item["mode"].ToString(),
+                    ship = item["ship"].ToString(),
+                    railCar = item["railCar"].ToString(),
+                    tender = item["tender"].ToString(),
+                    transportationDetails = item["transportationDetails"].ToString(),
+                    loadStartDate = item["loadStartDate"].ToString(),
+                    loadStartTime = item["loadStartTime"].ToString(),
+                    loadEndDate = item["loadEndDate"].ToString(),
+                    loadEndTime = item["loadEndTime"].ToString(),
+                    enteredOnDate = item["enteredOnDate"].ToString(),
+                    enteredOnTime = item["enteredOnTime"].ToString(),
+                    documentDate = item["documentDate"].ToString(),
+                    postingDateTime = item["postingDateTime"].ToString(),
+                    */
+                };
                 tickets.Add(ct);
             }
             return file;

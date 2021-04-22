@@ -118,7 +118,7 @@ go
  drop table ProductHierarchy
  go
  CREATE TABLE [ProductHierarchy](
-	[S4Material] [int] not NULL,
+	[S4Material] [varchar](50) not NULL,
 	[MaterialDescription] [varchar](100) NULL,
 	[MaterialGroup] [varchar](50) NULL,
 	[MaterialGroupText] [varchar](100) NULL,

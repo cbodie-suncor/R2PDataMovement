@@ -12,7 +12,7 @@ namespace R2PTransformation.Models {
     public class AzureModel {
         // The DBContext is created by EF, run the following command to rebuild
         // run from the Package Manager Console, cd C:\suncor\R2PDataMovement\R2PTransformation 1st 
-        // dotnet ef dbcontext scaffold "Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020" Microsoft.EntityFrameworkCore.SqlServer -o Model -c "AzureContext" --no-build --force
+        // dotnet ef dbcontext scaffold "Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020" Microsoft.EntityFrameworkCore.SqlServer -o Models -c "AzureContext" --no-build --force
 
         public static List<TagBalance> GetAllTagBalances() {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
@@ -175,22 +175,20 @@ namespace R2PTransformation.Models {
             }
         }
 
-        internal static decimal ConvertQuantityToStandardUnit(string uom, decimal quantity) {
+        internal static decimal ConvertQuantityToStandardUnit(string fromUom, string toUom, string material,  decimal quantity) {
             // if alread a StandarUnit, then no need to convert
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 if (!context.DoesConnectionStringExist) {
                     // probably for Unit Testing, so use
                     return quantity;
                 }
+                if (fromUom == toUom) return quantity;
+                
+                var found = context.StandardUnit.Find(fromUom); if (found == null) throw new Exception("cannot find UOM for " + fromUom);
+                    found = context.StandardUnit.Find(toUom); if (found == null) throw new Exception("cannot find UOM for " + toUom);
 
-                var found = context.StandardUnit.Find(uom);
-                if (found != null) return quantity;
-
-                // not found, so convert
-                var sourceUnitMap = context.SourceUnitMap.Find(uom);
-                if (sourceUnitMap == null) throw new Exception("cannot find UOM mapping for " + uom);
-                var foundConversion = context.Conversion.Find(sourceUnitMap.StandardUnit);
-                if (foundConversion == null) throw new Exception("cannot find UOM conversion for " + uom);
+                var foundConversion = context.Conversion.SingleOrDefault(c=>c.StandardUnit == fromUom && c.ToUnit == toUom && c.Material == material);
+                if (foundConversion == null) throw new Exception("cannot find UOM conversion for " + fromUom + "," + toUom + "," + material);
                 quantity = quantity * foundConversion.Factor.Value;
             }
             return quantity;
@@ -202,7 +200,7 @@ namespace R2PTransformation.Models {
                 cons = context.Conversion.ToList();
             }
             string converionContents = "Material,StandardUnit,ToUnit,Factor\r\n";
-            List<string> line = cons.Select(t => (t.Material == null ? "" : t.Material.Trim()) + "," + t.StandardUnit.Trim() + "," + t.ToUnit.Trim() + "," + t.Factor.Value.ToString().Trim()).ToList();
+            List<string> line = cons.Where(y=>y.StandardUnit != y.ToUnit).Select(t => (t.Material == null ? "" : t.Material.Trim()) + "," + t.StandardUnit.Trim() + "," + t.ToUnit.Trim() + "," + t.Factor.Value.ToString().Trim()).ToList();
             converionContents += string.Join("\r\n", line);
             return converionContents;
         }

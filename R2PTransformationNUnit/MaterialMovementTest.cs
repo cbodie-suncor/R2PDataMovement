@@ -106,6 +106,21 @@ namespace R2PTransformationNUnit {
         }
 
         [Test]
+        public void SimpleCustodyTicket2() {
+            HttpClient client = new HttpClient();
+            string json = File.ReadAllText(ROOTDIR + "CustodyTicket2.json");
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
+            var response = client.PostAsync(baseTestURL + "CustodyTicket", data);
+            string output = response.Result.Content.ReadAsStringAsync().Result;
+            Console.WriteLine(output);
+
+            if (response.Result.StatusCode.ToString() != "OK")
+                throw new Exception("CustodyTicket push failed : " + response.Result.ToString());
+        }
+
+        [Test]
         public void GenerateCustodyTicket() {
             HttpClient client = new HttpClient();
             string json = File.ReadAllText(ROOTDIR + "CustodyTicketProdMatDoc.json");

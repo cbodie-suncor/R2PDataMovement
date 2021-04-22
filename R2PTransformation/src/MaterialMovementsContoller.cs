@@ -39,6 +39,7 @@ namespace R2PTransformation.src {
                 sm.UnitOfMeasure    = GetStringValue(item["uom"]);
                 sm.EnteredOn        = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime) item["enteredOn"];
                 sm.EnteredAt        = GetStringValue(item["enteredAt"]) == null ? "R2PLoader" : GetStringValue(item["enteredAt"]);
+                /*
                 TagMap tm = AzureModel.ReverseLookupTag(sm.Material.Value, sm.Plant);
                 if (tm == null) {
                     Warnings.Add(new WarningMessage(MessageType.Info, sm.Material.ToString(), "No TagMapping"));
@@ -46,6 +47,8 @@ namespace R2PTransformation.src {
                     sm.Tag = tm.Tag;
                     mm.Add(sm);
                 }
+                */
+                mm.Add(sm);
             }
             AzureModel.AddMaterialMovements(mm);
             string plant = mm.Count > 0 ? mm[0].Plant : null;

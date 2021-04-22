@@ -32,7 +32,7 @@ namespace R2PTransformation.src {
             List<ProductHierarchy> mm = new List<ProductHierarchy>();
             foreach (JObject item in items) {
                 mm.Add(new ProductHierarchy() {
-                    S4material = SuncorProductionFile.ParseInt(item["S/4 Material"], "S/4 Material"),
+                    S4material = item["S/4 Material"].ToString(),
                     MaterialDescription = item["Material Description"].ToString(),
                     MaterialGroup = item["Material Group"].ToString(),
                     MaterialGroupText = item["Material Group Text"].ToString(),
@@ -61,8 +61,8 @@ namespace R2PTransformation.src {
                 mm.Add(new MaterialLedger() {
                     Plant = item["Plant"].ToString(),
                     CoCode = item["CoCode"].ToString(),
-                    PostingYear = SuncorProductionFile.ParseInt(item, "Posting Year"),
-                    //PostingPeriod = SuncorProductionFile.ParseInt(item, "Posting Period"),
+                    PostingYear = SuncorProductionFile.ParseInt(item["Posting Year"], "Posting Year"),
+                    PostingPeriod = SuncorProductionFile.ParseInt(item["Posting Period"], "Posting Period"),
                     Status = item["Status"].ToString(),
                     PreviousPeriodOpen = item["Previous Period Open?"].ToString(),
                 });

@@ -1,0 +1,14 @@
+{    "batchId": "98347512-0c9e-47f5-9123-b9266218404b",
+    "MaterialLedger": [     
+	{	
+	        "plant": "Plant01",
+            "companyCode": "Company Code",
+            "currentPostingPeriod": "01",
+            "currentPostingYear": "2021",
+            "previousPeriodOpen": ""        },        
+	{       "plant": "Plant02",
+            "companyCode": "Company Code",
+            "currentPostingPeriod": "01",
+            "currentPostingYear": "2021",
+            "previousPeriodOpen": ""        }    
+	]}

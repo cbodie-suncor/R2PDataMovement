@@ -43,6 +43,8 @@ namespace R2PTransformation.src {
                     day = DateTime.FromOADate((double)row["transaction date"]);
                 }
                 if (day == null) continue;
+                string toUnit = uom;
+                string material = null;
 
                 decimal production = 0, opening = 0, closing = 0, shipments = 0, receipts = 0;
                 try {
@@ -52,11 +54,14 @@ namespace R2PTransformation.src {
                     opening = SuncorProductionFile.ParseDecimal(row["Beginning Inventory"].ToString(), "Beginning Inventory");
                     closing = SuncorProductionFile.ParseDecimal(row["Ending Inventory"].ToString(), "Ending Inventory");
 
-                    production = AzureModel.ConvertQuantityToStandardUnit(uom, production);
-                    receipts = AzureModel.ConvertQuantityToStandardUnit(uom, receipts);
-                    shipments = AzureModel.ConvertQuantityToStandardUnit(uom, shipments);
-                    opening = AzureModel.ConvertQuantityToStandardUnit(uom, opening);
-                    closing = AzureModel.ConvertQuantityToStandardUnit(uom, closing);
+                    TagMap tm = AzureModel.LookupTag(productionCode, ms.Plant);
+                    if (tm != null) toUnit = tm.DefaultUnit;
+
+                    production = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, production);
+                    receipts = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, receipts);
+                    shipments = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, shipments);
+                    opening = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, opening);
+                    closing = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, closing);
                 } catch (Exception ex) {
                     ms.Warnings.Add(new WarningMessage(MessageType.Error, productionCode, ex.Message));
                     continue;

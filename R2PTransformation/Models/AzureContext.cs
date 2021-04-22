@@ -403,7 +403,8 @@ namespace R2PTransformation.Models
 
                 entity.Property(e => e.S4material)
                     .HasColumnName("S4Material")
-                    .ValueGeneratedNever();
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.EnteredAt)
                     .HasMaxLength(50)

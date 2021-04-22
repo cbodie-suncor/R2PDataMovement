@@ -9,7 +9,7 @@ namespace R2PTransformation.Models
 {
     public partial class ProductHierarchy
     {
-        public int S4material { get; set; }
+        public string S4material { get; set; }
         public string MaterialDescription { get; set; }
         public string MaterialGroup { get; set; }
         public string MaterialGroupText { get; set; }

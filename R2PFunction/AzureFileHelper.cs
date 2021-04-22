@@ -93,22 +93,18 @@ namespace SuncorR2P {
             string converionContents = null;
             try {
                 converionContents = AzureFileHelper.ReadFile(parentDirectory + "conversion.csv");
-                if (converionContents != null) {
-                    AzureFileHelper.ArchiveFile("Load Conversions", parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
-                    DataTable tm = Utilities.ConvertCSVTexttoDataTable(converionContents);
-                    int changes = AzureModel.UpdateConversions(tm);
-                    LogHelper.LogMessage(null, version, $"Loaded {changes} conversions");
-                    AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", null, null, changes, 0, null);
-                } else {
-                    string processed = AzureFileHelper.ReadFile(parentDirectory + "conversion.processed.csv");
-                    if (processed == null) { // create a processed file if not exists
-                        AzureFileHelper.WriteFile(parentDirectory + "conversion.processed.csv", AzureModel.GetCurrentConversionsCSV(), false);
-                    }
-                }
+
+                AzureFileHelper.ArchiveFile(parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
+                DataTable tm = Utilities.ConvertCSVTexttoDataTable(converionContents);
+                int changes = AzureModel.UpdateConversions(tm);
+                LogHelper.LogMessage(null, version, $"Loaded {changes} conversions");
+                AzureModel.RecordStats("Load Conversions", parentDirectory + "conversion.csv", null, null, changes, 0, null);
+
+                AzureFileHelper.WriteFile(parentDirectory + "conversion.processed.csv", AzureModel.GetCurrentConversionsCSV(), false);
             } catch (Exception ex) {
                 try {
                     AzureModel.RecordFatalLoad("Load Conversions", null, ex, converionContents);
-                    AzureFileHelper.ArchiveFile("Load Conversions", parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
+                    AzureFileHelper.ArchiveFile(parentDirectory + "conversion.csv", converionContents, parentDirectory + "conversion.processed.csv");
                 } catch (Exception Ignore) { }
             }
         }
@@ -122,7 +118,7 @@ namespace SuncorR2P {
             try {
                 tagContents = AzureFileHelper.ReadFile(parentDirectory + tagMappingFile + suffix);
                 if (tagContents != null) {
-                    AzureFileHelper.ArchiveFile("Load TagMaps", parentDirectory + tagMappingFile + suffix, tagContents, parentDirectory + tagMappingFileProcessed + suffix);
+                    AzureFileHelper.ArchiveFile(parentDirectory + tagMappingFile + suffix, tagContents, parentDirectory + tagMappingFileProcessed + suffix);
 
                     DataTable tm = Utilities.ConvertCSVTexttoDataTable(tagContents);
                     List<WarningMessage> output = AzureModel.UpdateTagMappings(plant, tm);
@@ -148,7 +144,7 @@ namespace SuncorR2P {
             }
         }
 
-        private static void ArchiveFile(string type, string originalPath, string contents, string archivedFileAndPath) {
+        private static void ArchiveFile(string originalPath, string contents, string archivedFileAndPath) {
             try {
                 AzureFileHelper.DeleteFile(originalPath);
             } catch (Exception ex) {
@@ -276,7 +272,7 @@ namespace SuncorR2P {
 
         public static void DeleteFile(string fullPath) {
             ShareFileClient share = new ShareFileClient(CONNECTIONSTRING, SHARENAME, fullPath);
-            share.Delete();
+            share.DeleteIfExists();
         }
 
         public static string ReadFile(string azurePath) {

@@ -27,8 +27,20 @@ namespace STransformNUnit {
         }
 
         [Test]
+        public void SimpleHierarchy2() {
+            string json = File.ReadAllText(ROOTDIR + "Hierarchy2.json");
+            SimplePersistentController.PersistHierarchy(json);
+        }
+
+        [Test]
         public void SimpleMaterialLedger() {
             string json = File.ReadAllText(ROOTDIR + "MaterialLedger.json");
+            SimplePersistentController.PersistMaterialLedger(json);
+        }
+
+        [Test]
+        public void SimpleMaterialLedger3() {
+            string json = File.ReadAllText(ROOTDIR + "MaterialLedger2.json");
             SimplePersistentController.PersistMaterialLedger(json);
         }
 

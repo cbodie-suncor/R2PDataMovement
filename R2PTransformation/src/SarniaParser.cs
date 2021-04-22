@@ -123,14 +123,14 @@ namespace R2PTransformation.src {
                     continue;
                 }
 
-                TagBalance suncorTB = CloneTag(presplit);
+                TagBalance suncorTB = CloneTagForULSD(presplit);
                 suncorTB.ValType = presplit.ValType;  // Suncor valType comes from the TagMap table, which always should be SUNCOR
                 suncorTB.Quantity = presplit.Quantity - shell.Volume;
                 additionalItems.Add(suncorTB);
 
                 presplit.ValType = "Presplit";
 
-                TagBalance shellTB = CloneTag(presplit);
+                TagBalance shellTB = CloneTagForULSD(presplit);
                 shellTB.ValType = "Shell";
                 shellTB.Quantity = shell.Volume;
                 additionalItems.Add(shellTB);
@@ -138,14 +138,13 @@ namespace R2PTransformation.src {
             pf.Products.AddRange(additionalItems);
         }
 
-        private static TagBalance CloneTag(TagBalance item) {
+        private static TagBalance CloneTagForULSD(TagBalance item) {
             TagBalance newItem = new TagBalance(){ Tag = item.Tag,
                 System = item.System, MovementType = item.MovementType, Material = item.Material,
                 Plant = item.Plant, WorkCenter = item.WorkCenter, ValType = item.ValType, 
                 BalanceDate = item.BalanceDate, Quantity = item.Quantity,
                 StandardUnit = item.StandardUnit, BatchId = item.BatchId, LastUpdated = item.LastUpdated, CreatedBy = item.CreatedBy,
-                OpeningInventory = item.OpeningInventory, ClosingInventory = item.ClosingInventory, Shipment = item.Shipment,
-                Consumption = item.Consumption, Receipt = item.Receipt
+                OpeningInventory = null, ClosingInventory = null, Shipment = null, Consumption = null, Receipt = null
             };
             return newItem;
         }
