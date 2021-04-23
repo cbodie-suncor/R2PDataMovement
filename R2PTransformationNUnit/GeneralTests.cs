@@ -48,14 +48,14 @@ Missed Heartbeats
         public void LoadTagMappings() {
             string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappings.GP01.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-            List<WarningMessage> output = AzureModel.UpdateTagMappings("GP01", tm);
+            List<WarningMessage> output = AzureModel.UpdateTagMappings("GP01", tm, "Prod");
             Console.WriteLine(String.Join(',', output.Select(t=>t.ToString()) ));
         }
         [Test]
         public void AddingSigmaTagMappings() {
             string tags = File.ReadAllText(@"..\..\..\..\sampleFiles\tagMappingsWithSigma.csv");
             DataTable tm = Utilities.ConvertCSVTexttoDataTable(tags);
-            List<WarningMessage> output = AzureModel.UpdateTagMappings("GP01", tm);
+            List<WarningMessage> output = AzureModel.UpdateTagMappings("GP01", tm, "Prod");
             Console.WriteLine(String.Join(',', output.Select(t => t.ToString())));
         }
 

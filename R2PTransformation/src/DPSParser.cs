@@ -54,7 +54,7 @@ namespace R2PTransformation.src {
                     opening = SuncorProductionFile.ParseDecimal(row["Beginning Inventory"].ToString(), "Beginning Inventory");
                     closing = SuncorProductionFile.ParseDecimal(row["Ending Inventory"].ToString(), "Ending Inventory");
 
-                    TagMap tm = AzureModel.LookupTag(productionCode, ms.Plant);
+                    TagMap tm = AzureModel.LookupTag(productionCode, ms.Plant, "Prod");
                     if (tm != null) toUnit = tm.DefaultUnit;
 
                     production = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, production);

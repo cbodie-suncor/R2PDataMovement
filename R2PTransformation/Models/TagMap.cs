@@ -15,6 +15,7 @@ namespace R2PTransformation.Models
         public string MaterialNumber { get; set; }
         public string DefaultValuationType { get; set; }
         public string DefaultUnit { get; set; }
+        public string Type { get; set; }
 
         public virtual StandardUnit DefaultUnitNavigation { get; set; }
     }

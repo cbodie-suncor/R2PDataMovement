@@ -53,7 +53,7 @@ namespace R2PTransformation.src {
                 Quantity = t.Quantity.Value.ToString(),
                 Uom = t.StandardUnit
             });
-            var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
+            var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "" && t.ValType != "Presplit") };
             return JsonConvert.SerializeObject(batch);
         }
         public string ExportInventory() {
@@ -85,7 +85,7 @@ namespace R2PTransformation.src {
             inv.LastUpdated = DateTime.Now;
             inv.QuantityTimestamp = balanceDate;
             inv.CreatedBy = "R2PLoader";
-            TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant);
+            TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant, "Inv");
             if (tm == null) {
                 Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "No TagMapping"));
                 this.FailedRecords++;
@@ -120,7 +120,7 @@ namespace R2PTransformation.src {
             tb.LastUpdated = DateTime.Now;
             tb.BalanceDate = balanceDate;
             tb.CreatedBy = "R2PLoader";
-            TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant);
+            TagMap tm = AzureModel.LookupTag(tb.Tag, tb.Plant, "Prod");
             if (tm == null) {
                 Warnings.Add(new WarningMessage(MessageType.Error, tb.Tag, "No TagMapping"));
                 this.FailedRecords++;

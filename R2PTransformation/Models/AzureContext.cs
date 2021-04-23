@@ -588,6 +588,11 @@ namespace R2PTransformation.Models
                     .HasMaxLength(20)
                     .IsUnicode(false);
 
+                entity.Property(e => e.Type)
+                    .HasColumnName("type")
+                    .HasMaxLength(15)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.WorkCenter)
                     .IsRequired()
                     .HasMaxLength(10)

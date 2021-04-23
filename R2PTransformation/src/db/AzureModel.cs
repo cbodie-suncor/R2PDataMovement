@@ -31,7 +31,7 @@ namespace R2PTransformation.Models {
                 batch.Filename = file;
                 context.Batch.Add(batch);
                 foreach (var item in inv) {
-                    InventorySnapshot found = context.InventorySnapshot.Find(new object[] { item.Tag, item.ValType, item.QuantityTimestamp, item.Tank, });
+                    InventorySnapshot found = context.InventorySnapshot.SingleOrDefault(t => t.Tag == item.Tag && t.QuantityTimestamp == item.QuantityTimestamp && t.ValType == item.ValType && t.Tank == item.Tank);
                     if (found == null)
                         batch.InventorySnapshot.Add(item);
                     else
@@ -145,14 +145,15 @@ namespace R2PTransformation.Models {
             }
         }
 
-        internal static TagMap LookupTag(string tag, string plant) {
+        internal static TagMap LookupTag(string tag, string plant, string type) {
             TagMap tm = null;
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 if (context.DoesConnectionStringExist) {
                     if (plant == "COMMERCECITY") {
-                        tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && (t.Plant == "GP01" || t.Plant == "GP02"));
-                    } else
-                        tm = context.TagMap.Find(new object[] { tag, plant });
+                        tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && (t.Plant == "GP01" || t.Plant == "GP02") && t.Type == type);
+                    } else {
+                        tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && t.Plant == plant && t.Type == type);
+                    }
                     return tm;
                 } else {
                     // probably for Unit Testing, so use 
@@ -164,15 +165,17 @@ namespace R2PTransformation.Models {
                     tm.Tag = tag;
                     tm.Plant = plant;
                     tm.DefaultValuationType = "SUNCOR";
-                    tm.StandardUnit = context.StandardUnits.ToArray()[0];
-                    tm.DefaultUnit = context.StandardUnits.ToArray()[0].Name;
+                    tm.DefaultUnit = "BBL";
                     tm.MaterialNumber = "999";
                     tm.WorkCenter = "123";
-                    context.TagMaps.Add(tm);
+                    tm.Type = type;
+                    context.TagMap.Add(tm);
                     context.SaveChanges();
-                }
-                */
+                }*/
+                
             }
+            return tm;
+
         }
 
         internal static decimal ConvertQuantityToStandardUnit(string fromUom, string toUom, string material,  decimal quantity) {
@@ -205,10 +208,10 @@ namespace R2PTransformation.Models {
             return converionContents;
         }
 
-        public static string GetCurrentTagMapsCSV(string plant) {
+        public static string GetCurrentTagMapsCSV(string plant, string type) {
             List<TagMap> tags = null;
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                tags = context.TagMap.Where(t => t.Plant == plant).ToList();
+                tags = context.TagMap.Where(t => t.Plant == plant && t.Type == type).ToList();
             }
             string tagContents = "Tag,Plant,WorkCenter,MaterialNumber,DefaultValuationType,DefaultUnit\r\n";
             List<string> line = tags.Select(t => t.Tag.Trim() + "," + t.Plant.Trim() + "," + t.WorkCenter.Trim() + "," + t.MaterialNumber.Trim() + "," + t.DefaultValuationType.Trim() + "," + t.DefaultUnit.Trim()).ToList();
@@ -363,7 +366,7 @@ namespace R2PTransformation.Models {
             return tm;
         }
 
-        public static List<WarningMessage> UpdateTagMappings(string plant, DataTable dt) {
+        public static List<WarningMessage> UpdateTagMappings(string plant, DataTable dt, string type) {
             List<WarningMessage> msgs = new List<WarningMessage>();
             List<TagMap> existingTM = null;
             List<TagMap> toAdd = new List<TagMap>();
@@ -372,9 +375,9 @@ namespace R2PTransformation.Models {
                 existingTM = context.TagMap.Where(t => t.Plant == plant).ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
-                TagMap current = TagMapFromRow(r);
+                TagMap current = TagMapFromRow(r, type);
                 if (current.Plant != plant) continue;  // ignore other plant tags 
-                TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag);
+                TagMap found = existingTM.SingleOrDefault(t => t.Plant == current.Plant && t.Tag == current.Tag && current.Type == t.Type);
                 if (found == null) {
                     toAdd.Add(current);
                     msgs.Add(new WarningMessage(MessageType.Info, "adding " + current.Tag));
@@ -406,7 +409,7 @@ namespace R2PTransformation.Models {
             return changed;
         }
 
-        public static TagMap TagMapFromRow(DataRow r) {
+        public static TagMap TagMapFromRow(DataRow r, string type) {
             TagMap tm = new TagMap();
             tm.Tag = r["tag"].ToString();
             tm.Plant = r["Plant"].ToString();
@@ -414,39 +417,9 @@ namespace R2PTransformation.Models {
             tm.MaterialNumber = r["MaterialNumber"].ToString();
             tm.DefaultValuationType = r["DefaultValuationType"].ToString();
             tm.DefaultUnit = r["DefaultUnit"].ToString();
+            tm.Type = type;
             return tm;
         }
-
-        /*
-        public static void PersistSigmafinex(List<Sigmafinex> newItems) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                context.Sigmafinexes.RemoveRange(context.Sigmafinexes);
-                context.Sigmafinexes.AddRange(newItems);
-                context.SaveChanges();
-            }
-        }
-
-        public static List<Sigmafinex> TransformToSigmafinex(DataTable dt) {
-            List<Sigmafinex> records = new List<Sigmafinex>();
-            foreach (var row in dt.AsEnumerable()) {
-                records.Add(SigmafineFile.FromDataRow(row));
-            }
-            return records;
-        }
-
-        public static List<Sigmafinex> GetCommerceCity() {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                return context.Sigmafinexes.Where(i => i.FlowCc == "East_Plt").ToList();
-            }
-        }
-        public static List<SigmaTransformedResult> GetCommerceCityWest(List<Sigmafinex> overrideRecords) {
-            if (overrideRecords != null) return TransformRow(overrideRecords.Where(i => i.FlowCc == "West_Plt").ToList());
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                var items = context.Sigmafinexes.Where(i => i.FlowCc == "West_Plt").ToList();
-                return TransformRow(items);
-            }
-        }*/
-
 
         public static DataTable GetDataTableFromSqlServer(String cs, string strSQL) {
             DateTime start = DateTime.Now;
@@ -457,31 +430,6 @@ namespace R2PTransformation.Models {
             return ds.Tables[0];
         }
     }
-    /*
-    public class SigmaTransformedResult {
-        public DateTime Day;
-        public string Plant;
-        public string Product;
-        public string ProductDesc;
-        public decimal VolOpen;
-        public decimal VolClose;
-        public decimal VolShip;
-        public decimal VolRec;
-        public bool IsCharge;
-
-        public SigmaTransformedResult(DateTime day, string plant, string product, string productDesc, decimal volOpen, decimal volClose, decimal volShip, decimal volRec, Boolean isCharge) {
-            this.Day = day;
-            this.Product = product;
-            this.ProductDesc = productDesc;
-            this.VolOpen = volOpen;
-            this.VolClose = volClose;
-            this.VolShip = volShip;
-            this.VolRec = volRec;
-            this.IsCharge = isCharge;
-        }
-
-        public decimal Production { get { return Math.Round((VolRec - VolShip + VolOpen - VolClose) * (IsCharge ? -1 : 1), 0); } }
-    }*/
 
     public partial class Conversion {
         public override string ToString() {

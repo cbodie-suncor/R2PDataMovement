@@ -1,0 +1,17 @@
+- multiple ULSD file for a month will grab last modifled 
+- "Presplit" ValTypes will not be sent to S4
+- split out Inventory and Prod Tag Mappings (files will be InvTagMappings.CP01.csv and ProdTagMappings.CP01.csv)
+- Sarnia interface – child records (generated from presplit) should not have opening / closing / shipments / receipts / consumption, default to null
+- fixed  inaccurate warning "Master/conversion.csv has a file lock and is NOT PROCESSED " 
+- 
+
+
+alter table tagmap add type varchar(15)
+update tagmap set type = 'Prod'
+go
+alter table tagmap alter column [MaterialNumber] varchar(20) not null
+ALTER TABLE tagmap DROP CONSTRAINT [Pk_TagMap];
+ALTER TABLE tagmap add CONSTRAINT [Pk_TagMap] primary key (plant, tag, materialnumber);
+
+go
+
