@@ -14,6 +14,25 @@ namespace STransformNUnit {
     public class CustodyTicketsTests {
         [SetUp]
         public void Setup() {
+            DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
+        }
+
+        [Test]
+        public void LoadCSV() {
+            string cs = "Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021";
+            DataTable dt = Utilities.ConvertCSVFiletoDataTable(@"..\..\..\..\sampleFiles\CustodyTicket\ct.csv");
+            dt.TableName = "custodyticket";
+            foreach (DataRow row in dt.AsEnumerable()) {
+                foreach(DataColumn col in dt.Columns) {
+                    //if (col.DataType.ToString() == "DateTime") 
+                        {
+                        if (row[col].ToString() == "") row[col] = DBNull.Value; ;
+                    }
+                }
+            }
+
+            Utilities.Save(cs, dt);
+            Assert.IsTrue(dt.Rows.Count > 0);
         }
 
         [Test]

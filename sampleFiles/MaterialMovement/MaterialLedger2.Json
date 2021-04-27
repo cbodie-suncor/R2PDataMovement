@@ -1,5 +1,5 @@
 {    "batchId": "98347512-0c9e-47f5-9123-b9266218404b",
-    "MaterialLedger": [     
+    "materialLedger": [     
 	{	
 	        "plant": "Plant01",
             "companyCode": "Company Code",

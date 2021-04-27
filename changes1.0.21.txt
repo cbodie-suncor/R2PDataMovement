@@ -1,0 +1,70 @@
+- fixed json issues with hierarchy and ledger
+- corrected issue with UOM conversion on DPS (material was always null)  
+- ignore blank cell values for ULSD 
+
+drop table [CustodyTicket]
+go
+
+CREATE TABLE [dbo].[CustodyTicket](
+	[custodyTicket_id] [int] IDENTITY(1,1) NOT NULL,
+	[S4_Material_Document] [varchar](50) NOT NULL,
+	[BOL_Number] [varchar](50) NULL,
+	[movemonment_type_description] [varchar](50) NOT NULL,  
+	[Sign] [varchar](50) NOT NULL,
+	[Net_Quantity_Size_in_uoe] [decimal](10, 3) NULL,
+	[Net_Quantity_Size_in_buoe] [decimal](10, 3) NULL, 
+	[mass] [decimal](10, 5) NULL, 
+	[Base_Unit_of_Measure] [varchar](10) NOT NULL,
+	[Base_Unit_of_entry] [varchar](10)  NULL,
+	[Valuation_Type] [varchar](10) NOT NULL,
+	[Density] [decimal](10, 3) NULL,
+	[Density_UOM] [varchar](10) NULL,  
+	[Origin] [varchar](10)  NULL,
+	[Destination] [varchar](10) NULL,
+	[Plant] [varchar](10) NOT NULL,
+	[Temperature] [decimal](10, 3) NULL,
+	[Temperature_Unit_of_Measure] [varchar](10) NULL,
+	[Movement_Type] [varchar](50) NOT NULL,
+	[Mode] int NOT NULL,
+	[tender] [varchar](50) NULL,
+	[vehicle_text] [varchar](50) NULL,
+	[vehicle_number] [varchar](50) NULL,
+	[Load_Start_DateTime] Datetime NULL,
+	[Load_End_DateTime] datetime NULL,
+	[Entered_On_DateTime] [datetime] NULL,
+	[Entered_by] [varchar](50) NULL,
+	[Document_DateTime] [datetime] NULL,
+	[Posting_DateTime] [datetime] NULL,
+ CONSTRAINT [PK_CustodyTicket] PRIMARY KEY CLUSTERED 
+(
+	[custodyTicket_id] ASC
+)WITH (STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[CustodyTicket]  WITH CHECK ADD  CONSTRAINT [FK_CustodyTicket_temperature_Unit_of_Measure] FOREIGN KEY([temperature_Unit_of_Measure])
+REFERENCES [dbo].[StandardUnit] ([Name])
+GO
+
+ALTER TABLE [dbo].[CustodyTicket]  WITH CHECK ADD  CONSTRAINT [FK_CustodyTicket_Base_Unit_of_Measure] FOREIGN KEY([base_Unit_of_Measure])
+REFERENCES [dbo].[StandardUnit] ([Name])
+GO
+
+ALTER TABLE [dbo].[CustodyTicket]  WITH CHECK ADD  CONSTRAINT [FK_CustodyTicket_unit_of_entry] FOREIGN KEY([base_unit_of_entry])
+REFERENCES [dbo].[StandardUnit] ([Name])
+GO
+
+ALTER TABLE [dbo].[CustodyTicket] CHECK CONSTRAINT [FK_CustodyTicket_unit_of_entry]
+GO
+
+insert into standardunit (name) values ('CEL')
+insert into standardunit (name) values ('FAH')
+go
+select * from CustodyTicket
+go
+
+create view Transactions as 
+select CONVERT(datetime, SWITCHOFFSET(createDate, DATEPART(TZOFFSET, createDate AT TIME ZONE 'Mountain Standard Time'))) createDate,
+plant,filename, failedrecordcount, successfulrecordcount, message, type, extra
+from transactionevent 
+go

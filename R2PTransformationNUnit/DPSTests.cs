@@ -5,6 +5,9 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
+using ExcelDataReader;
+using System.Data;
 
 namespace STransformNUnit {
     public class DPSTests {
@@ -52,6 +55,26 @@ namespace STransformNUnit {
         public void testDateParseForDPS() {
             DateTime dt = DateTime.ParseExact("24/01/2013", "dd/MM/yyyy", CultureInfo.InvariantCulture);
             DateTime dt2 = DateTime.ParseExact("22-10-2020", "dd-MM-yyyy", CultureInfo.InvariantCulture);
+        }
+
+        [Test]
+        public void tesMemory() {
+            byte[] allBytes = File.ReadAllBytes(ROOTDIR + "Firebag Sample_AP02.xlsx");
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            MemoryStream stream = new MemoryStream(allBytes);
+            using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+                var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
+                    ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
+                        UseHeaderRow = true
+                    }
+                });
+
+                DataTableCollection table = result.Tables;
+                if (table.IndexOf("Azure Load") == -1) throw new Exception("The sheet 'Azure Load' does not exist");
+                DataTable currentMonthSheet = table["Azure Load"];
+                Assert.IsTrue(currentMonthSheet.Rows.Count > 0);
+                //                        LoadProductionRecords(currentMonthSheet, ms, currentDay);
+            }
         }
     }
 }

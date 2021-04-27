@@ -15,6 +15,8 @@ namespace SuncorR2P.src {
         public string TempFileName;
         public string AzureFileName;
         public string AzureFullPathName;
+        public byte[] BytesOfFile;
+
         public SuncorProductionFile ProductionFile;
         public Boolean Inventory = false;
 
@@ -23,7 +25,8 @@ namespace SuncorR2P.src {
                 DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
                 return d.Parent.Name;
             }
-    }
+        }
+
         public string PlantName {
             get {
                 DirectoryInfo d = new FileInfo(AzureFullPathName).Directory;
@@ -222,10 +225,11 @@ namespace SuncorR2P.src {
             //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);        }
         }
         */
-        public FoundFile(string azureFileName, string azureFullPathName, string tempFileName) {
+        public FoundFile(string dir, string azureFileName, byte[] bytes, string tempFileName) {
             this.AzureFileName = azureFileName;
             this.TempFileName = tempFileName;
-            this.AzureFullPathName = azureFullPathName;
+            this.AzureFullPathName = dir + "/" + azureFileName;
+            this.BytesOfFile = bytes;
         }
 
         public Boolean IsHoneywellPB { get { return PlantName.ToUpper() == "CP01" || PlantName.ToUpper() == "CP04"; } }

@@ -1,0 +1,1 @@
+- removed all occurences of using the %temp% folder and the local HardDrive for the service.  Converted to in-memory structures

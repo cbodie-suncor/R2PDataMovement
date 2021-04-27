@@ -1,12 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.IO;
 using System.Text;
 
 namespace R2PTransformation.src {
-    public class Utilities {
+    public static class Utilities {
         public static DataTable ConvertCSVFiletoDataTable(string strFilePath) {
             DataTable dt = new DataTable();
             using (StreamReader sr = new StreamReader(strFilePath)) {
@@ -90,8 +92,30 @@ namespace R2PTransformation.src {
             }
             return hbHistory;
         }
-    }
-    public static class Utilities2 {
+
+        public static void Save(string cs, DataTable table) {
+            DbDataAdapter adapter = SetupAdapterWithComands(cs, "select * from " + table.TableName);
+            /*if (SAMAppSettings.Provider != "SQLCE")*/
+            adapter.UpdateBatchSize = 500;
+            adapter.Update(table);
+            table.AcceptChanges();
+
+            return;
+        }
+
+        public static DbDataAdapter SetupAdapterWithComands(string cs, string sql) {
+            DbDataAdapter adapter = null;
+            DbCommandBuilder builder = null;
+                adapter = new SqlDataAdapter(sql, cs);
+                builder = new SqlCommandBuilder((SqlDataAdapter)adapter);
+            builder.ConflictOption = ConflictOption.CompareAllSearchableValues;
+            adapter.UpdateCommand = builder.GetUpdateCommand();
+            adapter.InsertCommand = builder.GetInsertCommand();
+            adapter.DeleteCommand = builder.GetDeleteCommand();
+
+            return adapter;
+        }
+
         public static int IndexOfNth(this string str, string value, int nth = 0) {
             if (nth < 0)
                 throw new ArgumentException("Can not find a negative index of substring in string. Must start with 0");

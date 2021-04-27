@@ -73,10 +73,17 @@ namespace R2PTransformation.Models {
             }
         }
 
+        internal static List<StandardUnit> GetUnits() {
+            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+                return context.StandardUnit.ToList();
+            }
+        }
+
         internal static void AddMaterialMovements(List<MaterialMovement> mm) {
             using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
                 mm.ForEach(t => {
                     List<MaterialMovement> find = context.MaterialMovement.Where(f => f.MaterialDocument == t.MaterialDocument).ToList();
+
                     if (find.Count() > 0) find.ForEach(t => context.MaterialMovement.Remove(t));
                 });
 
@@ -362,7 +369,7 @@ namespace R2PTransformation.Models {
             tm.Material = r["Material"].ToString();
             tm.StandardUnit = r["StandardUnit"].ToString();
             tm.ToUnit = r["ToUnit"].ToString();
-            tm.Factor = (decimal)SuncorProductionFile.ParseDouble(r["Factor"].ToString(), "Factor");
+            tm.Factor = (decimal)SuncorController.ParseDouble(r, "Factor");
             return tm;
         }
 

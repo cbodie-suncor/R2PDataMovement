@@ -157,34 +157,11 @@ namespace R2PTransformation.src {
             AzureModel.SaveTagBalance(FileName, this, tb);
         }
 
-        public static int ParseInt(Object v, string columnName) {
-            try {
-                return string.IsNullOrEmpty(v.ToString()) ? 0 : int.Parse(v.ToString());
-            } catch (Exception ex) {
-                throw new Exception("Invalid Number for " + columnName);
-            }
-        }
         public static decimal ParseDecimal(object v, string columnName) {
             try {
                 return string.IsNullOrEmpty(v.ToString()) ? 0 : decimal.Parse(v.ToString());
             } catch (Exception ex) {
                 throw new Exception("Invalid Number for " + columnName);
-            }
-        }
-
-        public static double ParseDouble(object v, string columnName) {
-            try {
-                return string.IsNullOrEmpty(v.ToString()) ? 0 : double.Parse(v.ToString());
-            } catch (Exception ex) {
-                throw new Exception("Invalid Number for " + columnName);
-            }
-        }
-
-        public static DateTime ParseDateTime(object v, string columnName) {
-            try {
-                return DateTime.Parse(v.ToString());
-            } catch (Exception ex) {
-                throw new Exception("Invalid Date for " + columnName + ":'" + (v == null ? "" : v.ToString()) + "'");
             }
         }
 

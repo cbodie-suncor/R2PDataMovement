@@ -32,16 +32,16 @@ namespace R2PTransformation.src {
             List<ProductHierarchy> mm = new List<ProductHierarchy>();
             foreach (JObject item in items) {
                 mm.Add(new ProductHierarchy() {
-                    S4material = item["S/4 Material"].ToString(),
-                    MaterialDescription = item["Material Description"].ToString(),
-                    MaterialGroup = item["Material Group"].ToString(),
-                    MaterialGroupText = item["Material Group Text"].ToString(),
-                    ProductHierarchyLevel1Code = item["Product Hierarchy Level 1"].ToString(),
-                    ProductHierarchyLevel2Code = item["Product Hierarchy Level 2"].ToString(),
-                    ProductHierarchyLevel3Code = item["Product Hierarchy Level 3"].ToString(),
-                    ProductHierarchyLevel1Text = item["Product Hierarchy Text Level 1"].ToString(),
-                    ProductHierarchyLevel2Text = item["Product Hierarchy Text Level 2"].ToString(),
-                    ProductHierarchyLevel3Text = item["Product Hierarchy Text Level 3"].ToString(),
+                    S4material = GetStringValue(item, "material"),
+                    MaterialDescription = GetStringValue(item, "materialDescription"),
+                    MaterialGroup = GetStringValue(item, "materialGroup"),
+                    MaterialGroupText = GetStringValue(item, "materialGroupText"),
+                    ProductHierarchyLevel1Code = GetStringValue(item, "productHierarchyLevel1"),
+                    ProductHierarchyLevel2Code = GetStringValue(item, "productHierarchyLevel2"),
+                    ProductHierarchyLevel3Code = GetStringValue(item, "productHierarchyLevel3"),
+                    ProductHierarchyLevel1Text = GetStringValue(item, "productHierarchyLevel1Text"),
+                    ProductHierarchyLevel2Text = GetStringValue(item, "productHierarchyLevel2Text"),
+                    ProductHierarchyLevel3Text = GetStringValue(item, "productHierarchyLevel3Text"),
                 }); ;
             }
 
@@ -56,15 +56,15 @@ namespace R2PTransformation.src {
             if (string.IsNullOrWhiteSpace(requestBody)) throw new Exception("Json is empty");
             JObject data = (JObject) JsonConvert.DeserializeObject(requestBody);
             List<MaterialLedger> mm = new List<MaterialLedger>();
-            JArray items = (JArray)data["MaterialLedger"];
+            JArray items = (JArray)data["materialLedger"];
             foreach (JObject item in items) {
                 mm.Add(new MaterialLedger() {
-                    Plant = item["Plant"].ToString(),
-                    CoCode = item["CoCode"].ToString(),
-                    PostingYear = SuncorProductionFile.ParseInt(item["Posting Year"], "Posting Year"),
-                    PostingPeriod = SuncorProductionFile.ParseInt(item["Posting Period"], "Posting Period"),
-                    Status = item["Status"].ToString(),
-                    PreviousPeriodOpen = item["Previous Period Open?"].ToString(),
+                    Plant = GetStringValue(item,"plant"),
+                    CoCode = GetStringValue(item, "companyCode"),
+                    PostingYear = ParseInt(item, "currentPostingYear"),
+                    PostingPeriod = ParseInt(item, "currentPostingPeriod"),
+//                    Status = SuncorProductionFile.GetString(item,"Status"),
+                    PreviousPeriodOpen = GetStringValue(item, "previousPeriodOpen"),
                 });
             }
 

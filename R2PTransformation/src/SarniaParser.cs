@@ -22,13 +22,12 @@ namespace R2PTransformation.src {
             }
         }
 
-        public static List<ShellSplit> LoadULSDSplits(string fileName) {
+        public static List<ShellSplit> LoadULSDSplits(string fileName) { // change to byte[] bytes
             List<ShellSplit> splits = new List<ShellSplit>();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             List<String> productCodes = GetProductCodes(fileName);
-            //            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName); // either GP01 or GP02
             using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+                using (var reader = ExcelReaderFactory.CreateReader(stream)) {  //new MemoryStream(bytes)
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                             UseHeaderRow = true,
@@ -49,6 +48,7 @@ namespace R2PTransformation.src {
 
                         for(int i=0;i<productCodes.Count;i++) {
                             string volumeStringValue = row[i+2].ToString();
+                            if (string.IsNullOrEmpty(volumeStringValue)) continue;
                             try {
                                 volume = Math.Round(SuncorProductionFile.ParseDecimal(volumeStringValue, "Volume for " + productCodes[i]), 3);
                             } catch (Exception ex) {

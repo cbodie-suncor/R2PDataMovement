@@ -25,11 +25,11 @@ namespace STransformNUnit {
                     t["site"].ToString(),
                     t["tag"].ToString(),
                     t["alias"].ToString(),
-                    SuncorProductionFile.ParseDateTime(t["datetime"], "datetime"),
-                    SuncorProductionFile.ParseDecimal(t["value"], "value"),
-                    SuncorProductionFile.ParseDecimal(t["avgvalue"], "avgvalue"),
+                    SuncorController.ParseDateTime(t, "datetime"),
+                    SuncorController.ParseDecimal(t, "value"),
+                    SuncorController.ParseDecimal(t, "avgvalue"),
                     t["strvalue"].ToString(),
-                    SuncorProductionFile.ParseDecimal(t["quality"], "quality")
+                    SuncorController.ParseDecimal(t, "quality")
             ));
 
             var groups = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Select(g => new { Key = g.Key, Count = g.Count(), Tank = g.Max(s => s.Tank), Tag = g.Max(s => s.StrValue), Quantity = g.Max(s => s.Value) });

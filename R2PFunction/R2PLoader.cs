@@ -12,6 +12,7 @@ using R2PFunction;
 using R2PTransformation.src;
 using R2PTransformation.Models;
 using SuncorR2P.src;
+using System.Linq;
 
 namespace SuncorR2P
 {
@@ -35,6 +36,10 @@ namespace SuncorR2P
             AzureFileHelper.CheckForFilesToBeProcessed(productVersion, log);
             if (ULSDChanges) {
                 FoundFile.CleanUpCurrentDateFile("CP03");
+            }
+
+            foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.IsReady)) {
+                log.LogInformation($"{drive.Name}: {drive.TotalFreeSpace / 1024 / 1024} MB");
             }
         }
 

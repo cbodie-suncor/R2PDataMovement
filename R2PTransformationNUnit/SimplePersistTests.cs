@@ -20,11 +20,6 @@ namespace STransformNUnit {
             DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
         }
 
-        [Test]
-        public void SimpleHierarchy() {
-            string json = File.ReadAllText(ROOTDIR + "Hierarchy.json");
-            SimplePersistentController.PersistHierarchy(json);
-        }
 
         [Test]
         public void SimpleHierarchy2() {
@@ -32,15 +27,22 @@ namespace STransformNUnit {
             SimplePersistentController.PersistHierarchy(json);
         }
 
+
         [Test]
-        public void SimpleMaterialLedger() {
-            string json = File.ReadAllText(ROOTDIR + "MaterialLedger.json");
+        public void SimpleHierarchy3() {
+            string json = File.ReadAllText(ROOTDIR + "Hierarchy3.json");
+            SimplePersistentController.PersistHierarchy(json);
+        }
+
+        [Test]
+        public void SimpleMaterialLedger2() {
+            string json = File.ReadAllText(ROOTDIR + "MaterialLedger2.json");
             SimplePersistentController.PersistMaterialLedger(json);
         }
 
         [Test]
         public void SimpleMaterialLedger3() {
-            string json = File.ReadAllText(ROOTDIR + "MaterialLedger2.json");
+            string json = File.ReadAllText(ROOTDIR + "MaterialLedger3.json");
             SimplePersistentController.PersistMaterialLedger(json);
         }
 

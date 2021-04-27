@@ -44,7 +44,6 @@ namespace R2PTransformation.src {
                 }
                 if (day == null) continue;
                 string toUnit = uom;
-                string material = null;
 
                 decimal production = 0, opening = 0, closing = 0, shipments = 0, receipts = 0;
                 try {
@@ -57,11 +56,11 @@ namespace R2PTransformation.src {
                     TagMap tm = AzureModel.LookupTag(productionCode, ms.Plant, "Prod");
                     if (tm != null) toUnit = tm.DefaultUnit;
 
-                    production = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, production);
-                    receipts = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, receipts);
-                    shipments = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, shipments);
-                    opening = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, opening);
-                    closing = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, material, closing);
+                    production = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, production);
+                    receipts = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, receipts);
+                    shipments = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, shipments);
+                    opening = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, opening);
+                    closing = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, closing);
                 } catch (Exception ex) {
                     ms.Warnings.Add(new WarningMessage(MessageType.Error, productionCode, ex.Message));
                     continue;

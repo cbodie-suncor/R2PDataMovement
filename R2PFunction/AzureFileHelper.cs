@@ -99,8 +99,8 @@ namespace SuncorR2P {
             ProcessTagMappings(plant, version, invTagMappingFile, invTagMappingFileProcessed, invTagMappingFileError, "Inv");
             AzureFileHelper.DeleteFile(parentDirectory + "System/tagMappings.processed." + plant + ".csv");
 
-            string currentDateString = @"2021-05-31
-****use the format YYYY - MM - DD
+            string currentDateString = $@"{DateTime.Today.ToString("yyyy-MM-dd")}
+****use the format YYYY-MM-DD
 ****This date will specify to the R2P integration loader when to process the records in the next upload.";
             AzureFileHelper.WriteFile(parentDirectory + "System/currentDate." + plant + ".processed.txt", currentDateString, false);
         }
@@ -185,6 +185,16 @@ namespace SuncorR2P {
             return text;
         }
 
+        private static byte[] GetBinaryStreamContents(ShareFileDownloadInfo file, string name) {
+            byte[] bytes = new byte[file.ContentLength];
+            if (file.ContentLength > int.MaxValue) throw new Exception("File too big to read " + name + ":" + file.ContentLength);
+
+            using (BinaryReader br = new BinaryReader(file.Content)) {
+                bytes = br.ReadBytes((int)file.ContentLength);
+            }
+            return bytes;
+        }
+
         internal static bool UpdateULSDSplits(ILogger log, string version) {
             DateTime currentDate = FoundFile.GetCurrentDay("CP03", false);
             Boolean changes = UpdateULSDSplits(log, version, currentDate);
@@ -242,10 +252,11 @@ namespace SuncorR2P {
 
                         // if more than 1 file matches year/month, then grab the latest (last changed)
                         matchingFiles = matchingFiles.OrderByDescending(t => t.LastModified).ToList();
+                        if (matchingFiles.Count == 0) return null;
 
                         string tempFileName = Path.GetTempFileName();
-                        DownloadFile(dir.GetFileClient(matchingFiles[0].Filename), tempFileName);
-                        return new FoundFile(matchingFiles[0].Filename, dir.Path + "/" + matchingFiles[0].Filename, tempFileName);
+                        byte[] bytes = DownloadFile(dir.GetFileClient(matchingFiles[0].Filename), tempFileName);
+                        return new FoundFile(dir.Path, matchingFiles[0].Filename, bytes, tempFileName);
                     }
                 } catch (Exception ex) {
                     throw new Exception(item.Name + ":" + (tfile != null ? tfile.Name : "") + " " + ex.Message);
@@ -271,8 +282,8 @@ namespace SuncorR2P {
                             tfile = file; 
                             if (!file.IsDirectory) {
                                 string tempFileName = Path.GetTempFileName();
-                                DownloadFile(dir.GetFileClient(file.Name), tempFileName);
-                                return new FoundFile(/*item.Name, */file.Name, dir.Path + "/" + file.Name, tempFileName);
+                                byte[] bytes = DownloadFile(dir.GetFileClient(file.Name), tempFileName);
+                                return new FoundFile(dir.Path, file.Name, bytes, tempFileName);
                             }
                         }
                     }
@@ -309,7 +320,7 @@ namespace SuncorR2P {
             }
         }
 
-        private static void DownloadFile(ShareFileClient file, string localFilePath) {
+        private static byte[] DownloadFile(ShareFileClient file, string localFilePath) {
             long fileLength = 0;
             using (Stream stream = file.OpenRead()) {
                 var properties = file.GetProperties();
@@ -318,12 +329,16 @@ namespace SuncorR2P {
             if (fileLength == 0) {  // handle 0 length files
                 FileStream fs = File.Create(localFilePath);
                 fs.Close();
-                return;
+                return null;
             }
             ShareFileDownloadInfo download = file.Download();
+            byte[] abc = GetBinaryStreamContents(download, file.Name);
+
             using (FileStream stream = File.OpenWrite(localFilePath)) {
-                download.Content.CopyTo(stream);
+                ShareFileDownloadInfo d2 = file.Download();
+                d2.Content.CopyTo(stream);
             }
+            return abc;
         }
     }
 public class MatchingFile {
