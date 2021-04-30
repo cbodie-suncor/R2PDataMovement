@@ -5,7 +5,7 @@ namespace R2PTransformation.src {
     public class MontrealSulphurFile : SuncorProductionFile {
         public string ProductCode;
 
-        public MontrealSulphurFile(string fileName, string plant, string productCode) : base(plant, fileName) {
+        public MontrealSulphurFile(string plant, string productCode) : base(plant) {
             ProductCode = productCode;
         }
     }

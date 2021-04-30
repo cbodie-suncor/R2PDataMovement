@@ -34,5 +34,20 @@ namespace R2PTransformation.src {
 
             return true;
         }
+
+        public static Boolean PostInventory(string json) {
+            if (String.IsNullOrEmpty(InventoryUrl)) return false;
+            var byteArray = Encoding.ASCII.GetBytes(InventoryUser + ":" + InventoryPW);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = client.PostAsync(InventoryUrl, data);
+
+            //            Console.WriteLine(response.Result);
+            if (response.Result.StatusCode.ToString() != "Created")
+                throw new Exception("Mulesoft push failed : " + response.Result.ToString());
+
+            return true;
+        }
     }
 }

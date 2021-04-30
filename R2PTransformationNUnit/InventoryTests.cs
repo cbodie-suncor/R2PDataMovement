@@ -11,7 +11,7 @@ namespace STransformNUnit {
     public class InventoryTests {
         [SetUp]
         public void Setup() {
-            DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
+            DBContextWithConnectionString.CreateTestContext();
         }
 
         [Test]
@@ -20,7 +20,7 @@ namespace STransformNUnit {
             srcFile = srcFile.Replace("\"", "");
             DataTable dt = Utilities.ConvertCSVTexttoDataTable(srcFile);
             DateTime currentDay = new DateTime(2021, 04, 25);
-            SuncorProductionFile sf = new SuncorProductionFile("edm", null);
+            SuncorProductionFile sf = new SuncorProductionFile("edm");
             var invs = dt.AsEnumerable().Select(t => new HistorianTag(
                     t["site"].ToString(),
                     t["tag"].ToString(),
@@ -37,9 +37,9 @@ namespace STransformNUnit {
             //    .GroupBy); {
             //                sf.AddInventory()
             groups.ToList().ForEach(t => sf.AddInventory(currentDay, "Inventory", t.Key.Site, t.Tag, t.Tank, t.Key.Datetime, t.Quantity));
-            AzureModel.SaveInventory(sf.FileName,sf, sf.Inventory);
-            Assert.IsTrue(invs.Count() > 0);
-            Assert.IsTrue(missing.Count() ==  0);
+            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            Assert.AreEqual(5000, invs.Count());
+            Assert.AreEqual(46, missing.Count());
         }
     }
 

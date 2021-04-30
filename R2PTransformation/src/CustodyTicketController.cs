@@ -10,12 +10,12 @@ namespace R2PTransformation.src {
     public class PBFile {
         public String Filename { get; set; }
         public String Json { get; set; }
-        public String Plant{ get; set; }
-        public String AzurePath{ get; set; }
+        public String Plant { get; set; }
+        public String AzurePath { get; set; }
         public String Contents { get; set; }
         public int SuccessFulRecords { get; set; }
     }
-    public class CustodyTicketController {
+    public class CustodyTicketController : SuncorController {
         public static string FOOTER = @"<<PRODUCT MOVEMENT IFC>>
 <<END OF FILE MARKER>>
 ";
@@ -29,63 +29,62 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
         public static PBFile CreateHoneywellPBFile(string json) {
             if (string.IsNullOrWhiteSpace(json)) throw new Exception("Json is empty");
             PBFile file = new PBFile();
-
-            object data = JsonConvert.DeserializeObject(json);
-
-            List<CustodyTicket> tickets = new List<CustodyTicket>();
             List<WarningMessage> Warnings = new List<WarningMessage>();
-            JObject batch = (JObject)data;
-            string batchId = batch["batchId"].ToString();
-            JArray custodyTickets = (JArray)batch["CustodyTicket"];
-            foreach (var item in custodyTickets) {
-                CustodyTicket ct = new CustodyTicket() {
-                    /*
-                    S4MaterialDocument = item["materialDocument"].ToString(),
-                    //version = item["version"].ToString(),
-                    //batchId = item["batchId"].ToString(),
-                    BolNumber = item["bolNumber"].ToString(),
-                    meterial = item["meterial"].ToString(),
-                    movementTypeDesc = item["movementTypeDesc"].ToString(),
-                    Sign = item["sign"].ToString(),
-                    GrossQuantitySize = item["grossQuantitySize"].ToString(),
-                    NetQuantitySize = item["netQuantitySize"].ToString(),
-                    mass = item["mass"].ToString(),
-                    baseUom = item["baseUom"].ToString(),
-                    ValuationType = item["valuationType"].ToString(),
-                    Density = item["density"].ToString(),
-                    densityUOM = item["densityUOM"].ToString(),
-                    origin = item["origin"].ToString(),
-                    destination = item["destination"].ToString(),
-                    plant = item["plant"].ToString(),
-                    temperature = item["temperature"].ToString(),
-                    temperatureUom = item["temperatureUom"].ToString(),
-                    movementType = item["movementType"].ToString(),
-                    mode = item["mode"].ToString(),
-                    ship = item["ship"].ToString(),
-                    railCar = item["railCar"].ToString(),
-                    tender = item["tender"].ToString(),
-                    transportationDetails = item["transportationDetails"].ToString(),
-                    loadStartDate = item["loadStartDate"].ToString(),
-                    loadStartTime = item["loadStartTime"].ToString(),
-                    loadEndDate = item["loadEndDate"].ToString(),
-                    loadEndTime = item["loadEndTime"].ToString(),
-                    enteredOnDate = item["enteredOnDate"].ToString(),
-                    enteredOnTime = item["enteredOnTime"].ToString(),
-                    documentDate = item["documentDate"].ToString(),
-                    postingDateTime = item["postingDateTime"].ToString(),
-                    */
-                };
-                tickets.Add(ct);
-            }
+
+            List<CustodyTicket> tixs = GetTixFromJson(json);
+            file.Json = json;
+            file.Contents = CreateHoneywellPBFile(tixs);
+            file.SuccessFulRecords = tixs.Count;
             return file;
         }
 
         public static string CreateHoneywellPBFile(List<CustodyTicket> tix) {
             string doc = HEADER;
-            foreach(CustodyTicket ticket in tix) {
-                doc += GetMovement(ticket, ticket.EnteredBy  );
+            foreach (CustodyTicket ticket in tix) {
+                doc += GetMovement(ticket, ticket.EnteredBy);
             }
             return doc + FOOTER;
+        }
+
+        public static List<CustodyTicket> GetTixFromJson(string json) {
+            List<CustodyTicket> tix = new List<CustodyTicket>();
+            object data = JsonConvert.DeserializeObject(json);
+            JObject batch = (JObject)data;
+            string batchId = batch["batchId"].ToString();
+            JArray custodyTickets = (JArray)batch["custodyTicket"];
+            foreach (var v in custodyTickets) {
+                CustodyTicket ct = new CustodyTicket() {
+                    S4MaterialDocument = GetStringValue(v, "materialDocument"),
+                    BolNumber = GetStringValue(v,"bolNumber"),
+                    MovemonmentTypeDescription = GetStringValue(v, "movementTypeDescription"),
+                    Sign = GetStringValue(v, "sign"),
+                    NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
+                    NetQuantitySizeInBuoe = ParseDecimal(v, "netQuantitySizeinBUOE"),
+                    BaseUnitOfMeasure = GetStringValue(v, "baseUoM"),
+                    BaseUnitOfEntry = GetStringValue(v, "unitOfEntry"),
+                    Mass = ParseDecimal(v, "mass"),
+                    ValuationType = GetStringValue(v, "valuationType"),
+                    Density = ParseDecimal(v, "density"),
+                    DensityUom = GetStringValue(v,"densityUOM"),
+                    Origin = GetStringValue(v,"origin"),
+                    Destination = GetStringValue(v,"destination"),
+                    Plant = GetStringValue(v,"plant"),
+                    Temperature = ParseDecimal(v, "temperature"),
+                    TemperatureUnitOfMeasure= GetStringValue(v, "temperatureUom"),
+                    MovementType = GetStringValue(v,"movementType"),
+                    Mode = ParseInt(v,"mode"),
+                    VehicleNumber = GetStringValue(v, "vehicle"),
+                    VehicleText = GetStringValue(v, "vehicleText"),
+                    Tender = GetStringValue(v,"tender"),
+                    LoadStartDateTime = ParseDateTime(v,"loadStartDate", "loadStartTime"),
+                    LoadEndDateTime = ParseDateTime(v,"loadEndDate", "loadEndTime"),
+                    EnteredOnDateTime = ParseDateTime(v, "enteredOnDateTime"),
+                    DocumentDateTime = ParseDateTime(v,"documentDate"),
+                    PostingDateTime = ParseDateTime(v,"postingDateTime")
+                };
+                tix.Add(ct);
+            }
+            return tix;
         }
 
         private static string GetMovement(CustodyTicket ticket, string movementId) {
@@ -110,7 +109,7 @@ NOTES,
         }
 
         private static string GetMovementDetail(CustodyTicket ticket, string movementId, string type) {
-            string product = ticket.S4Material;
+            string product = ticket.S4MaterialDocument;
             string result = "<START MOVEMENT DETAIL REC>\r\n";
             result += @$"MOVEMENT_ID,{movementId}
 SOURCE_OR_DESTINATION,{type}
@@ -118,12 +117,12 @@ EQUIPMENT,
 PRODUCT,{product}
 PACKAGE,
 START_QTY,
-END_QTY,{ (type == "D" ? "" : FormatDP(ticket.NetQuantitySize, 3))}
-NET_QTY,{ FormatDP(ticket.NetQuantitySize, 3)}
+END_QTY,{ (type == "D" ? "" : FormatDP(ticket.NetQuantitySizeInBuoe, 3))}
+NET_QTY,{ FormatDP(ticket.NetQuantitySizeInBuoe, 3)}
 PACKAGE_COUNT,
 UNITS,L
 COMPANY,
-REFERENCE,{ (type == "D" ? ticket.BolNumber : FormatDP(ticket.Density, 4) )}
+REFERENCE,{ (type == "D" ? ticket.BolNumber : FormatDP(ticket.Density.Value, 4) )}
 ";
             result += "<END MOVEMENT DETAIL REC>\r\n";
             return result;

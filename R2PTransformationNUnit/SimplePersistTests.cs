@@ -10,16 +10,18 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 
 namespace STransformNUnit {
     public class SimplePersistTests {
+        static string baseTestURL = "https://aaasbxarmfapuw2015.azurewebsites.net/api/";
         string ROOTDIR = @"..\..\..\..\sampleFiles\MaterialMovement\";
 
         [SetUp]
         public void Setup() {
-            DBContextWithConnectionString.SetConnectionString("Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020;");
+            DBContextWithConnectionString.CreateTestContext();
         }
-
 
         [Test]
         public void SimpleHierarchy2() {
@@ -45,6 +47,5 @@ namespace STransformNUnit {
             string json = File.ReadAllText(ROOTDIR + "MaterialLedger3.json");
             SimplePersistentController.PersistMaterialLedger(json);
         }
-
     }
 }

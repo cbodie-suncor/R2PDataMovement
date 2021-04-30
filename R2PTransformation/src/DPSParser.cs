@@ -9,16 +9,13 @@ using R2PTransformation.Models;
 
 namespace R2PTransformation.src {
     public class DPSParser {
-        private string Filename = "";
 
-        public SuncorProductionFile LoadFile(string fileName, string plant, DateTime currentDay) {
-            Filename = fileName;
-
+        public SuncorProductionFile LoadFile(byte[] fileContents, string plant, DateTime currentDay) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName);
+            SuncorProductionFile ms = new SuncorProductionFile(plant);
             ms.IsCurrentDay(currentDay);
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+            /*using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read))*/ {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                             UseHeaderRow = true
@@ -54,7 +51,11 @@ namespace R2PTransformation.src {
                     closing = SuncorProductionFile.ParseDecimal(row["Ending Inventory"].ToString(), "Ending Inventory");
 
                     TagMap tm = AzureModel.LookupTag(productionCode, ms.Plant, "Prod");
-                    if (tm != null) toUnit = tm.DefaultUnit;
+                    if (tm == null) {
+                        ms.Warnings.Add(new WarningMessage(MessageType.Error, productionCode, "No TagMapping"));
+                        ms.FailedRecords++;
+                        continue;
+                    }
 
                     production = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, production);
                     receipts = AzureModel.ConvertQuantityToStandardUnit(uom, toUnit, tm.MaterialNumber, receipts);

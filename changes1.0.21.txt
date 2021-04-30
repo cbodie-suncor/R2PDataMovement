@@ -12,9 +12,9 @@ CREATE TABLE [dbo].[CustodyTicket](
 	[movemonment_type_description] [varchar](50) NOT NULL,  
 	[Sign] [varchar](50) NOT NULL,
 	[Net_Quantity_Size_in_uoe] [decimal](10, 3) NULL,
-	[Net_Quantity_Size_in_buoe] [decimal](10, 3) NULL, 
+	[Net_Quantity_Size_in_buoe] [decimal](10, 3) not NULL, 
 	[mass] [decimal](10, 5) NULL, 
-	[Base_Unit_of_Measure] [varchar](10) NOT NULL,
+	[Base_Unit_of_Measure] [varchar](10) NULL,
 	[Base_Unit_of_entry] [varchar](10)  NULL,
 	[Valuation_Type] [varchar](10) NOT NULL,
 	[Density] [decimal](10, 3) NULL,
@@ -34,7 +34,7 @@ CREATE TABLE [dbo].[CustodyTicket](
 	[Entered_On_DateTime] [datetime] NULL,
 	[Entered_by] [varchar](50) NULL,
 	[Document_DateTime] [datetime] NULL,
-	[Posting_DateTime] [datetime] NULL,
+	[Posting_DateTime] [datetime] not NULL,
  CONSTRAINT [PK_CustodyTicket] PRIMARY KEY CLUSTERED 
 (
 	[custodyTicket_id] ASC

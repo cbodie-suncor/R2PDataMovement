@@ -1,1 +1,12 @@
-- removed all occurences of using the %temp% folder and the local HardDrive for the service.  Converted to in-memory structures
+- removed all occurences of using the %temp% folder and the local HardDrive for the service.  Converted to in-memory structures - result was "out of disk space" after prolong usage
+- do not send Sarnia json files when no valid ULSD files exist (including when the ulsd splits are blank for a day)
+- error occurred when the ULSd directory was empty for the given month (for file CP03,NPUpld-April.txt)
+- updated DB Context for offline unit testing
+- changed SHELL ValType to uppercase
+- added error handling for valType being updated (should always be handled as a delete, then insert)
+- changed the timezone for both FUT and Sandbox services to Mountain Standard Time (affects how the time is displayed, prior was UTC)
+-  saving/generating Custody tickets, saving product hierarchy, material ledgers
+
+ALTER TABLE tagmap DROP CONSTRAINT [Pk_TagMap];
+ALTER TABLE tagmap add CONSTRAINT [Pk_TagMap] primary key (plant, tag);
+update tagbalance set valtype = 'SHELL' where valtype = 'Shell'

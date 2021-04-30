@@ -22,12 +22,12 @@ namespace R2PTransformation.src {
             }
         }
 
-        public static List<ShellSplit> LoadULSDSplits(string fileName) { // change to byte[] bytes
+        public static List<ShellSplit> LoadULSDSplits(byte[] fileContents) { // change to byte[] bytes
             List<ShellSplit> splits = new List<ShellSplit>();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            List<String> productCodes = GetProductCodes(fileName);
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {  //new MemoryStream(bytes)
+            List<String> productCodes = GetProductCodes(fileContents);
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {  //new MemoryStream(bytes)
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                             UseHeaderRow = true,
@@ -65,11 +65,11 @@ namespace R2PTransformation.src {
             return splits;
         }
 
-        private static List<String> GetProductCodes(string fileName) {
+        private static List<String> GetProductCodes(byte[] fileContents) {
             List<String> products = new List<String>();
             int row = 6;
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                         }
@@ -91,7 +91,7 @@ namespace R2PTransformation.src {
         }
 
         public static SuncorProductionFile UpdateShellSplits(List<ShellSplit> ss) {
-            var pf = new SuncorProductionFile("CP03", null);
+            var pf = new SuncorProductionFile("CP03");
             if (ss.Count == 0) return pf;
             List<TagBalance> changedTBS = new List<TagBalance>();
             List<TagBalance> tbs = AzureModel.GetAllTagBalances().Where(t => t.Plant == "CP03" && t.BalanceDate >= ss.Min(r => r.Day) && t.BalanceDate <= ss.Max(r => r.Day)).ToList();
@@ -108,7 +108,7 @@ namespace R2PTransformation.src {
                 }
             }
             if (changedTBS .Count > 0) {
-                AzureModel.SaveTagBalance(tbs);
+                AzureModel.UpdateTagBalance(tbs);
                 pf.SavedRecords = changedTBS;
             }
             return pf;
@@ -116,9 +116,11 @@ namespace R2PTransformation.src {
 
         public static void ApplyShellSplits(SuncorProductionFile pf, List<ShellSplit> splits) {
             List<TagBalance> additionalItems = new List<TagBalance>();
+            List<TagBalance> removelItems = new List<TagBalance>();
             foreach (var presplit in pf.Products) {
                 ShellSplit shell = splits.FirstOrDefault(t => t.Day == presplit.BalanceDate && t.ProductCode == presplit.Tag);
-                if (shell == null && splits.Where(y=>y.ProductCode == presplit.Tag).Count() > 0) {
+                if (shell == null/* && splits.Where(y=>y.ProductCode == presplit.Tag).Count() > 0*/) {
+                    removelItems.Add(presplit);
                     pf.Warnings.Add(new WarningMessage(MessageType.Error, presplit.Tag, "No matching ULSD record was for " + presplit.BalanceDate.ToString("yyyy-MM-dd")));
                     continue;
                 }
@@ -131,11 +133,12 @@ namespace R2PTransformation.src {
                 presplit.ValType = "Presplit";
 
                 TagBalance shellTB = CloneTagForULSD(presplit);
-                shellTB.ValType = "Shell";
+                shellTB.ValType = "SHELL";
                 shellTB.Quantity = shell.Volume;
                 additionalItems.Add(shellTB);
             }
             pf.Products.AddRange(additionalItems);
+            foreach(TagBalance item in removelItems) pf.Products.Remove(item);
         }
 
         private static TagBalance CloneTagForULSD(TagBalance item) {

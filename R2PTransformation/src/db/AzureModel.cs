@@ -11,24 +11,24 @@ using SuncorR2P;
 namespace R2PTransformation.Models {
     public class AzureModel {
         // The DBContext is created by EF, run the following command to rebuild
-        // run from the Package Manager Console, cd C:\suncor\R2PDataMovement\R2PTransformation 1st 
+        // 
+        // run from the Package Manager Console, cd C:\suncor\R2PDataMovement\R2PTransformation 
         // dotnet ef dbcontext scaffold "Data Source=inmdevarmsvruw2001.database.windows.net;Initial Catalog=inmdevarmsqluw2001;User ID=suncorsqladmin;password=AdvancedAnalytics2020" Microsoft.EntityFrameworkCore.SqlServer -o Models -c "AzureContext" --no-build --force
 
         public static List<TagBalance> GetAllTagBalances() {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 var items = context.TagBalance.ToList();
                 return items;
             }
         }
 
-
-        public static void SaveInventory(String file, SuncorProductionFile pf, List<InventorySnapshot> inv) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+        public static void SaveInventory(string fileName, SuncorProductionFile pf, List<InventorySnapshot> inv) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 Batch batch = new Batch();
                 batch.Id = pf.BatchId.ToString();
                 batch.Created = DateTime.Now;
                 batch.CreatedBy = "System";
-                batch.Filename = file;
+                batch.Filename = fileName;
                 context.Batch.Add(batch);
                 foreach (var item in inv) {
                     InventorySnapshot found = context.InventorySnapshot.SingleOrDefault(t => t.Tag == item.Tag && t.QuantityTimestamp == item.QuantityTimestamp && t.ValType == item.ValType && t.Tank == item.Tank);
@@ -42,24 +42,26 @@ namespace R2PTransformation.Models {
             }
         }
 
-        public static void SaveTagBalance(List<TagBalance> tb) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+        public static void UpdateTagBalance(List<TagBalance> tb) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 foreach (var item in tb) {
                     TagBalance found = context.TagBalance.Find(new object[] { item.Tag, item.BalanceDate, item.ValType });
-                    if (found != null)
+                    if (found == null)
+                        throw new Exception("Unexcepted new record for " + item.Tag + " " + item.BalanceDate + " " + item.ValType);
+                    else
                         UpdateTagBalance(found, item);
                 }
                 context.SaveChanges();
             }
         }
 
-        public static void SaveTagBalance(String file, SuncorProductionFile pf, List<TagBalance> tb) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+        public static void SaveTagBalance(string fileName, SuncorProductionFile pf, List<TagBalance> tb) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 Batch batch = new Batch();
                 batch.Id = pf.BatchId.ToString();
                 batch.Created = DateTime.Now;
                 batch.CreatedBy = "System";
-                batch.Filename = file;
+                batch.Filename = fileName;
                 context.Batch.Add(batch);
                 foreach (var item in tb) {
                     TagBalance found = context.TagBalance.Find(new object[] { item.Tag, item.BalanceDate, item.ValType });
@@ -73,14 +75,14 @@ namespace R2PTransformation.Models {
             }
         }
 
-        internal static List<StandardUnit> GetUnits() {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+        public static List<StandardUnit> GetUnits() {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 return context.StandardUnit.ToList();
             }
         }
 
         internal static void AddMaterialMovements(List<MaterialMovement> mm) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 mm.ForEach(t => {
                     List<MaterialMovement> find = context.MaterialMovement.Where(f => f.MaterialDocument == t.MaterialDocument).ToList();
 
@@ -93,7 +95,7 @@ namespace R2PTransformation.Models {
         }
 
         internal static void AddProductHierarchy(List<ProductHierarchy> mm) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 context.ProductHierarchy.RemoveRange(context.ProductHierarchy);
                 context.ProductHierarchy.AddRange(mm);
                 context.SaveChanges();
@@ -101,7 +103,7 @@ namespace R2PTransformation.Models {
         }
 
         internal static void AddMaterialLedger(List<MaterialLedger> mm) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 context.MaterialLedger.RemoveRange(context.MaterialLedger);
                 context.MaterialLedger.AddRange(mm);
                 context.SaveChanges();
@@ -117,7 +119,9 @@ namespace R2PTransformation.Models {
             existing.Consumption = tb.Consumption;
             existing.MovementType = tb.MovementType;
             existing.Material = tb.Material;
-            existing.ValType = tb.ValType;
+            if (existing.ValType != tb.ValType) {
+                throw new Exception("Valuation types different : " + existing.ValType + " " + tb.ValType + " " + existing.BalanceDate.ToString() + " " + existing.Tag);
+            }
             existing.Material = tb.Material;
             existing.StandardUnit = tb.StandardUnit;
             existing.WorkCenter = tb.WorkCenter;
@@ -141,31 +145,21 @@ namespace R2PTransformation.Models {
 
         internal static TagMap ReverseLookupTag(int material, string plant) {
             TagMap tm = null;
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                if (context.DoesConnectionStringExist) {
-                    tm = context.TagMap.SingleOrDefault(t => t.MaterialNumber == material.ToString() && t.Plant == plant);
-                    return tm;
-                } else {
-                    // probably for Unit Testing, so use 
-                    return new TagMap() { Tag = "EP Sweet Crude Trucks", DefaultUnit = "abc", MaterialNumber = "abc", WorkCenter = "123", Plant = plant, DefaultValuationType = "asd" };
-                }
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
+                tm = context.TagMap.SingleOrDefault(t => t.MaterialNumber == material.ToString() && t.Plant == plant);
+                return tm;
             }
         }
 
         internal static TagMap LookupTag(string tag, string plant, string type) {
             TagMap tm = null;
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
-                if (context.DoesConnectionStringExist) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                     if (plant == "COMMERCECITY") {
                         tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && (t.Plant == "GP01" || t.Plant == "GP02") && t.Type == type);
                     } else {
                         tm = context.TagMap.SingleOrDefault(t => t.Tag == tag && t.Plant == plant && t.Type == type);
                     }
                     return tm;
-                } else {
-                    // probably for Unit Testing, so use 
-                    return new TagMap() { Tag = "EP Sweet Crude Trucks", DefaultUnit = "abc", MaterialNumber = "abc", WorkCenter = "123", Plant = plant, DefaultValuationType = "asd" };
-                }
                 /*
                 if (tm == null) {
                     tm = new TagMap();
@@ -187,7 +181,7 @@ namespace R2PTransformation.Models {
 
         internal static decimal ConvertQuantityToStandardUnit(string fromUom, string toUom, string material,  decimal quantity) {
             // if alread a StandarUnit, then no need to convert
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 if (!context.DoesConnectionStringExist) {
                     // probably for Unit Testing, so use
                     return quantity;
@@ -206,7 +200,7 @@ namespace R2PTransformation.Models {
 
         public static string GetCurrentConversionsCSV() {
             List<Conversion> cons = null;
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 cons = context.Conversion.ToList();
             }
             string converionContents = "Material,StandardUnit,ToUnit,Factor\r\n";
@@ -217,7 +211,7 @@ namespace R2PTransformation.Models {
 
         public static string GetCurrentTagMapsCSV(string plant, string type) {
             List<TagMap> tags = null;
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 tags = context.TagMap.Where(t => t.Plant == plant && t.Type == type).ToList();
             }
             string tagContents = "Tag,Plant,WorkCenter,MaterialNumber,DefaultValuationType,DefaultUnit\r\n";
@@ -227,14 +221,14 @@ namespace R2PTransformation.Models {
         }
 
         public static List<TransactionEvent> GetTransactions() {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 return context.TransactionEvent.ToList();
             }
         }
 
         /*
         public static void RecordMaterialMovement(string plant, List<WarningMessage> warnings, int success, int fail, string body) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 TransactionEvent te = new TransactionEvent() { Type = "Material Movement", Plant = plant, Extra = body, CreateDate = DateTime.Now, SuccessfulRecordCount = success, FailedRecordCount = fail };
 
                 foreach (var item in warnings.Select(y => new { Tag = y.Tag, Message = y.Message }).Distinct()) {
@@ -254,7 +248,7 @@ namespace R2PTransformation.Models {
 
         public static void RecordStats(string type, string filename, List<WarningMessage> warnings, string plant, int success, int fail, string json) {
             if (json != null && json.Length > 5990) json = json.Substring(0, 5990);
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plant, Filename = filename, SuccessfulRecordCount = success, FailedRecordCount = fail, Extra = json };
                 te.Message = "";
 
@@ -279,7 +273,7 @@ namespace R2PTransformation.Models {
 
         public static void RecordStats(string type, int successfulRecords, string json) {
             if (json.Length > 5990) json = json.Substring(0, 5990);
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = null, Filename = null, SuccessfulRecordCount = successfulRecords, FailedRecordCount = 0, Extra = json };
                 te.Message = "File completed successfully";
                 context.TransactionEvent.Add(te);
@@ -288,7 +282,7 @@ namespace R2PTransformation.Models {
         }
 
         public static Boolean RecordFileFailure(string type, String plant, string fileName, int successfulRecordCount, int failedRecordCount, Exception ex) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = plant, Filename = fileName, SuccessfulRecordCount = 0, FailedRecordCount = failedRecordCount, Message = (ex.InnerException != null ? ex.Message + ":" + ex.InnerException.Message : ex.Message) };
                 if (ex is OriginalFileLockException) {
                     // if the last message is an File Lock, do not log
@@ -309,7 +303,7 @@ namespace R2PTransformation.Models {
         }
 
         public static void RecordFatalLoad(string type, string plant, Exception ex, string extra) {
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 if (extra != null && extra.Length > 5990) extra = extra.Substring(0, 5990);
                 TransactionEvent te = new TransactionEvent() { Type = type, Plant = plant, CreateDate = DateTime.Now, Message = ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message), Extra = extra };
                 if (ex is OriginalFileLockException) {
@@ -330,7 +324,7 @@ namespace R2PTransformation.Models {
             dt2.TableName = "conversion";
 
             List<Conversion> csv = new List<Conversion>();
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 existing = context.Conversion.ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
@@ -344,7 +338,7 @@ namespace R2PTransformation.Models {
                 }
             }
 
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 List<String> existingUnits = context.StandardUnit.Select(u => u.Name).ToList();
                 List<String> additionalStandarUnits = csv.Select(t => t.StandardUnit).Distinct().Where(y => !existingUnits.Contains(y)).ToList();
                 List<String> additionalToUnits = csv.Select(t => t.ToUnit).Distinct().Where(y => !existingUnits.Contains(y) && !additionalStandarUnits.Contains(y)).ToList();
@@ -378,7 +372,7 @@ namespace R2PTransformation.Models {
             List<TagMap> existingTM = null;
             List<TagMap> toAdd = new List<TagMap>();
             List<TagMap> toChange = new List<TagMap>();
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 existingTM = context.TagMap.Where(t => t.Plant == plant).ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
@@ -398,7 +392,7 @@ namespace R2PTransformation.Models {
             }
             existingTM.ForEach(t => { msgs.Add(new WarningMessage(MessageType.Info, "deleting " + t.Tag)); });
 
-            using (DBContextWithConnectionString context = new DBContextWithConnectionString()) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 context.TagMap.RemoveRange(existingTM);
                 context.TagMap.AddRange(toAdd);
                 toChange.ForEach(chg => { UpdateTagMapValues(context.TagMap.Single(t => t.Plant == chg.Plant && t.Tag == chg.Tag), chg); });

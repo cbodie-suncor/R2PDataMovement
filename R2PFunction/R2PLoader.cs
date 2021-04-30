@@ -113,6 +113,8 @@ namespace SuncorR2P
                 FoundFile.SetConnection(log);
                 using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync();   }
                 generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
+                generatedFile.Plant = "CP01";
+                generatedFile.AzurePath = $"CP01/custodyTickets/{DateTime.Now.ToString("yyyyMMddHHmmss")}.txt";
                 LogHelper.LogSystemError(log, productVersion, "writing file to " + generatedFile.AzurePath);
                 LogHelper.LogSystemError(log, productVersion, "wcontents to " + generatedFile.Contents);
                 AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.Contents, true);

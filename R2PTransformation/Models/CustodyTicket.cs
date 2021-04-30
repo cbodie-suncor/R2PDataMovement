@@ -12,28 +12,35 @@ namespace R2PTransformation.Models
         public int CustodyTicketId { get; set; }
         public string S4MaterialDocument { get; set; }
         public string BolNumber { get; set; }
-        public string S4Material { get; set; }
-        public string SourceDataMaterialCode { get; set; }
+        public string MovemonmentTypeDescription { get; set; }
         public string Sign { get; set; }
-        public decimal GrossQuantitySize { get; set; }
-        public decimal NetQuantitySize { get; set; }
-        public string UnitOfMeasure { get; set; }
+        public decimal? NetQuantitySizeInUoe { get; set; }
+        public decimal NetQuantitySizeInBuoe { get; set; }
+        public decimal? Mass { get; set; }
+        public string BaseUnitOfMeasure { get; set; }
+        public string BaseUnitOfEntry { get; set; }
         public string ValuationType { get; set; }
-        public decimal Density { get; set; }
-        public string MovementPlant { get; set; }
-        public string SendingPlant { get; set; }
-        public string ReceivingPlant { get; set; }
-        public string Temperature { get; set; }
+        public decimal? Density { get; set; }
+        public string DensityUom { get; set; }
+        public string Origin { get; set; }
+        public string Destination { get; set; }
+        public string Plant { get; set; }
+        public decimal? Temperature { get; set; }
+        public string TemperatureUnitOfMeasure { get; set; }
         public string MovementType { get; set; }
-        public string Mode { get; set; }
-        public string LoadStartDate { get; set; }
-        public string LoadStartTime { get; set; }
-        public DateTime LoadEndDateTime { get; set; }
-        public DateTime EnteredOnDateTime { get; set; }
+        public int Mode { get; set; }
+        public string Tender { get; set; }
+        public string VehicleText { get; set; }
+        public string VehicleNumber { get; set; }
+        public DateTime? LoadStartDateTime { get; set; }
+        public DateTime? LoadEndDateTime { get; set; }
+        public DateTime? EnteredOnDateTime { get; set; }
         public string EnteredBy { get; set; }
-        public DateTime DocumentDateTime { get; set; }
+        public DateTime? DocumentDateTime { get; set; }
         public DateTime PostingDateTime { get; set; }
 
-        public virtual StandardUnit UnitOfMeasureNavigation { get; set; }
+        public virtual StandardUnit BaseUnitOfEntryNavigation { get; set; }
+        public virtual StandardUnit BaseUnitOfMeasureNavigation { get; set; }
+        public virtual StandardUnit TemperatureUnitOfMeasureNavigation { get; set; }
     }
 }

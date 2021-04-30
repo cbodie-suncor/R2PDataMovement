@@ -1,0 +1,61 @@
+{
+  "BatchId": "3f602f3d-68a4-4739-a694-00868bc83fbe",
+  "Batch": [
+    {
+      "Tag": "OSX",
+      "System": "TopTech",
+      "MovementType": "Inventory",
+      "Material": 10699,
+      "Plant": "CT08",
+      "WorkCenter": null,
+      "ValType": null,
+      "Tank": "TK-1009",
+      "QuantityTimestamp": "2021-03-15T01:30:00",
+      "BalanceDate": "2021-02-15T00:00:00",
+      "Quantity": 12500,
+      "StandardUnit": "BBL"
+    },
+    {
+      "Tag": "PFT",
+      "System": "TopTech",
+      "MovementType": "Inventory",
+      "Material": 10696,
+      "Plant": "FP01",
+      "WorkCenter": null,
+      "ValType": null,
+      "Tank": "6400",
+      "QuantityTimestamp": "2021-03-15T02:30:00",
+      "BalanceDate": "2021-02-15T00:00:00",
+      "Quantity": 50000,
+      "StandardUnit": "BBL"
+    },
+    {
+      "Tag": "OSX",
+      "System": "TopTech",
+      "MovementType": "Inventory",
+      "Material": 10699,
+      "Plant": "FT01",
+      "WorkCenter": null,
+      "ValType": null,
+      "Tank": "1000",
+      "QuantityTimestamp": "2021-03-15T03:30:00",
+      "BalanceDate": "2021-02-15T00:00:00",
+      "Quantity": 2500,
+      "StandardUnit": "BBL"
+    },
+    {
+      "Tag": "PFT",
+      "System": "TopTech",
+      "MovementType": "Inventory",
+      "Material": 10696,
+      "Plant": "MT02",
+      "WorkCenter": null,
+      "ValType": null,
+      "Tank": "TK-1005",
+      "QuantityTimestamp": "2021-03-15T04:30:00",
+      "BalanceDate": "2021-02-15T00:00:00",
+      "Quantity": 30000.0000,
+      "StandardUnit": "BBL"
+    }
+  ]
+}

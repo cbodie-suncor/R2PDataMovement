@@ -13,7 +13,9 @@ namespace R2PTransformation.Models
         {
             ConversionStandardUnitNavigation = new HashSet<Conversion>();
             ConversionToUnitNavigation = new HashSet<Conversion>();
-            CustodyTicket = new HashSet<CustodyTicket>();
+            CustodyTicketBaseUnitOfEntryNavigation = new HashSet<CustodyTicket>();
+            CustodyTicketBaseUnitOfMeasureNavigation = new HashSet<CustodyTicket>();
+            CustodyTicketTemperatureUnitOfMeasureNavigation = new HashSet<CustodyTicket>();
             InventorySnapshot = new HashSet<InventorySnapshot>();
             MaterialMovementUnitOfEntryNavigation = new HashSet<MaterialMovement>();
             MaterialMovementUnitOfMeasureNavigation = new HashSet<MaterialMovement>();
@@ -26,7 +28,9 @@ namespace R2PTransformation.Models
 
         public virtual ICollection<Conversion> ConversionStandardUnitNavigation { get; set; }
         public virtual ICollection<Conversion> ConversionToUnitNavigation { get; set; }
-        public virtual ICollection<CustodyTicket> CustodyTicket { get; set; }
+        public virtual ICollection<CustodyTicket> CustodyTicketBaseUnitOfEntryNavigation { get; set; }
+        public virtual ICollection<CustodyTicket> CustodyTicketBaseUnitOfMeasureNavigation { get; set; }
+        public virtual ICollection<CustodyTicket> CustodyTicketTemperatureUnitOfMeasureNavigation { get; set; }
         public virtual ICollection<InventorySnapshot> InventorySnapshot { get; set; }
         public virtual ICollection<MaterialMovement> MaterialMovementUnitOfEntryNavigation { get; set; }
         public virtual ICollection<MaterialMovement> MaterialMovementUnitOfMeasureNavigation { get; set; }

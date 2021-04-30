@@ -41,10 +41,19 @@ namespace R2PTransformation.src {
                 sm.EnteredOn        = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime) item["enteredOn"];
                 sm.EnteredAt        = GetStringValue(item, "enteredAt") ?? "R2PLoader";
 
-                var found = units.SingleOrDefault(t=>t.Name == sm.UnitOfEntry);
-                if (found == null) {
-                    Warnings.Add(new WarningMessage(MessageType.Info, "cannot find UOM for" + sm.UnitOfEntry));
-                    continue;
+                if (sm.UnitOfEntry != null) {
+                    var found = units.SingleOrDefault(t => t.Name == sm.UnitOfEntry);
+                    if (found == null) {
+                        Warnings.Add(new WarningMessage(MessageType.Info, "cannot find UOE for" + sm.UnitOfEntry));
+                        continue;
+                    }
+                }
+                if (sm.UnitOfMeasure != null) {
+                    var found = units.SingleOrDefault(t => t.Name == sm.UnitOfMeasure);
+                    if (found == null) {
+                        Warnings.Add(new WarningMessage(MessageType.Info, "cannot find UOM for" + sm.UnitOfMeasure));
+                        continue;
+                    }
                 }
 
                 /*

@@ -9,13 +9,13 @@ using ExcelDataReader;
 
 namespace R2PTransformation.src {
     public class SigmafineParser {
-        public SuncorProductionFile LoadInventoryExcel(string fileName, string plant, DateTime currentDay) {
+        public SuncorProductionFile LoadInventoryExcel(byte[] fileContents, string plant, DateTime currentDay) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName); // either GP01 or GP02
+            SuncorProductionFile ms = new SuncorProductionFile(plant); // either GP01 or GP02
             ms.IsCurrentDay(currentDay);
-            DateTime day = GetDayFromExcelHeader(fileName, 10, 5);
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+            DateTime day = GetDayFromExcelHeader(fileContents, 10, 5);
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                             UseHeaderRow = true,
@@ -49,13 +49,13 @@ namespace R2PTransformation.src {
 
             return ms;
         }
-        public SuncorProductionFile LoadProductionExcel(string fileName, string plant, DateTime currentDay) {
+        public SuncorProductionFile LoadProductionExcel(byte[] fileContents, string plant, DateTime currentDay) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName); // either GP01 or GP02
+            SuncorProductionFile ms = new SuncorProductionFile(plant); // either GP01 or GP02
             ms.IsCurrentDay(currentDay);
-            DateTime day = GetDayFromExcelHeader(fileName, 2, 12);
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+            DateTime day = GetDayFromExcelHeader(fileContents, 2, 12);
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                             UseHeaderRow = true,
@@ -102,9 +102,9 @@ namespace R2PTransformation.src {
             return ms;
         }
 
-        private DateTime GetDayFromExcelHeader(string fileName, int row, int column) {
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+        private DateTime GetDayFromExcelHeader(byte[] fileContents, int row, int column) {
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                         }

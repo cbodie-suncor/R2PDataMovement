@@ -26,6 +26,13 @@ namespace R2PTransformation.src {
                 throw new Exception("Invalid Date for " + columnName);
             }
         }
+        public static DateTime ParseDateTime(JToken v, string columnName1, string columnName2) {
+            try {
+                return DateTime.Parse(v[columnName1].ToString() + " " + v[columnName2].ToString());
+            } catch (Exception ex) {
+                throw new Exception("Invalid Date for " + columnName1);
+            }
+        }
 
         public static DateTime ParseDateTime(DataRow v, string columnName) {
             try {
@@ -67,7 +74,7 @@ namespace R2PTransformation.src {
             }
         }
 
-        public static int ParseInt(JObject v, string columnName) {
+        public static int ParseInt(JToken v, string columnName) {
             try {
                 return string.IsNullOrEmpty(v[columnName].ToString()) ? 0 : int.Parse(v[columnName].ToString());
             } catch (Exception ex) {

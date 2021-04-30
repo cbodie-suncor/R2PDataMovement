@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace R2PTransformation.src {
     public class HoneywellPBParser {
-        private string Filename = "";
-
-        public HoneywellPBFile LoadFile(string fileName, string plant, DateTime currentDay) {
-            Filename = fileName;
-            HoneywellPBFile pf = new HoneywellPBFile(fileName, plant);
+        public HoneywellPBFile LoadFile(string fileText, string plant, DateTime currentDay) {
+            HoneywellPBFile pf = new HoneywellPBFile(plant);
             pf.IsCurrentDay(currentDay);
-            string fileText = File.ReadAllText(fileName);
             if (string.IsNullOrEmpty(fileText)) throw new Exception("File is empty");
             fileText = fileText.Replace("\r", "");  // only care about \n
             Contents fileContents = GetTagContents(fileText, "<<NP UPLOAD FILE>>");

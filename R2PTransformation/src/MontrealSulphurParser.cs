@@ -8,16 +8,14 @@ using R2PTransformation.Models;
 
 namespace R2PTransformation.src {
     public class MontrealSulphurParser {
-        private string Filename = "";
 
-        public MontrealSulphurFile LoadFile(string fileName, string plant, string productCode, DateTime currentDay) {
-            Filename = fileName;
+        public MontrealSulphurFile LoadFile(byte[] fileContents, string plant, string productCode, DateTime currentDay) {
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            MontrealSulphurFile ms = new MontrealSulphurFile(fileName, plant, productCode);
+            MontrealSulphurFile ms = new MontrealSulphurFile(plant, productCode);
             ms.IsCurrentDay(currentDay);
-            using (var stream = File.Open(fileName, FileMode.Open, FileAccess.Read)) {
-                using (var reader = ExcelReaderFactory.CreateReader(stream)) {
+            {
+                using (var reader = ExcelReaderFactory.CreateReader(new MemoryStream(fileContents))) {
                     var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
                         ConfigureDataTable = (data) => new ExcelDataTableConfiguration() {
                         }

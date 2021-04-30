@@ -9,16 +9,14 @@ using System.Linq;
 namespace R2PTransformation.src {
     public class SuncorProductionFile {
         public Guid BatchId;
-        public string FileName;
         public string Plant;
         public List<WarningMessage> Warnings = new List<WarningMessage>();
         public List<TagBalance> Products { get; set; }
         public List<InventorySnapshot> Inventory { get; set; }
 
-        public SuncorProductionFile(string plant, string fileName) {
+        public SuncorProductionFile(string plant) {
             BatchId = Guid.NewGuid();
             Plant = plant;
-            FileName = fileName;
             FailedRecords = 0;
             Products = new List<TagBalance>();
             Inventory = new List<InventorySnapshot>();
@@ -152,9 +150,9 @@ namespace R2PTransformation.src {
         private static string LogFileName = "AzureDataHub.log";
         private static string CRLF = "\r\n";
 
-        public void SaveRecords() {
+        public void SaveRecords(string filename) {
             List<TagBalance> tb = this.GetTagBalanceRecords();
-            AzureModel.SaveTagBalance(FileName, this, tb);
+            AzureModel.SaveTagBalance(filename, this, tb);
         }
 
         public static decimal ParseDecimal(object v, string columnName) {

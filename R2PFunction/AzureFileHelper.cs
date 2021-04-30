@@ -43,8 +43,8 @@ namespace SuncorR2P {
                     Boolean result = AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
                     if (result) LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
                     if (foundFile.PlantName == "CP03" && ex.Message.Contains("no ULSD file found for the month")) {  // do not delete the NPUpld file if no ULSD file 
-                        AzureFileHelper.CopyToAzureFileShare(foundFile.TempFileName, foundFile.AzureFullPathName);
-                        File.Delete(foundFile.TempFileName);
+                        AzureFileHelper.CopyToAzureFileShare(foundFile.BytesOfFile, foundFile.AzureFullPathName);
+                        File.Delete(foundFile.FileContents);
                     } else
                         foundFile.DisposeOfFile();
                 }
@@ -72,7 +72,7 @@ namespace SuncorR2P {
 
         private static readonly string prodTagMappingFile = "System/ProdTagMappings";
         private static readonly string prodTagMappingFileProcessed = "System/ProdTagMappings.processed";
-        private static readonly string prodTagMappingFileError = "System/ProTagMappings.error";
+        private static readonly string prodTagMappingFileError = "System/ProdTagMappings.error";
 
         private static readonly string invTagMappingFile = "System/InvTagMappings";
         private static readonly string invTagMappingFileProcessed = "System/InvTagMappings.processed";
@@ -206,7 +206,7 @@ namespace SuncorR2P {
             try {
                 FoundFile ulsd = GetULSDFileForCP03(currentDay);
                 if (ulsd == null) return false;
-                List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
+                List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.BytesOfFile);
                 SuncorProductionFile pf = SarniaParser.UpdateShellSplits(ss);
                 if (pf.SavedRecords != null) {
                     string json = pf.ExportProductionJson();
@@ -254,9 +254,8 @@ namespace SuncorR2P {
                         matchingFiles = matchingFiles.OrderByDescending(t => t.LastModified).ToList();
                         if (matchingFiles.Count == 0) return null;
 
-                        string tempFileName = Path.GetTempFileName();
-                        byte[] bytes = DownloadFile(dir.GetFileClient(matchingFiles[0].Filename), tempFileName);
-                        return new FoundFile(dir.Path, matchingFiles[0].Filename, bytes, tempFileName);
+                        byte[] bytes = DownloadFile(dir.GetFileClient(matchingFiles[0].Filename));
+                        return new FoundFile(dir.Path, matchingFiles[0].Filename, bytes);
                     }
                 } catch (Exception ex) {
                     throw new Exception(item.Name + ":" + (tfile != null ? tfile.Name : "") + " " + ex.Message);
@@ -281,9 +280,8 @@ namespace SuncorR2P {
                         foreach (var file in dir.GetFilesAndDirectories()) {
                             tfile = file; 
                             if (!file.IsDirectory) {
-                                string tempFileName = Path.GetTempFileName();
-                                byte[] bytes = DownloadFile(dir.GetFileClient(file.Name), tempFileName);
-                                return new FoundFile(dir.Path, file.Name, bytes, tempFileName);
+                                byte[] bytes = DownloadFile(dir.GetFileClient(file.Name));
+                                return new FoundFile(dir.Path, file.Name, bytes);
                             }
                         }
                     }
@@ -310,17 +308,19 @@ namespace SuncorR2P {
             return text;
         }
 
-        public static void CopyToAzureFileShare(string localPath, string azurePath) {
+        public static void CopyToAzureFileShare(byte[] fileContents, string azurePath) {
             ShareFileClient newFile = new ShareFileClient(CONNECTIONSTRING, SHARENAME, azurePath);
             if (newFile.Exists()) newFile.Delete();
-            using (FileStream stream = File.OpenRead(localPath)) {
-                newFile.Create(stream.Length);
-                if (stream.Length > 0)
-                    newFile.UploadRange(new HttpRange(0, stream.Length), stream);
+//            using (FileStream stream = File.OpenRead(localPath)) 
+            {
+                newFile.Create(fileContents.Length);
+                if (fileContents.Length > 0)
+                    newFile.UploadRange(new HttpRange(0, fileContents.Length), new MemoryStream(fileContents));
             }
         }
 
-        private static byte[] DownloadFile(ShareFileClient file, string localFilePath) {
+        private static byte[] DownloadFile(ShareFileClient file) {
+            /*
             long fileLength = 0;
             using (Stream stream = file.OpenRead()) {
                 var properties = file.GetProperties();
@@ -331,13 +331,14 @@ namespace SuncorR2P {
                 fs.Close();
                 return null;
             }
+            */
             ShareFileDownloadInfo download = file.Download();
             byte[] abc = GetBinaryStreamContents(download, file.Name);
-
+            /*
             using (FileStream stream = File.OpenWrite(localFilePath)) {
                 ShareFileDownloadInfo d2 = file.Download();
                 d2.Content.CopyTo(stream);
-            }
+            }*/
             return abc;
         }
     }

@@ -10,7 +10,7 @@ using System.Linq;
 namespace R2PTransformation {
     public class HoneywellPBFile : SuncorProductionFile {
         
-        public HoneywellPBFile(string fileName, string plant) : base(plant, fileName) { }
+        public HoneywellPBFile(string plant) : base(plant) { }
 
         public Dictionary<string, string> Defaults { get; set; }
         public Dictionary<string, string> Values { get; set; }

@@ -32,6 +32,7 @@ namespace R2PTransformation.Models
         public virtual DbSet<TagMap> TagMap { get; set; }
         public virtual DbSet<TransactionEvent> TransactionEvent { get; set; }
         public virtual DbSet<TransactionEventDetail> TransactionEventDetail { get; set; }
+        public virtual DbSet<Transactions> Transactions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -99,20 +100,37 @@ namespace R2PTransformation.Models
             {
                 entity.Property(e => e.CustodyTicketId).HasColumnName("custodyTicket_id");
 
+                entity.Property(e => e.BaseUnitOfEntry)
+                    .HasColumnName("Base_Unit_of_entry")
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.BaseUnitOfMeasure)
+                    .HasColumnName("Base_Unit_of_Measure")
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.BolNumber)
-                    .IsRequired()
                     .HasColumnName("BOL_Number")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Density).HasColumnType("decimal(10, 5)");
+                entity.Property(e => e.Density).HasColumnType("decimal(10, 3)");
+
+                entity.Property(e => e.DensityUom)
+                    .HasColumnName("Density_UOM")
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Destination)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.DocumentDateTime)
                     .HasColumnName("Document_DateTime")
                     .HasColumnType("datetime");
 
                 entity.Property(e => e.EnteredBy)
-                    .IsRequired()
                     .HasColumnName("Entered_by")
                     .HasMaxLength(50)
                     .IsUnicode(false);
@@ -121,36 +139,17 @@ namespace R2PTransformation.Models
                     .HasColumnName("Entered_On_DateTime")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.GrossQuantitySize)
-                    .HasColumnName("Gross_Quantity_Size")
-                    .HasColumnType("decimal(10, 5)");
-
                 entity.Property(e => e.LoadEndDateTime)
                     .HasColumnName("Load_End_DateTime")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.LoadStartDate)
-                    .IsRequired()
-                    .HasColumnName("Load_Start_Date")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.LoadStartDateTime)
+                    .HasColumnName("Load_Start_DateTime")
+                    .HasColumnType("datetime");
 
-                entity.Property(e => e.LoadStartTime)
-                    .IsRequired()
-                    .HasColumnName("Load_Start_Time")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Mode)
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.MovementPlant)
-                    .IsRequired()
-                    .HasColumnName("Movement_Plant")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Mass)
+                    .HasColumnName("mass")
+                    .HasColumnType("decimal(10, 5)");
 
                 entity.Property(e => e.MovementType)
                     .IsRequired()
@@ -158,25 +157,32 @@ namespace R2PTransformation.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.NetQuantitySize)
-                    .HasColumnName("Net_Quantity_Size")
-                    .HasColumnType("decimal(10, 5)");
+                entity.Property(e => e.MovemonmentTypeDescription)
+                    .IsRequired()
+                    .HasColumnName("movemonment_type_description")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.NetQuantitySizeInBuoe)
+                    .HasColumnName("Net_Quantity_Size_in_buoe")
+                    .HasColumnType("decimal(10, 3)");
+
+                entity.Property(e => e.NetQuantitySizeInUoe)
+                    .HasColumnName("Net_Quantity_Size_in_uoe")
+                    .HasColumnType("decimal(10, 3)");
+
+                entity.Property(e => e.Origin)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Plant)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.PostingDateTime)
                     .HasColumnName("Posting_DateTime")
                     .HasColumnType("datetime");
-
-                entity.Property(e => e.ReceivingPlant)
-                    .IsRequired()
-                    .HasColumnName("Receiving_Plant")
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.S4Material)
-                    .IsRequired()
-                    .HasColumnName("S4_Material")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
 
                 entity.Property(e => e.S4MaterialDocument)
                     .IsRequired()
@@ -184,32 +190,21 @@ namespace R2PTransformation.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.SendingPlant)
-                    .IsRequired()
-                    .HasColumnName("Sending_Plant")
-                    .HasMaxLength(10)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Sign)
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.SourceDataMaterialCode)
-                    .IsRequired()
-                    .HasColumnName("Source_Data_Material_Code")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
+                entity.Property(e => e.Temperature).HasColumnType("decimal(10, 3)");
 
-                entity.Property(e => e.Temperature)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.UnitOfMeasure)
-                    .IsRequired()
-                    .HasColumnName("Unit_of_Measure")
+                entity.Property(e => e.TemperatureUnitOfMeasure)
+                    .HasColumnName("Temperature_Unit_of_Measure")
                     .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Tender)
+                    .HasColumnName("tender")
+                    .HasMaxLength(50)
                     .IsUnicode(false);
 
                 entity.Property(e => e.ValuationType)
@@ -218,11 +213,30 @@ namespace R2PTransformation.Models
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.UnitOfMeasureNavigation)
-                    .WithMany(p => p.CustodyTicket)
-                    .HasForeignKey(d => d.UnitOfMeasure)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_CustodyTicket_Unit_of_Measure");
+                entity.Property(e => e.VehicleNumber)
+                    .HasColumnName("vehicle_number")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.VehicleText)
+                    .HasColumnName("vehicle_text")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.HasOne(d => d.BaseUnitOfEntryNavigation)
+                    .WithMany(p => p.CustodyTicketBaseUnitOfEntryNavigation)
+                    .HasForeignKey(d => d.BaseUnitOfEntry)
+                    .HasConstraintName("FK_CustodyTicket_unit_of_entry");
+
+                entity.HasOne(d => d.BaseUnitOfMeasureNavigation)
+                    .WithMany(p => p.CustodyTicketBaseUnitOfMeasureNavigation)
+                    .HasForeignKey(d => d.BaseUnitOfMeasure)
+                    .HasConstraintName("FK_CustodyTicket_Base_Unit_of_Measure");
+
+                entity.HasOne(d => d.TemperatureUnitOfMeasureNavigation)
+                    .WithMany(p => p.CustodyTicketTemperatureUnitOfMeasureNavigation)
+                    .HasForeignKey(d => d.TemperatureUnitOfMeasure)
+                    .HasConstraintName("FK_CustodyTicket_temperature_Unit_of_Measure");
             });
 
             modelBuilder.Entity<InventorySnapshot>(entity =>
@@ -565,14 +579,15 @@ namespace R2PTransformation.Models
 
             modelBuilder.Entity<TagMap>(entity =>
             {
-                entity.HasKey(e => new { e.Tag, e.Plant });
-
-                entity.Property(e => e.Tag)
-                    .HasMaxLength(100)
-                    .IsUnicode(false);
+                entity.HasKey(e => new { e.Plant, e.Tag })
+                    .HasName("Pk_TagMap");
 
                 entity.Property(e => e.Plant)
                     .HasMaxLength(4)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Tag)
+                    .HasMaxLength(100)
                     .IsUnicode(false);
 
                 entity.Property(e => e.DefaultUnit)
@@ -585,6 +600,7 @@ namespace R2PTransformation.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.MaterialNumber)
+                    .IsRequired()
                     .HasMaxLength(20)
                     .IsUnicode(false);
 
@@ -671,6 +687,46 @@ namespace R2PTransformation.Models
                     .HasForeignKey(d => d.TransactionEventId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_transactioneventdetail");
+            });
+
+            modelBuilder.Entity<Transactions>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("Transactions");
+
+                entity.Property(e => e.CreateDate)
+                    .HasColumnName("createDate")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Extra)
+                    .HasColumnName("extra")
+                    .HasMaxLength(8000)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Failedrecordcount).HasColumnName("failedrecordcount");
+
+                entity.Property(e => e.Filename)
+                    .HasColumnName("filename")
+                    .HasMaxLength(500)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Message)
+                    .HasColumnName("message")
+                    .HasMaxLength(3000)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Plant)
+                    .HasColumnName("plant")
+                    .HasMaxLength(40)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Successfulrecordcount).HasColumnName("successfulrecordcount");
+
+                entity.Property(e => e.Type)
+                    .HasColumnName("type")
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
             });
 
             OnModelCreatingPartial(modelBuilder);

@@ -9,16 +9,18 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using static R2PTransformation.src.SarniaParser;
 using System.Collections.Generic;
+using System.Text;
 
 namespace SuncorR2P.src {
     public class FoundFile {
-        public string TempFileName;
         public string AzureFileName;
         public string AzureFullPathName;
         public byte[] BytesOfFile;
 
         public SuncorProductionFile ProductionFile;
         public Boolean Inventory = false;
+
+        public string FileContents { get { return Encoding.Default.GetString(BytesOfFile); } }
 
         public string ParentDiectory {
             get {
@@ -71,8 +73,7 @@ namespace SuncorR2P.src {
 
         public void DisposeOfFile(Boolean fatal = false) {
             string destination = this.ParentDiectory + "\\" + (this.SuccessfulRecords == 0 || fatal ? "rejected" : "archived") + "\\" + this.GetFileNameWithTimestampAppendedBeforeSuffix();
-            AzureFileHelper.CopyToAzureFileShare(this.TempFileName, destination);
-            File.Delete(this.TempFileName);
+            AzureFileHelper.CopyToAzureFileShare(this.BytesOfFile, destination);
         }
 
         public void DeleteOriginalFile() {
@@ -89,28 +90,28 @@ namespace SuncorR2P.src {
             DateTime processingDate = GetCurrentDay(this.PlantName, true);
 
             if (this.IsHoneywellPB || this.IsSarnia) {
-                this.ProductionFile = new HoneywellPBParser().LoadFile(this.TempFileName, this.PlantName, processingDate);
+                this.ProductionFile = new HoneywellPBParser().LoadFile(this.FileContents, this.PlantName, processingDate);
                 if (this.IsSarnia) {
                     DateTime balancingDate = ((R2PTransformation.HoneywellPBFile)this.ProductionFile).GetAccountDate();
 
                     if (SuncorProductionFile.IsDayValid(balancingDate, processingDate)) {
                         FoundFile ulsd = AzureFileHelper.GetULSDFileForCP03(balancingDate);
                         if (ulsd == null) throw new Exception("no ULSD file found for the month " + balancingDate.ToString("MMMM yyyy"));
-                        List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.TempFileName);
+                        List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.BytesOfFile);
                         SarniaParser.ApplyShellSplits(this.ProductionFile, ss);
                     }
                 }
             }
-            if (this.IsMontrealSulphur)     { this.ProductionFile = new MontrealSulphurParser().LoadFile(this.TempFileName, this.PlantName, this.ProductCode, processingDate); }
-            if (this.IsDPS)                 { this.ProductionFile = new DPSParser().LoadFile(this.TempFileName, this.PlantName, processingDate); }
-            if (this.IsDenver)              { this.ProductionFile = new SigmafineParser().LoadProductionExcel(this.TempFileName, this.PlantName, processingDate); }
-            if (this.Inventory)             { this.ProductionFile = new SigmafineParser().LoadInventoryExcel(this.TempFileName, this.PlantName, processingDate);  }
-            if (this.IsTerraNova)           { this.ProductionFile = new TerraNovaParser().LoadFile(this.TempFileName, this.PlantName, processingDate); }
+            if (this.IsMontrealSulphur)     { this.ProductionFile = new MontrealSulphurParser().LoadFile(this.BytesOfFile, this.PlantName, this.ProductCode, processingDate); }
+            if (this.IsDPS)                 { this.ProductionFile = new DPSParser().LoadFile(this.BytesOfFile, this.PlantName, processingDate); }
+            if (this.IsDenver)              { this.ProductionFile = new SigmafineParser().LoadProductionExcel(this.BytesOfFile, this.PlantName, processingDate); }
+            if (this.Inventory)             { this.ProductionFile = new SigmafineParser().LoadInventoryExcel(this.BytesOfFile, this.PlantName, processingDate);  }
+            if (this.IsTerraNova)           { this.ProductionFile = new TerraNovaParser().LoadFile(this.FileContents, this.PlantName, processingDate); }
             if (this.ProductionFile != null) {
                 this.FailedRecords = this.ProductionFile.FailedRecords;
 
                 if (this.Inventory) {
-                    AzureModel.SaveInventory(this.ProductionFile.FileName, this.ProductionFile, this.ProductionFile.Inventory);
+                    AzureModel.SaveInventory(this.AzureFullPathName, this.ProductionFile, this.ProductionFile.Inventory);
                     this.SuccessfulRecords = this.ProductionFile.SavedInventoryRecords.Count;
                     if (this.ProductionFile.SavedInventoryRecords.Count > 0) {
                         string json = this.ProductionFile.ExportInventory();
@@ -124,7 +125,7 @@ namespace SuncorR2P.src {
                     }
 
                 } else {
-                    this.ProductionFile.SaveRecords();
+                    this.ProductionFile.SaveRecords(this.AzureFullPathName);
                     this.SuccessfulRecords = this.ProductionFile.SavedRecords.Count;
                     if (this.ProductionFile.SavedRecords.Count > 0) {
                         string json = this.ProductionFile.ExportProductionJson();
@@ -225,9 +226,8 @@ namespace SuncorR2P.src {
             //AzureFileHelper.WriteFile("system/" + ".AzureDataHubProduction.SS.log", aw == null ? "empty - storage" : "env:" + aw, true);        }
         }
         */
-        public FoundFile(string dir, string azureFileName, byte[] bytes, string tempFileName) {
+        public FoundFile(string dir, string azureFileName, byte[] bytes) {
             this.AzureFileName = azureFileName;
-            this.TempFileName = tempFileName;
             this.AzureFullPathName = dir + "/" + azureFileName;
             this.BytesOfFile = bytes;
         }

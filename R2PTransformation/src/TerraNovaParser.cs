@@ -9,15 +9,11 @@ using R2PTransformation.Models;
 
 namespace R2PTransformation.src {
     public class TerraNovaParser {
-        private string Filename = "";
 
-        public SuncorProductionFile LoadFile(string fileName, string plant, DateTime currentDay) {
-            Filename = fileName;
-
+        public SuncorProductionFile LoadFile(string fileContents, string plant, DateTime currentDay) {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            SuncorProductionFile ms = new SuncorProductionFile(plant, fileName);
+            SuncorProductionFile ms = new SuncorProductionFile(plant);
             ms.IsCurrentDay(currentDay);
-            string fileContents = File.ReadAllText(fileName);
             DataTable dt = Utilities.ConvertTerraNovaCSVTexttoDataTable(fileContents);
 
             // load current month
