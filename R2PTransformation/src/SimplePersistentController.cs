@@ -18,19 +18,20 @@ namespace R2PTransformation.src {
             List<MaterialMovement> mm = new List<MaterialMovement>();
             List<WarningMessage> Warnings = new List<WarningMessage>();
             JObject batch = (JObject)data;
-            JArray items = (JArray)batch["hierarchy"];
+            JArray items = (JArray)batch["inventory"];
             string batchId = batch["batchId"].ToString();
             foreach (JObject item in items) {
                 MaterialMovement sm = new MaterialMovement();
                 sm.MaterialDocument = GetStringValue(item, "material");
+                sm.MovementType = "Inventory";
                 sm.Plant = GetStringValue(item, "plant");
                 sm.ValuationType = GetStringValue(item, "valuationType");
                 sm.Quantity = ParseDecimal(item, "openingQuantity");
-                sm.Quantity = ParseDecimal(item, "closingQuantity");
+                sm.Quantity = ParseDecimal(item, "closingInventory");
                 sm.UnitOfMeasure = GetStringValue(item, "baseUnitOfMeasure");
                 sm.System = GetStringValue(item, "system");
                 sm.PostingDate = ParseDateTime(item, "date");
-                sm.EnteredOn = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime)item["enteredOn"];
+//                sm.EnteredOn = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime)item["enteredOn"];
                 sm.EnteredAt = GetStringValue(item, "enteredAt") ?? "R2PLoader";
                 mm.Add(sm);
             }

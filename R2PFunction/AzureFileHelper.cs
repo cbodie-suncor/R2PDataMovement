@@ -42,9 +42,8 @@ namespace SuncorR2P {
                     errorState = true;
                     Boolean result = AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
                     if (result) LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
-                    if (foundFile.PlantName == "CP03" && ex.Message.Contains("no ULSD file found for the month")) {  // do not delete the NPUpld file if no ULSD file 
+                    if (foundFile.PlantName == "CP03" && (ex.Message.Contains("no ULSD file found for the month") || ex.Message.Contains("No matching ULSD record"))) {  // do not delete the NPUpld file if no ULSD file or no matching record exists
                         AzureFileHelper.CopyToAzureFileShare(foundFile.BytesOfFile, foundFile.AzureFullPathName);
-                        File.Delete(foundFile.FileContents);
                     } else
                         foundFile.DisposeOfFile();
                 }
@@ -203,8 +202,9 @@ namespace SuncorR2P {
         }
 
         internal static bool UpdateULSDSplits(ILogger log, string version, DateTime currentDay) {
+            FoundFile ulsd = null;
             try {
-                FoundFile ulsd = GetULSDFileForCP03(currentDay);
+                ulsd = GetULSDFileForCP03(currentDay);
                 if (ulsd == null) return false;
                 List<ShellSplit> ss = SarniaParser.LoadULSDSplits(ulsd.BytesOfFile);
                 SuncorProductionFile pf = SarniaParser.UpdateShellSplits(ss);
@@ -219,7 +219,7 @@ namespace SuncorR2P {
                     return true;
                 }
             } catch (Exception ex) {
-                AzureModel.RecordFatalLoad("Load ULSD", "CP03", ex, null);
+                AzureModel.RecordFatalLoad("Load ULSD", "CP03", ex, "size:" + (ulsd == null ? "" : ulsd.AzureFileName) + " " + ex.Message + ":" + ex.StackTrace + (ex.InnerException == null ? "" : ex.InnerException.ToString()));
             }
             return false;
         }
@@ -240,6 +240,9 @@ namespace SuncorR2P {
                         if (!dir.Exists()) continue;
                         foreach (var file in dir.GetFilesAndDirectories()) {
                             tfile = file;
+                            if (file.Name.StartsWith("thumbs")) continue;
+                            if (file.Name.StartsWith("~")) continue;
+
                             if (!file.IsDirectory) {
                                 if (!file.Name.Contains(month.Year.ToString())) continue;
                                 if (!file.Name.ToLower().Contains(month.ToString("MMMM").ToLower())) continue;
@@ -278,7 +281,9 @@ namespace SuncorR2P {
 
                         if (!dir.Exists()) continue;
                         foreach (var file in dir.GetFilesAndDirectories()) {
-                            tfile = file; 
+                            tfile = file;
+                            if (file.Name.StartsWith("thumbs")) continue;
+                            if (file.Name.StartsWith("~")) continue;
                             if (!file.IsDirectory) {
                                 byte[] bytes = DownloadFile(dir.GetFileClient(file.Name));
                                 return new FoundFile(dir.Path, file.Name, bytes);
@@ -320,27 +325,40 @@ namespace SuncorR2P {
         }
 
         private static byte[] DownloadFile(ShareFileClient file) {
-            /*
-            long fileLength = 0;
-            using (Stream stream = file.OpenRead()) {
-                var properties = file.GetProperties();
-                fileLength = stream.Length;
-            }
-            if (fileLength == 0) {  // handle 0 length files
-                FileStream fs = File.Create(localFilePath);
-                fs.Close();
-                return null;
-            }
-            */
             ShareFileDownloadInfo download = file.Download();
             byte[] abc = GetBinaryStreamContents(download, file.Name);
-            /*
-            using (FileStream stream = File.OpenWrite(localFilePath)) {
-                ShareFileDownloadInfo d2 = file.Download();
-                d2.Content.CopyTo(stream);
-            }*/
             return abc;
         }
+
+        public static FoundFile GetNextInventoryFile(string cs, string sharename) {
+            ShareClient share = new ShareClient(cs, SHARENAME);
+            ShareFileItem tfile = null;
+            foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
+                if (item.Name == "System") continue;
+                if (item.Name == "Master") continue;
+                try {
+                    if (item.IsDirectory) {
+                        var subDirectory = share.GetRootDirectoryClient().GetSubdirectoryClient(item.Name);
+                        ShareDirectoryClient dir = subDirectory.GetSubdirectoryClient("immediateScan");
+
+                        if (!dir.Exists()) continue;
+                        foreach (var file in dir.GetFilesAndDirectories()) {
+                            tfile = file;
+                            if (file.Name.StartsWith("thumbs")) continue;
+                            if (file.Name.StartsWith("~")) continue;
+                            if (!file.IsDirectory) {
+                                byte[] bytes = DownloadFile(dir.GetFileClient(file.Name));
+                                return new FoundFile(dir.Path, file.Name, bytes);
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    throw new Exception(item.Name + ":" + (tfile != null ? tfile.Name : "") + " " + ex.Message);
+                }
+            }
+            return null;
+        }
+
     }
 public class MatchingFile {
     public MatchingFile(string filename, DateTime lastModified) {

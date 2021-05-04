@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 using R2PTransformation.Models;
 using R2PTransformation.src;
+using SuncorR2P;
 using System;
 using System.Data;
 using System.IO;
@@ -40,6 +41,12 @@ namespace STransformNUnit {
             AzureModel.SaveInventory("filename", sf, sf.Inventory);
             Assert.AreEqual(5000, invs.Count());
             Assert.AreEqual(46, missing.Count());
+        }
+
+        [Test]
+        public void TestGetInventory() {
+            AzureFileHelper.GetNextInventoryFile("DefaultEndpointsProtocol=https;AccountName=aaadevarmdlsuw2001;AccountKey=UIbHlnqziOKZecmClO4GunGdqNRyTko9uR8BHh9vJH0o6etIG0nEeNzZWP16Nu6fLhOC9zSdGonT42PMDpxFtA==;EndpointSuffix=core.windows.net", "sap-iot-data");
+//            AzureFileHelper.GetNextInventoryFile("DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net", "sap-iot-data");
         }
     }
 

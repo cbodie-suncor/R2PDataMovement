@@ -42,6 +42,13 @@ namespace R2PTransformation.Models {
             }
         }
 
+        internal static void AddCustodyTickets(List<CustodyTicket> tixs) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
+                context.CustodyTicket.AddRange(tixs);
+                context.SaveChanges();
+            }
+        }
+
         public static void UpdateTagBalance(List<TagBalance> tb) {
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 foreach (var item in tb) {
@@ -290,10 +297,13 @@ namespace R2PTransformation.Models {
                     if (lastItems.Count() > 0 && lastItems[0].Message.Contains("has a file lock") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return false;
                 }
 
-                if (ex.Message.Contains("no ULSD file found for the month")) {
+                if (ex.Message.Contains("ULSD")) {
                     // if the last message is an File Lock, do not log
                     List<TransactionEvent> lastItems = context.TransactionEvent.Where(t => t.Type == type && t.Plant == plant && t.Filename == fileName && t.Message.Contains("no ULSD file found for the month")).OrderByDescending(r => r.CreateDate).ToList();
                     if (lastItems.Count() > 0 && lastItems[0].Message.Contains("no ULSD file found for the month") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return false;
+
+                    lastItems = context.TransactionEvent.Where(t => t.Type == type && t.Plant == plant && t.Filename == fileName && t.Message.Contains("No matching ULSD record")).OrderByDescending(r => r.CreateDate).ToList();
+                    if (lastItems.Count() > 0 && lastItems[0].Message.Contains("No matching ULSD record") && (DateTime.Now - lastItems[0].CreateDate.Value).TotalHours < 12) return false;
                 }
 
                 context.TransactionEvent.Add(te);

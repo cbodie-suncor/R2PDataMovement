@@ -32,6 +32,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
             List<WarningMessage> Warnings = new List<WarningMessage>();
 
             List<CustodyTicket> tixs = GetTixFromJson(json);
+            AzureModel.AddCustodyTickets(tixs);
             file.Json = json;
             file.Contents = CreateHoneywellPBFile(tixs);
             file.SuccessFulRecords = tixs.Count;

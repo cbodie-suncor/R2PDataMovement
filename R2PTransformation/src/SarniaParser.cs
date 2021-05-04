@@ -97,7 +97,7 @@ namespace R2PTransformation.src {
             List<TagBalance> tbs = AzureModel.GetAllTagBalances().Where(t => t.Plant == "CP03" && t.BalanceDate >= ss.Min(r => r.Day) && t.BalanceDate <= ss.Max(r => r.Day)).ToList();
             foreach (var group in tbs.GroupBy(y => new { y.BalanceDate, y.Tag })) {
                 TagBalance presplit = group.SingleOrDefault(e => e.ValType == "Presplit");
-                TagBalance shell = group.SingleOrDefault(e => e.ValType == "Shell");
+                TagBalance shell = group.SingleOrDefault(e => e.ValType == "SHELL");
                 TagBalance suncor = group.SingleOrDefault(e => e.ValType == "SUNCOR");
                 ShellSplit split = ss.SingleOrDefault(e => e.Day == group.Key.BalanceDate && e.ProductCode == group.Key.Tag);
                 if (presplit == null || shell == null || suncor == null || split == null) continue;
@@ -119,10 +119,11 @@ namespace R2PTransformation.src {
             List<TagBalance> removelItems = new List<TagBalance>();
             foreach (var presplit in pf.Products) {
                 ShellSplit shell = splits.FirstOrDefault(t => t.Day == presplit.BalanceDate && t.ProductCode == presplit.Tag);
-                if (shell == null/* && splits.Where(y=>y.ProductCode == presplit.Tag).Count() > 0*/) {
-                    removelItems.Add(presplit);
-                    pf.Warnings.Add(new WarningMessage(MessageType.Error, presplit.Tag, "No matching ULSD record was for " + presplit.BalanceDate.ToString("yyyy-MM-dd")));
-                    continue;
+                if (shell == null) {
+                    throw new Exception("No matching ULSD record for " + presplit.BalanceDate.ToString("yyyy-MM-dd"));
+//                    removelItems.Add(presplit);
+//                    pf.Warnings.Add(new WarningMessage(MessageType.Error, presplit.Tag, "No matching ULSD record was for " + presplit.BalanceDate.ToString("yyyy-MM-dd")));
+//                    continue;
                 }
 
                 TagBalance suncorTB = CloneTagForULSD(presplit);

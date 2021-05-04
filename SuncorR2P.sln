@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R2PTransformation", "R2PTransformation\R2PTransformation.csproj", "{1C577FF7-09C9-448A-8F0B-9203731FDF72}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R2PTransformationNUnit", "R2PTransformationNUnit\R2PTransformationNUnit.csproj", "{1E5DC88F-C63C-401B-9A68-261BC5D6341D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{44506AB0-26C2-4D3E-827E-8D49ABE5C1C1} = {44506AB0-26C2-4D3E-827E-8D49ABE5C1C1}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "R2PFunction", "R2PFunction\R2PFunction.csproj", "{44506AB0-26C2-4D3E-827E-8D49ABE5C1C1}"
 EndProject

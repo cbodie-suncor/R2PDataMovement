@@ -16,6 +16,7 @@ using System.Text;
 namespace STransformNUnit {
     public class SimplePersistTests {
         static string baseTestURL = "https://aaasbxarmfapuw2015.azurewebsites.net/api/";
+        string BASEDIR = @"..\..\..\..\sampleFiles\";
         string ROOTDIR = @"..\..\..\..\sampleFiles\MaterialMovement\";
 
         [SetUp]
@@ -46,6 +47,12 @@ namespace STransformNUnit {
         public void SimpleMaterialLedger3() {
             string json = File.ReadAllText(ROOTDIR + "MaterialLedger3.json");
             SimplePersistentController.PersistMaterialLedger(json);
+        }
+
+        [Test]
+        public void SimpleInventory() {
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft.txt");
+            SimplePersistentController.PersistInventory(json);
         }
     }
 }

@@ -144,7 +144,7 @@ namespace SuncorR2P.src {
         }
 
         internal static void SaveHearbeat(ILogger log) {
-            string fileName = $"/master/heatbeat.txt";
+            string fileName = $"/master/heartbeat.txt";
             string contents = AzureFileHelper.ReadFile(fileName);
 
             TimeZoneInfo timeInfo = TimeZoneInfo.FindSystemTimeZoneById("Mountain Standard Time");
