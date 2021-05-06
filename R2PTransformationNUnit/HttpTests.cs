@@ -76,5 +76,22 @@ namespace STransformNUnit {
             if (response.Result.StatusCode.ToString() != "OK")
                 throw new Exception("CustodyTicket push failed : " + response.Result.ToString());
         }
+
+        [Test]
+        public void SimpleInventory() {
+            string BASEDIR = @"..\..\..\..\sampleFiles\";
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft3.json");
+
+            HttpClient client = new HttpClient();
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
+            var response = client.PostAsync(baseTestURL + "Inventory", data);
+            string output = response.Result.Content.ReadAsStringAsync().Result;
+            Console.WriteLine(output);
+
+            if (response.Result.StatusCode.ToString() != "OK")
+                throw new Exception("CustodyTicket push failed : " + response.Result.ToString());
+        }
     }
 }

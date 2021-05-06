@@ -26,7 +26,7 @@ namespace R2PTransformation.src {
                 CloudBlockBlob blockBlob = dirContainer.Container.GetBlockBlobReference(((CloudBlockBlob)blobItem).Name);
                 string contents = blockBlob.DownloadTextAsync().GetAwaiter().GetResult();
                 BlobFile file = new BlobFile() { RootFolder = directory, FullName = ((CloudBlockBlob)blobItem).Name, FullDirectoryName = blobItem.Parent.Prefix, Contents = contents };
-                if (file.DateTime < new DateTime(2021, 05, 01)) continue;
+                if (file.DateTime < DateTime.Now.AddDays(-7)) continue;
                 files.Add(file);
             }
             return files;

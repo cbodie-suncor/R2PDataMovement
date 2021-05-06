@@ -1,0 +1,30 @@
+{"BatchId":"7491a974-5d78-4d97-9fda-376c3f21eae6",
+"Batch":[{
+	"Tag":"REFF",
+	"System":"OPIS",
+	"MovementType":"Inventory",
+      "Material": 10699,
+	"Plant":"CP04",
+	"WorkCenter":"001",
+	"ValType":"SUNCOR",
+	"Tank":"Tank 101",
+	"QuantityTimestamp":"2021-04-29T18:00:00-06:00",
+	"BalanceDate":"2021-04-29T18:00:00-06:00",
+	"Quantity":11383.679,
+	"StandardUnit":"M3"}
+]
+}
+
+
+      "Tag": "OSX",
+      "System": "TopTech",
+      "MovementType": "Inventory",
+      "Material": 10699,
+      "Plant": "CT08",
+      "WorkCenter": null,
+      "ValType": null,
+      "Tank": "TK-1009",
+      "QuantityTimestamp": "2021-03-15T01:30:00",
+      "BalanceDate": "2021-02-15T00:00:00",
+      "Quantity": 12500,
+      "StandardUnit": "BBL"

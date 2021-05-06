@@ -32,13 +32,13 @@ namespace R2PTransformation.src {
             groups.ToList().ForEach(t => sf.AddInventory(t.Key.Datetime, "Inventory", system, t.Tag, t.Tank, t.Quantity));
             missing.Where(t => t.Alias.ToLower().Contains("volume")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching product tag")));
             missing.Where(t => t.Alias.ToLower().Contains("product")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching volume tag")));
+            sf.FailedRecords = sf.Warnings.Count;
             return sf;
         }
 
         public static SuncorProductionFile GetInventoryRecordsWithSingleTag(string contents, string plant, string system) {
             contents = contents.Replace("\"", "");
             DataTable dt = Utilities.ConvertCSVTexttoDataTable(contents);
-            DateTime currentDay = new DateTime(2021, 04, 25);
             SuncorProductionFile sf = new SuncorProductionFile(plant);
             var invs = dt.AsEnumerable().Select(t => new HistorianTag(
                     t["site"].ToString(),
@@ -52,19 +52,23 @@ namespace R2PTransformation.src {
             ));
 
             invs.ToList().ForEach(t => sf.AddInventory(t.Datetime, "Inventory", system, t.Tag, t.Tank, t.AvgValue));
+            sf.FailedRecords = sf.Warnings.Count;
             return sf;
         }
 
         public static void ProcessInventoryFile(BlobFile file, string plant, string system, TagType tagType) {
+            string json = null;
             SuncorProductionFile pf = null;
             if (tagType == TagType.MultipleTagForentry)
                 pf = GetInventoryRecordsWithMultiTags(file.Contents, plant, system);
             else
                 pf = GetInventoryRecordsWithSingleTag(file.Contents, plant, system);
             AzureModel.SaveInventory(file.FullName, pf, pf.Inventory);
-            pf.RecordSuccess(file.FullName, "Inventory Snapshot", pf.SavedInventoryRecords.Count);
-            string json = pf.ExportInventory();
-            MulesoftPush.PostInventory(json);
+            if (pf.SavedInventoryRecords.Count > 0) json = pf.ExportInventory();
+            pf.RecordSuccess(file.FullName, "Inventory Snapshot", pf.SavedInventoryRecords.Count, json);
+            if (pf.SavedInventoryRecords.Count > 0) {
+                MulesoftPush.PostInventory(json);
+            }
         }
     }
     public enum TagType {

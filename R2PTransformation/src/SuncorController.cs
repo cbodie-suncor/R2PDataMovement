@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Data;
+using System.Globalization;
 
 namespace R2PTransformation.src {
     public class SuncorController {
@@ -28,7 +29,7 @@ namespace R2PTransformation.src {
         }
         public static DateTime ParseDateTime(JToken v, string columnName1, string columnName2) {
             try {
-                return DateTime.Parse(v[columnName1].ToString() + " " + v[columnName2].ToString());
+                    return DateTime.ParseExact(v[columnName1].ToString() + " " + v[columnName2].ToString(), "yyyy/MM/dd HHmmss", CultureInfo.InvariantCulture);
             } catch (Exception ex) {
                 throw new Exception("Invalid Date for " + columnName1);
             }

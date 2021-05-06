@@ -57,20 +57,21 @@ namespace R2PTransformation.src {
         public string ExportInventory() {
             if (this.SavedInventoryRecords == null) throw new Exception("Please call SuncorProductionFile.SaveInventory before ExportInventory");
             var records = this.SavedInventoryRecords.Select(t => new {
-                Date = t.QuantityTimestamp,
+//                Date = t.QuantityTimestamp,
                 Tag = t.Tag,
-                Tank = t.Tank,
                 System = t.System,
                 MovementType = t.MovementType,
-                Material = t.Material,
+                Material = int.Parse(t.Material),
                 Plant = t.Plant,
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
+                Tank = t.Tank,
+                QuantityTimestamp = t.QuantityTimestamp,
                 BalanceDate = t.QuantityTimestamp,
-                Quantity = t.Quantity.Value == 0 || t.Confidence < 100 ? "0.1" : t.Quantity.Value.ToString(),
+                Quantity = t.Quantity.Value == 0 || t.Confidence < 100 ? 0.1m : t.Quantity.Value,
                 StandardUnit = t.StandardUnit
             });
-            var batch = new { CreatedBy = "P2C", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
+            var batch = new { BatchId = this.BatchId, Batch = records };
             return JsonConvert.SerializeObject(batch);
         }
 
@@ -172,8 +173,8 @@ namespace R2PTransformation.src {
             }
         }
 
-        public void RecordSuccess(string fileName, string type, int successCount) {
-            AzureModel.RecordStats(type, fileName, this.Warnings, this.Plant, successCount, this.FailedRecords, null);
+        public void RecordSuccess(string fileName, string type, int successCount, string json) {
+            AzureModel.RecordStats(type, fileName, this.Warnings, this.Plant, successCount, this.FailedRecords, json);
             SuncorProductionFile.LogSuccess(fileName, this, successCount, FailedRecords);
         }
 

@@ -399,6 +399,10 @@ namespace R2PTransformation.Models
                     .HasMaxLength(30)
                     .IsUnicode(false);
 
+                entity.Property(e => e.WorkCenter)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
                 entity.HasOne(d => d.UnitOfEntryNavigation)
                     .WithMany(p => p.MaterialMovementUnitOfEntryNavigation)
                     .HasForeignKey(d => d.UnitOfEntry)

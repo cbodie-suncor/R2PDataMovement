@@ -85,7 +85,6 @@ namespace SuncorR2P.src {
         }
 
         public void ProcessFile(ILogger log, string version) {
-            SuncorProductionFile.SetLogFileWriter(LogHelper.WriteLogFile);
             this.ProductionFile = null;
             DateTime processingDate = GetCurrentDay(this.PlantName, true);
 
@@ -138,7 +137,7 @@ namespace SuncorR2P.src {
         }
 
         internal void RecordSuccess() {
-            ProductionFile.RecordSuccess(this.AzureFullPathName, this.FileType, this.Inventory ? this.ProductionFile.SavedInventoryRecords.Count : this.ProductionFile.SavedRecords.Count);
+            ProductionFile.RecordSuccess(this.AzureFullPathName, this.FileType, this.Inventory ? this.ProductionFile.SavedInventoryRecords.Count : this.ProductionFile.SavedRecords.Count, null);
         }
 
         internal static void SaveHearbeat(ILogger log) {
@@ -185,6 +184,8 @@ namespace SuncorR2P.src {
         }
 
         public static void SetConnection(ILogger log) {
+            SuncorProductionFile.SetLogFileWriter(LogHelper.WriteLogFile);
+
             IConfiguration iconfig = new ConfigurationBuilder()
             .AddEnvironmentVariables()  // needed for the ConnectionString - comes from local.settings.json or Azure Function Configuration 
 //            .AddJsonFile("local.settings.json", true, true)

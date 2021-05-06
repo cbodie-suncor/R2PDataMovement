@@ -70,7 +70,31 @@ namespace STransformNUnit {
             PBFile generatedFile = CustodyTicketController.CreateHoneywellPBFile(json);
         }
 
-//fix        [Test]
+        [Test]
+        public void TestSample2() {
+            string json = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\Custody Ticket2.json");
+            List<CustodyTicket> tix = CustodyTicketController.GetTixFromJson(json);
+            Assert.AreEqual(2, tix.Count);
+            String generated = CustodyTicketController.CreateHoneywellPBFile(tix);
+            generated = generated.Replace("\n", "").Replace("\r", "");
+//            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,S_TTNOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,10.000NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,723.0000<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,3343434<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", generated);
+
+            PBFile generatedFile = CustodyTicketController.CreateHoneywellPBFile(json);
+        }
+
+        [Test]
+        public void TestSample3() {
+            string json = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\Custody Ticket3.json");
+            List<CustodyTicket> tix = CustodyTicketController.GetTixFromJson(json);
+            Assert.AreEqual(2, tix.Count);
+            String generated = CustodyTicketController.CreateHoneywellPBFile(tix);
+            generated = generated.Replace("\n", "").Replace("\r", "");
+            //            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,S_TTNOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,10.000NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,723.0000<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,3343434<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", generated);
+
+            PBFile generatedFile = CustodyTicketController.CreateHoneywellPBFile(json);
+        }
+
+        //fix        [Test]
         public void TestBuilder() {
             string targetFile = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\SampleTicket.txt");
             CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13),  EnteredBy = "170552311-1",  S4MaterialDocument = "123", NetQuantitySizeInUoe = 13507, BolNumber = "166438_", Density = 0.7260M };

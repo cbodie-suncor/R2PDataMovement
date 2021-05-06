@@ -21,7 +21,8 @@ namespace STransformNUnit {
 
         [SetUp]
         public void Setup() {
-            DBContextWithConnectionString.CreateTestContext();
+            string cs = "Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021";
+            DBContextWithConnectionString.SetConnectionString(cs);
         }
 
         [Test]
@@ -57,6 +58,12 @@ namespace STransformNUnit {
         [Test]
         public void SimpleInventory2() {
             string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft2.json");
+            SimplePersistentController.PersistInventory(json);
+        }
+
+        [Test]
+        public void SimpleInventory3() {
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft3.json");
             SimplePersistentController.PersistInventory(json);
         }
     }

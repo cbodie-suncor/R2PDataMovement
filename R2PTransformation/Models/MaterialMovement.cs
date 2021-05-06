@@ -28,6 +28,7 @@ namespace R2PTransformation.Models
         public string BatchId { get; set; }
         public DateTime EnteredOn { get; set; }
         public string EnteredAt { get; set; }
+        public string WorkCenter { get; set; }
 
         public virtual StandardUnit UnitOfEntryNavigation { get; set; }
         public virtual StandardUnit UnitOfMeasureNavigation { get; set; }

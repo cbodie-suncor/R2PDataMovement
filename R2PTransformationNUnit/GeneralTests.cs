@@ -121,7 +121,7 @@ Missed Heartbeats
             HoneywellPBFile pf = new HoneywellPBParser().LoadFile(File.ReadAllText(ROOTDIR + "NPUpld-20200930-005900M_MTL.txt"), "CP01", DateTime.Now);
             pf.SaveRecords("filename");
             string json = pf.ExportProductionJson();
-            pf.RecordSuccess("sampleHoneyPB.xlsx", "R2PLoad", 2);
+            pf.RecordSuccess("sampleHoneyPB.xlsx", "R2PLoad", 2, null);
         }
 
         [Test]
@@ -137,9 +137,20 @@ Missed Heartbeats
 
         [Test]
         public void PostInventorynMulesoftTest() {
-            MulesoftPush.SetConnection("https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/physical-inventory", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321", null, null, null);
+            MulesoftPush.SetConnection("https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/production-posting", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321", "https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/physical-inventory", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321");
             string ROOTDIR = @"..\..\..\..\sampleFiles\InventorySnapshot\";
             string fileName = "SamplePayload-April2021.txt";
+
+            string json = File.ReadAllText(ROOTDIR + fileName);
+
+            MulesoftPush.PostInventory(json);
+        }
+
+        [Test]
+        public void PostInventorynMulesoftTest2() {
+            MulesoftPush.SetConnection("https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/physical-inventory", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321", "https://api-rtfdev.sequt.com/azureiot-experience-api/api/v1/azureiot-experience-api/physical-inventory", "20da7837f9574f03adb6fca17301f75a", "63e0E42AaDbA4815bD6B002E70E9B321");
+            string ROOTDIR = @"..\..\..\..\sampleFiles\InventorySnapshot\";
+            string fileName = "SamplePayload-April2021.2.txt";
 
             string json = File.ReadAllText(ROOTDIR + fileName);
 

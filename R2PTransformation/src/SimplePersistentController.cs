@@ -31,7 +31,7 @@ namespace R2PTransformation.src {
                 sm.UnitOfMeasure = GetStringValue(item, "baseUnitOfMeasure");
                 sm.System = GetStringValue(item, "system");
                 sm.PostingDate = ParseDateTime(item, "date");
-//                sm.EnteredOn = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime)item["enteredOn"];
+                sm.EnteredOn = item["enteredOn"] == null || item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime)item["enteredOn"];
                 sm.EnteredAt = GetStringValue(item, "enteredAt") ?? "R2PLoader";
                 mm.Add(sm);
             }

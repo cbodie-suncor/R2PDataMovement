@@ -38,6 +38,7 @@ namespace R2PTransformation.src {
                 sm.QuantityInL15    = ParseDecimal(item, "quantityL15");
                 sm.UnitOfEntry      = GetStringValue(item,"uoe");
                 sm.UnitOfMeasure    = GetStringValue(item, "uom");
+                sm.WorkCenter       = GetStringValue(item, "workCenter");
                 sm.EnteredOn        = item["enteredOn"].ToString() == "" ? DateTime.Now : (DateTime) item["enteredOn"];
                 sm.EnteredAt        = GetStringValue(item, "enteredAt") ?? "R2PLoader";
 

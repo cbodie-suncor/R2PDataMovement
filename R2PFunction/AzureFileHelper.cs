@@ -114,7 +114,7 @@ namespace SuncorR2P {
                     InventoryController.ProcessInventoryFile(file, plant, system, tagType);
                 }
             } catch (Exception ex) {
-                AzureModel.RecordFileFailure("Inventory Snapsnot", plant, fileName, 0, 0, ex);
+                AzureModel.RecordFileFailure("Inventory Snapshot", plant, fileName, 0, 0, ex);
             }
     }
 
