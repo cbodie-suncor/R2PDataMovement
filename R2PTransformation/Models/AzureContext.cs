@@ -32,7 +32,6 @@ namespace R2PTransformation.Models
         public virtual DbSet<TagMap> TagMap { get; set; }
         public virtual DbSet<TransactionEvent> TransactionEvent { get; set; }
         public virtual DbSet<TransactionEventDetail> TransactionEventDetail { get; set; }
-        public virtual DbSet<Transactions> Transactions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -579,7 +578,7 @@ namespace R2PTransformation.Models
 
             modelBuilder.Entity<TagMap>(entity =>
             {
-                entity.HasKey(e => new { e.Plant, e.Tag })
+                entity.HasKey(e => new { e.Plant, e.Tag, e.Type })
                     .HasName("Pk_TagMap");
 
                 entity.Property(e => e.Plant)
@@ -588,6 +587,11 @@ namespace R2PTransformation.Models
 
                 entity.Property(e => e.Tag)
                     .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Type)
+                    .HasColumnName("type")
+                    .HasMaxLength(15)
                     .IsUnicode(false);
 
                 entity.Property(e => e.DefaultUnit)
@@ -602,11 +606,6 @@ namespace R2PTransformation.Models
                 entity.Property(e => e.MaterialNumber)
                     .IsRequired()
                     .HasMaxLength(20)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Type)
-                    .HasColumnName("type")
-                    .HasMaxLength(15)
                     .IsUnicode(false);
 
                 entity.Property(e => e.WorkCenter)
@@ -687,46 +686,6 @@ namespace R2PTransformation.Models
                     .HasForeignKey(d => d.TransactionEventId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_transactioneventdetail");
-            });
-
-            modelBuilder.Entity<Transactions>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.ToView("Transactions");
-
-                entity.Property(e => e.CreateDate)
-                    .HasColumnName("createDate")
-                    .HasColumnType("datetime");
-
-                entity.Property(e => e.Extra)
-                    .HasColumnName("extra")
-                    .HasMaxLength(8000)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Failedrecordcount).HasColumnName("failedrecordcount");
-
-                entity.Property(e => e.Filename)
-                    .HasColumnName("filename")
-                    .HasMaxLength(500)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Message)
-                    .HasColumnName("message")
-                    .HasMaxLength(3000)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Plant)
-                    .HasColumnName("plant")
-                    .HasMaxLength(40)
-                    .IsUnicode(false);
-
-                entity.Property(e => e.Successfulrecordcount).HasColumnName("successfulrecordcount");
-
-                entity.Property(e => e.Type)
-                    .HasColumnName("type")
-                    .HasMaxLength(20)
-                    .IsUnicode(false);
             });
 
             OnModelCreatingPartial(modelBuilder);

@@ -42,7 +42,7 @@ namespace R2PTransformation.src {
                             continue;
                         }
 
-                        ms.AddInventory(currentDay, "Inventory Snapshot", "Sigmafine", materialCode, tank, day, quantity);
+                        ms.AddInventory(day, "Inventory Snapshot", "Sigmafine", materialCode, tank, quantity);
                     }
                 }
             }

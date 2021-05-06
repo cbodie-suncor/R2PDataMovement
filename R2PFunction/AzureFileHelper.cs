@@ -12,6 +12,8 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using static R2PTransformation.src.SarniaParser;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace SuncorR2P {
     public class AzureFileHelper {
@@ -41,11 +43,12 @@ namespace SuncorR2P {
                 } catch (Exception ex) {
                     errorState = true;
                     Boolean result = AzureModel.RecordFileFailure(foundFile.FileType, foundFile.PlantName, foundFile.AzureFullPathName, foundFile.SuccessfulRecords, foundFile.FailedRecords, ex);
-                    if (result) LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
                     if (foundFile.PlantName == "CP03" && (ex.Message.Contains("no ULSD file found for the month") || ex.Message.Contains("No matching ULSD record"))) {  // do not delete the NPUpld file if no ULSD file or no matching record exists
                         AzureFileHelper.CopyToAzureFileShare(foundFile.BytesOfFile, foundFile.AzureFullPathName);
-                    } else
+                    } else {
+                        if (result) LogHelper.LogMessage(foundFile.PlantName, productVersion, "Fatal error with file " + foundFile.AzureFullPathName + " : " + ex.Message + ex.StackTrace);
                         foundFile.DisposeOfFile();
+                    }
                 }
             }
         }
@@ -89,6 +92,31 @@ namespace SuncorR2P {
             ProcessModifiedTagMapping("GP01", version);
             ProcessModifiedTagMapping("GP02", version);
         }
+
+        internal static void ProcessInventoryFromHistorian(ILogger log, string version) {
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=oilsands/", "AP01", "PI", version, log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=firebag/", "AP02", "PI", version, log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=mackay/", "AP03", "PI", version, log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=edmonton/", "CP04", "OPIS", version, log, TagType.MultipleTagForentry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=montreal/", "CP01", "OPIS", version, log, TagType.MultipleTagForentry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=sarnia/", "CP03", "PHD", version, log, TagType.SingleEntry);
+        }
+
+        internal static void ProcessInventoryFromHistorian(string dir, string plant, string system, string productVersion, ILogger log, TagType tagType) {
+            string fileName = "";
+            try {
+                string cs = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
+                //cs = "DefaultEndpointsProtocol=https;AccountName=aaadevarmdlsuw2001;AccountKey=UIbHlnqziOKZecmClO4GunGdqNRyTko9uR8BHh9vJH0o6etIG0nEeNzZWP16Nu6fLhOC9zSdGonT42PMDpxFtA==;EndpointSuffix=core.windows.net";
+                List<BlobFile> items = BlobHelper.GetBlobFileList(cs, "silver", dir);
+                foreach (BlobFile file in items) {
+                    fileName = file.FullName;
+                    log.LogInformation("Found " + file.FullName);
+                    InventoryController.ProcessInventoryFile(file, plant, system, tagType);
+                }
+            } catch (Exception ex) {
+                AzureModel.RecordFileFailure("Inventory Snapsnot", plant, fileName, 0, 0, ex);
+            }
+    }
 
         internal static void ProcessModifiedTagMapping(string plant, string version) {
             string parentDirectory = plant + "/";
@@ -210,11 +238,11 @@ namespace SuncorR2P {
                 SuncorProductionFile pf = SarniaParser.UpdateShellSplits(ss);
                 if (pf.SavedRecords != null) {
                     string json = pf.ExportProductionJson();
+                    AzureFileHelper.WriteFile(ulsd.AzureFullPathName.Replace("ulsd", "diagnostic") + ".json", json, false);
                     if (!MulesoftPush.PostProduction(json)) {
                         LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
                         pf.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
                     }
-                    AzureFileHelper.WriteFile(ulsd.AzureFullPathName.Replace("ulsd", "diagnostic") + ".json", json, false);
                     AzureModel.RecordStats("Load ULSD", ulsd.AzureFileName, null, "CP03", pf.SavedRecords.Count, 0, null);
                     return true;
                 }
@@ -330,7 +358,27 @@ namespace SuncorR2P {
             return abc;
         }
 
-        public static FoundFile GetNextInventoryFile(string cs, string sharename) {
+        /*
+        public async static FoundFile GetNextInventoryFile(string cs, string sharename) {
+
+            string storageConnection = "DefaultEndpointsProtocol=https;AccountName=aaadevarmdlsuw2001;AccountKey=UIbHlnqziOKZecmClO4GunGdqNRyTko9uR8BHh9vJH0o6etIG0nEeNzZWP16Nu6fLhOC9zSdGonT42PMDpxFtA==;EndpointSuffix=core.windows.net";
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse(storageConnection); CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+            CloudBlobContainer container = blobClient.GetContainerReference("silver");
+            BlobResultSegment allBlobs = await container.ListBlobsSegmentedAsync(null);
+
+            foreach (IListBlobItem blob in allBlobs.Results) {
+                try {
+                    CloudBlockBlob blockblob = (CloudBlockBlob)blob;
+                    blob.
+                    ...
+                ...
+                ...
+            } catch (Exception e) {
+                    continue;
+                }
+            }
+
+
             ShareClient share = new ShareClient(cs, SHARENAME);
             ShareFileItem tfile = null;
             foreach (ShareFileItem item in share.GetRootDirectoryClient().GetFilesAndDirectories()) {  // loop through all plants
@@ -357,7 +405,7 @@ namespace SuncorR2P {
                 }
             }
             return null;
-        }
+        }*/
 
     }
 public class MatchingFile {

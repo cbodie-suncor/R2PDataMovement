@@ -67,45 +67,44 @@ namespace R2PTransformation.src {
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
                 BalanceDate = t.QuantityTimestamp,
-                Closing = t.Quantity.Value.ToString(),
-                Uom = t.StandardUnit
+                Quantity = t.Quantity.Value == 0 || t.Confidence < 100 ? "0.1" : t.Quantity.Value.ToString(),
+                StandardUnit = t.StandardUnit
             });
-            var batch = new { CreatedBy = "P2C", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Closing != "") };
+            var batch = new { CreatedBy = "P2C", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "") };
             return JsonConvert.SerializeObject(batch);
         }
 
-        public void AddInventory(DateTime currentDay, string movementType, string system, string productCode, string tank, DateTime balanceDate, decimal? quantity) {
+        public void AddInventory(DateTime dateTime, string movementType, string system, string productCode, string tank, decimal? quantity) {
             InventorySnapshot inv = new InventorySnapshot();
             inv.MovementType = movementType;
             inv.System = system;
             inv.Tag = productCode;
             inv.Plant = this.Plant;
             inv.LastUpdated = DateTime.Now;
-            inv.QuantityTimestamp = balanceDate;
+            inv.QuantityTimestamp = dateTime;
             inv.CreatedBy = "R2PLoader";
+            inv.ValType = "SUNCOR";
             TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant, "Inv");
+            
             if (tm == null) {
                 Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "No TagMapping"));
                 this.FailedRecords++;
                 return;
             }
 
+            if (tm != null) {
+                inv.ValType = tm.DefaultValuationType;
+                inv.WorkCenter = tm.WorkCenter;
+                inv.Material = tm.MaterialNumber;
+                inv.StandardUnit = tm.DefaultUnit;
+            }
+
             inv.Confidence = 100;
-            inv.StandardUnit = tm.DefaultUnit;
             inv.Tank = tank;
-            inv.Plant = tm.Plant;
-            inv.ValType = tm.DefaultValuationType;
-            inv.WorkCenter = tm.WorkCenter;
-            inv.Material = tm.MaterialNumber;
             if (quantity.HasValue) inv.Quantity = Math.Round(quantity.Value, 3);
             inv.BatchId = this.BatchId.ToString();
 
-            if (!IsDayValid(balanceDate, currentDay)) {
-                this.Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "Invalid Date " + balanceDate.ToString("yyyy/MM/dd")));
-                this.FailedRecords++;
-            } else {
-                this.Inventory.Add(inv);
-            }
+            this.Inventory.Add(inv);
             return;
         }
 

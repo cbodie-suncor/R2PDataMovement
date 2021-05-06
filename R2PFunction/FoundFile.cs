@@ -115,13 +115,11 @@ namespace SuncorR2P.src {
                     this.SuccessfulRecords = this.ProductionFile.SavedInventoryRecords.Count;
                     if (this.ProductionFile.SavedInventoryRecords.Count > 0) {
                         string json = this.ProductionFile.ExportInventory();
-                        /*
-                        if (!MulesoftPush.PostProduction(json)) {
-                            LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
-                            this.ProducitionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
-                        }
-                        */
                         AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
+                        if (!MulesoftPush.PostInventory(json)) {
+                            LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
+                            this.ProductionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
+                        }
                     }
 
                 } else {
@@ -129,11 +127,11 @@ namespace SuncorR2P.src {
                     this.SuccessfulRecords = this.ProductionFile.SavedRecords.Count;
                     if (this.ProductionFile.SavedRecords.Count > 0) {
                         string json = this.ProductionFile.ExportProductionJson();
+                        AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
                         if (!MulesoftPush.PostProduction(json)) {
                             LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");
                             this.ProductionFile.Warnings.Add(new WarningMessage(MessageType.Error, "Json NOT sent to Mulesoft"));
                         }
-                        AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
                     }
                 }
             }

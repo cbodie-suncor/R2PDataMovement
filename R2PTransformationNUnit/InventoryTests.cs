@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.WindowsAzure.Storage.Blob;
 using NUnit.Framework;
 using R2PTransformation.Models;
 using R2PTransformation.src;
 using SuncorR2P;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -17,89 +19,50 @@ namespace STransformNUnit {
 
         [Test]
         public void TestEdm() {
-            string srcFile = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\edphd.csv");
-            srcFile = srcFile.Replace("\"", "");
-            DataTable dt = Utilities.ConvertCSVTexttoDataTable(srcFile);
-            DateTime currentDay = new DateTime(2021, 04, 25);
-            SuncorProductionFile sf = new SuncorProductionFile("edm");
-            var invs = dt.AsEnumerable().Select(t => new HistorianTag(
-                    t["site"].ToString(),
-                    t["tag"].ToString(),
-                    t["alias"].ToString(),
-                    SuncorController.ParseDateTime(t, "datetime"),
-                    SuncorController.ParseDecimal(t, "value"),
-                    SuncorController.ParseDecimal(t, "avgvalue"),
-                    t["strvalue"].ToString(),
-                    SuncorController.ParseDecimal(t, "quality")
-            ));
+            string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\edphd.csv");
 
-            var groups = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Select(g => new { Key = g.Key, Count = g.Count(), Tank = g.Max(s => s.Tank), Tag = g.Max(s => s.StrValue), Quantity = g.Max(s => s.Value) });
-            var missing = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Where(grp => grp.Count() == 1);
-            //    .GroupBy); {
-            //                sf.AddInventory()
-            groups.ToList().ForEach(t => sf.AddInventory(currentDay, "Inventory", t.Key.Site, t.Tag, t.Tank, t.Key.Datetime, t.Quantity));
-            AzureModel.SaveInventory("filename", sf, sf.Inventory);
-            Assert.AreEqual(5000, invs.Count());
-            Assert.AreEqual(46, missing.Count());
+            contents = contents.Replace("\"", "");
+            SuncorProductionFile sf  = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP04", "OPIS");
+            AzureModel.SaveInventory("filenamev", sf, sf.Inventory);
+            Assert.AreEqual(78, sf.Inventory.Count());
         }
 
         [Test]
-        public void TestGetInventory() {
-            AzureFileHelper.GetNextInventoryFile("DefaultEndpointsProtocol=https;AccountName=aaadevarmdlsuw2001;AccountKey=UIbHlnqziOKZecmClO4GunGdqNRyTko9uR8BHh9vJH0o6etIG0nEeNzZWP16Nu6fLhOC9zSdGonT42PMDpxFtA==;EndpointSuffix=core.windows.net", "sap-iot-data");
-//            AzureFileHelper.GetNextInventoryFile("DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net", "sap-iot-data");
-        }
-    }
+        public void TestMtl() {
+            string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\mtphd.csv");
 
-    internal class HistorianTag {
-        public string Site { get; }
-        public string Tag { get; }
-        public string Alias { get; }
-        public DateTime Datetime { get; }
-        public decimal Value { get; }
-        public decimal AvgValue { get; }
-        public string StrValue { get; }
-        public decimal Quality { get; }
-
-        public HistorianTag(string site, string tag, string alias, DateTime datetime, decimal value, decimal avgValue, string strValue, decimal quality) {
-            Site = site;
-            Tag = tag;
-            Alias = alias;
-            Datetime = datetime;
-            Value = value;
-            AvgValue = avgValue;
-            StrValue = strValue;
-            Quality = quality;
+            contents = contents.Replace("\"", "");
+            SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP01", "OPIS");
+            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            Assert.AreEqual(27, sf.Inventory.Count());
+            string json = sf.ExportInventory();
+            MulesoftPush.PostInventory(json);
         }
 
-        public String BaseTag { get {
-                int find = Tag.IndexOf(".");
-                if (find == -1) find = Tag.IndexOf("_");
-                if (find == -1) return Tag;
-                return Tag.Substring(0, find);
-         } }
+        [Test]
+        public void TestOilsands() {
+            string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\Oilsandspi.csv");
+            contents = contents.Replace("\"", "");
+            SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithSingleTag(contents, "AP01", "PI");
+            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            Assert.AreEqual(125, sf.Inventory.Count());
+        }
 
-        public String Tank {
-            get {
-                if (Site == "Oilsandspi") return null;
-                return Alias.Replace(" Product code", "").Replace(" Net Volume", "").Replace(" Volume", "");
-            }
+        [Test]
+        public void Testsarnia() {
+            string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\srphd.csv");
+            contents = contents.Replace("\"", "");
+            SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithSingleTag(contents, "CP03", "PHD");
+            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            Assert.AreEqual(44, sf.Inventory.Count());
+            //            Assert.AreEqual(46, missing.Count());
         }
 
 
-        public override bool Equals(object obj) {
-            return obj is HistorianTag other &&
-                   Site == other.Site &&
-                   Tag == other.Tag &&
-                   Alias == other.Alias &&
-                   Datetime == other.Datetime &&
-                   Value == other.Value &&
-                   AvgValue == other.AvgValue &&
-                   StrValue == other.StrValue &&
-                   Quality == other.Quality;
-        }
-
-        public override int GetHashCode() {
-            return HashCode.Combine(Site, Tag, Alias, Datetime, Value, AvgValue, StrValue, Quality);
+        [Test]
+        public void TstBlob() {
+            string cs = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
+            var items = BlobHelper.GetBlobFileList(cs, "silver", "nl/collection=batch/dataset=edmonton/");
         }
     }
 }

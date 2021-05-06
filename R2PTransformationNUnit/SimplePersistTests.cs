@@ -54,5 +54,10 @@ namespace STransformNUnit {
             string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft.txt");
             SimplePersistentController.PersistInventory(json);
         }
+        [Test]
+        public void SimpleInventory2() {
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft2.json");
+            SimplePersistentController.PersistInventory(json);
+        }
     }
 }

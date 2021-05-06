@@ -70,6 +70,7 @@ namespace STransformNUnit {
             AzureModel.SaveInventory("filename", ms, ms.Inventory);
             //            ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportInventory();
+            MulesoftPush.PostInventory(json);
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 140);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedInventoryRecords.Count > 0);

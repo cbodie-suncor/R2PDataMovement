@@ -1,0 +1,4 @@
+- sending Denver inventory  records to mulesoft (S4)
+- Loading inventory from historians and sending them to mulesoft (S4)
+
+

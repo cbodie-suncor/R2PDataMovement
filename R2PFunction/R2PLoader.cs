@@ -43,6 +43,17 @@ namespace SuncorR2P
             }
         }
 
+        [FunctionName("R2PHistorianLoader")]
+        public static void R2PHistorianLoader([TimerTrigger("0 30 22 * * *")] TimerInfo myTimer, ExecutionContext context, ILogger log) {  // at 9:30 AM every day ("0 30 9 * * *")
+            var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
+            try {
+                FoundFile.SetConnection(log);
+                AzureFileHelper.ProcessInventoryFromHistorian(log, productVersion);
+            } catch (Exception ex) {
+                LogHelper.LogSystemError(log, productVersion, ex);
+            }
+        }
+
         [FunctionName("MaterialLedger")]
         public static async Task<IActionResult> RunMaterialLedger([HttpTrigger(AuthorizationLevel.Function)] HttpRequest req, ILogger log) {
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
