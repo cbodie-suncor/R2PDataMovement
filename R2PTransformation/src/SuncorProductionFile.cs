@@ -61,7 +61,7 @@ namespace R2PTransformation.src {
                 Tag = t.Tag,
                 System = t.System,
                 MovementType = t.MovementType,
-                Material = int.Parse(t.Material),
+                Material = SuncorController.ParseInt(t.Material, "Material"),
                 Plant = t.Plant,
                 WorkCenter = t.WorkCenter,
                 ValType = t.ValType,
@@ -86,7 +86,8 @@ namespace R2PTransformation.src {
             inv.CreatedBy = "R2PLoader";
             inv.ValType = "SUNCOR";
             TagMap tm = AzureModel.LookupTag(inv.Tag, inv.Plant, "Inv");
-            
+
+            if (string.IsNullOrEmpty(inv.Tag)) throw new Exception("INV Tag is empty");
             if (tm == null) {
                 Warnings.Add(new WarningMessage(MessageType.Error, inv.Tag, "No TagMapping"));
                 this.FailedRecords++;

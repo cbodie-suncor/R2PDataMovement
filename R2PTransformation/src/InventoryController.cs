@@ -26,10 +26,11 @@ namespace R2PTransformation.src {
                     SuncorController.ParseDecimal(t, "quality")
             ));
 
-            var groups = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Select(g => new { Key = g.Key, Count = g.Count(), Tank = g.Max(s => s.Tank), Tag = g.Max(s => s.StrValue), Quantity = g.Max(s => s.Value) });
+            var groups = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Where(grp => grp.Count() == 2).Select(g => new { Key = g.Key, Count = g.Count(), Tank = g.Max(s => s.Tank), Tag = g.Max(s => s.StrValue), Quantity = g.Max(s => s.Value) });
             var missing = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Where(grp => grp.Count() == 1).Select(g => new { Key = g.Key, Alias = g.Max(s=>s.Alias)}) ;
-            //    .GroupBy); {
-            groups.ToList().ForEach(t => sf.AddInventory(t.Key.Datetime, "Inventory", system, t.Tag, t.Tank, t.Quantity));
+            groups.Where(t => String.IsNullOrEmpty(t.Tag)).ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "No product tag exists in the StrValue")));
+
+            groups.Where(t => !String.IsNullOrEmpty(t.Tag)).ToList().ForEach(t => sf.AddInventory(t.Key.Datetime, "Inventory", system, t.Tag, t.Tank, t.Quantity));
             missing.Where(t => t.Alias.ToLower().Contains("volume")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching product tag")));
             missing.Where(t => t.Alias.ToLower().Contains("product")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching volume tag")));
             sf.FailedRecords = sf.Warnings.Count;
@@ -66,9 +67,8 @@ namespace R2PTransformation.src {
             AzureModel.SaveInventory(file.FullName, pf, pf.Inventory);
             if (pf.SavedInventoryRecords.Count > 0) json = pf.ExportInventory();
             pf.RecordSuccess(file.FullName, "Inventory Snapshot", pf.SavedInventoryRecords.Count, json);
-            if (pf.SavedInventoryRecords.Count > 0) {
-                MulesoftPush.PostInventory(json);
-            }
+
+            if (pf.SavedInventoryRecords.Count > 0) MulesoftPush.PostInventory(json);
         }
     }
     public enum TagType {

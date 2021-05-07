@@ -77,8 +77,8 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                     VehicleNumber = GetStringValue(v, "vehicle"),
                     VehicleText = GetStringValue(v, "vehicleText"),
                     Tender = GetStringValue(v,"tender"),
-                    LoadStartDateTime = ParseDateTime(v,"loadStartDate", "loadStartTime"),
-                    LoadEndDateTime = ParseDateTime(v,"loadEndDate", "loadEndTime"),
+                    LoadStartDateTime = ParseDateTime(v,"loadStartDate"),
+                    LoadEndDateTime = ParseDateTime(v,"loadEndDate"),
                     EnteredOnDateTime = ParseDateTime(v, "enteredOnDateTime"),
                     DocumentDateTime = ParseDateTime(v,"documentDate"),
                     PostingDateTime = ParseDateTime(v,"postingDateTime")

@@ -41,8 +41,8 @@ namespace R2PTransformation.src {
                             ms.Warnings.Add(new WarningMessage(MessageType.Error, tank, ex.Message));
                             continue;
                         }
-
-                        ms.AddInventory(day, "Inventory Snapshot", "Sigmafine", materialCode, tank, quantity);
+                        if (!string.IsNullOrEmpty(materialCode))
+                            ms.AddInventory(day, "Inventory Snapshot", "Sigmafine", materialCode, tank, quantity);
                     }
                 }
             }

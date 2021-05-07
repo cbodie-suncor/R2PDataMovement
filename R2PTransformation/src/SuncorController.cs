@@ -82,5 +82,13 @@ namespace R2PTransformation.src {
                 throw new Exception("Invalid Number for " + columnName);
             }
         }
+
+        public static int ParseInt(String v, string columnName) {
+            try {
+                return string.IsNullOrEmpty(v) ? 0 : int.Parse(v);
+            } catch (Exception ex) {
+                throw new Exception("Invalid Number for " + columnName);
+            }
+        }
     }
 }

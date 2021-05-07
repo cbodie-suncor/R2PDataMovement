@@ -1,6 +1,7 @@
 - sending Denver inventory records to mulesoft (S4)
 - Loading inventory from historians and sending them to mulesoft (S4)
 	: reloading 7 day rolling window
+	: runs only once a day (at 6:30am)
 - added workcenter to Material Movement
 - fixed date error on Entered On for S4 Inventory
 - 

@@ -1,0 +1,6 @@
+- is materialnumber always a number?  we pass int to S4 inventory 
+- 
+
+ALTER TABLE inventorysnapshot DROP CONSTRAINT [Pk_inventorysnapshot];
+alter table inventorysnapshot alter column tank varchar(75) not null
+ALTER TABLE inventorysnapshot add CONSTRAINT [Pk_inventorysnapshot] primary key (tag, tank, quantitytimestamp);

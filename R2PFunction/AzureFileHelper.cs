@@ -93,30 +93,36 @@ namespace SuncorR2P {
             ProcessModifiedTagMapping("GP02", version);
         }
 
-        internal static void ProcessInventoryFromHistorian(ILogger log, string version) {
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=oilsands/", "AP01", "PI", version, log, TagType.SingleEntry);
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=firebag/", "AP02", "PI", version, log, TagType.SingleEntry);
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=mackay/", "AP03", "PI", version, log, TagType.SingleEntry);
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=edmonton/", "CP04", "OPIS", version, log, TagType.MultipleTagForentry);
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=montreal/", "CP01", "OPIS", version, log, TagType.MultipleTagForentry);
-            ProcessInventoryFromHistorian("nl/collection=batch/dataset=sarnia/", "CP03", "PHD", version, log, TagType.SingleEntry);
+        public static void ProcessInventoryFromHistorian(ILogger log) {
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=oilsands/", "AP01", "PI", log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=firebag/", "AP02", "PI", log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=mackay/", "AP03", "PI", log, TagType.SingleEntry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=edmonton/", "CP04", "OPIS", log, TagType.MultipleTagForentry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=montreal/", "CP01", "OPIS", log, TagType.MultipleTagForentry);
+            ProcessInventoryFromHistorian("nl/collection=batch/dataset=sarnia/", "CP03", "PHD", log, TagType.SingleEntry);
         }
 
-        internal static void ProcessInventoryFromHistorian(string dir, string plant, string system, string productVersion, ILogger log, TagType tagType) {
-            string fileName = "";
+        public static void ProcessInventoryFromHistorian(string dir, string plant, string system, ILogger log, TagType tagType) {
+            List<BlobFile> items = null;
             try {
-                string cs = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
-                //cs = "DefaultEndpointsProtocol=https;AccountName=aaadevarmdlsuw2001;AccountKey=UIbHlnqziOKZecmClO4GunGdqNRyTko9uR8BHh9vJH0o6etIG0nEeNzZWP16Nu6fLhOC9zSdGonT42PMDpxFtA==;EndpointSuffix=core.windows.net";
-                List<BlobFile> items = BlobHelper.GetBlobFileList(cs, "silver", dir);
-                foreach (BlobFile file in items) {
-                    fileName = file.FullName;
-                    log.LogInformation("Found " + file.FullName);
-                    InventoryController.ProcessInventoryFile(file, plant, system, tagType);
-                }
-            } catch (Exception ex) {
-                AzureModel.RecordFileFailure("Inventory Snapshot", plant, fileName, 0, 0, ex);
+                items = BlobHelper.GetBlobFileList("silver", dir);
+            } catch(Exception ex) {
+                AzureModel.RecordFileFailure("Inventory Snapshot", plant, null, 0, 0, ex);
+                return;
             }
-    }
+
+            string fileName = "";
+            foreach (BlobFile file in items) {
+                try {
+                    fileName = file.FullName;
+                    if (log == null) Console.WriteLine("Found " + file.FullName);
+                    else log.LogInformation("Found " + file.FullName);
+                    InventoryController.ProcessInventoryFile(file, plant, system, tagType);
+                } catch (Exception ex) {
+                    AzureModel.RecordFileFailure("Inventory Snapshot", plant, fileName, 0, 0, ex);
+                }
+            }
+        }
 
         internal static void ProcessModifiedTagMapping(string plant, string version) {
             string parentDirectory = plant + "/";
@@ -293,6 +299,18 @@ namespace SuncorR2P {
                 }
             }
             return null;
+        }
+
+
+        internal static bool DoesRetriggerFileExist() {
+            ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
+            ShareDirectoryClient dir = share.GetRootDirectoryClient().GetSubdirectoryClient("master");
+            if (dir.GetFileClient("Retrigger.txt").Exists()) {
+                AzureFileHelper.DeleteFile("master/Retrigger.txt");
+                WriteFile("master/Retrigger.processed.txt", "abc", false);
+                return true;
+            }
+            return false;
         }
 
         public static FoundFile ScanForANewFile(Boolean errorState) {

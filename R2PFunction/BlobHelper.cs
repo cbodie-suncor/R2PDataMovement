@@ -11,9 +11,15 @@ using System.Globalization;
 namespace R2PTransformation.src {
 
     public class BlobHelper {
+        public static string HISTORIANCONNECTIONSTRING = Utilities.GetEnvironmentVariable("HistorianStorage");
 
-        public static List<BlobFile> GetBlobFileList(string storageConnectionString, string containerName, string directory) {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(storageConnectionString);
+        public static void SetBlobCS(string name) {
+            HISTORIANCONNECTIONSTRING = name;
+        }
+
+        public static List<BlobFile> GetBlobFileList(string containerName, string directory) {
+
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(HISTORIANCONNECTIONSTRING);
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer container = blobClient.GetContainerReference(containerName);
             var dirContainer = container.GetDirectoryReference(directory);
@@ -26,7 +32,7 @@ namespace R2PTransformation.src {
                 CloudBlockBlob blockBlob = dirContainer.Container.GetBlockBlobReference(((CloudBlockBlob)blobItem).Name);
                 string contents = blockBlob.DownloadTextAsync().GetAwaiter().GetResult();
                 BlobFile file = new BlobFile() { RootFolder = directory, FullName = ((CloudBlockBlob)blobItem).Name, FullDirectoryName = blobItem.Parent.Prefix, Contents = contents };
-                if (file.DateTime < DateTime.Now.AddDays(-7)) continue;
+                if (file.DateTime < DateTime.Today.AddDays(-8)) continue;
                 files.Add(file);
             }
             return files;

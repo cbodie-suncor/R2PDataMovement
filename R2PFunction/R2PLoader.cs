@@ -29,6 +29,8 @@ namespace SuncorR2P
                 AzureFileHelper.ProcessModifiedTagMappings(productVersion);
                 AzureFileHelper.ProcessConversions(productVersion);
                 ULSDChanges = AzureFileHelper.UpdateULSDSplits(log, productVersion);
+
+                if (AzureFileHelper.DoesRetriggerFileExist()) AzureFileHelper.ProcessInventoryFromHistorian(log);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex); 
             }
@@ -49,7 +51,7 @@ namespace SuncorR2P
             try {
                 FoundFile.SetConnection(log);
                 log.LogInformation("starting historian");
-                AzureFileHelper.ProcessInventoryFromHistorian(log, productVersion);
+                AzureFileHelper.ProcessInventoryFromHistorian(log);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
             }

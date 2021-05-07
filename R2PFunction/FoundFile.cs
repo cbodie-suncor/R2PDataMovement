@@ -188,7 +188,7 @@ namespace SuncorR2P.src {
 
             IConfiguration iconfig = new ConfigurationBuilder()
             .AddEnvironmentVariables()  // needed for the ConnectionString - comes from local.settings.json or Azure Function Configuration 
-//            .AddJsonFile("local.settings.json", true, true)
+            //.AddJsonFile("local.settings.json", true, true)
             .Build();
             string cs = iconfig["ConnectionStrings:DataHub"];
 //            TestConectivity(log, cs);

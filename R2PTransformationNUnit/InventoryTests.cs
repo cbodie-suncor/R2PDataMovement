@@ -1,9 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.WindowsAzure.Storage.Blob;
 using NUnit.Framework;
+using R2PFunction;
 using R2PTransformation.Models;
 using R2PTransformation.src;
 using SuncorR2P;
+using SuncorR2P.src;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -14,7 +16,7 @@ namespace STransformNUnit {
     public class InventoryTests {
         [SetUp]
         public void Setup() {
-            DBContextWithConnectionString.CreateTestContext();
+//            DBContextWithConnectionString.CreateTestContext();
         }
 
         [Test]
@@ -55,14 +57,22 @@ namespace STransformNUnit {
             SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithSingleTag(contents, "CP03", "PHD");
             AzureModel.SaveInventory("filename", sf, sf.Inventory);
             Assert.AreEqual(44, sf.Inventory.Count());
-            //            Assert.AreEqual(46, missing.Count());
         }
-
 
         [Test]
         public void TstBlob() {
             string cs = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
-            var items = BlobHelper.GetBlobFileList(cs, "silver", "nl/collection=batch/dataset=edmonton/");
+            BlobHelper.SetBlobCS(cs);
+            var items = BlobHelper.GetBlobFileList("silver", "nl/collection=batch/dataset=edmonton/");
+        }
+
+        public void TstAllHistorianLoad() {
+            string cs = "DefaultEndpointsProtocol=https;AccountName=aaasbxarmstauw2015;AccountKey=awVSOVgmAW7FbMY+9NOsvrlH6Wzwb+0WA9j3ZPbtLOr1gQoZi+EzVq5R1d0Yv5/44REY6BOpjXeAu/bldV70CA==;EndpointSuffix=core.windows.net";
+            BlobHelper.SetBlobCS(cs);
+            FoundFile.SetConnection(null);
+            SuncorProductionFile.SetLogFileWriter(SuncorProductionFile.LocalLogWriter);
+//            AzureFileHelper.ProcessInventoryFromHistorian("nl/collection=batch/dataset=edmonton/", "CP04", "OPIS", null, TagType.MultipleTagForentry);
+            AzureFileHelper.ProcessInventoryFromHistorian(null);
         }
     }
 }
