@@ -25,7 +25,7 @@ namespace STransformNUnit {
 
             contents = contents.Replace("\"", "");
             SuncorProductionFile sf  = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP04", "OPIS");
-            AzureModel.SaveInventory("filenamev", sf, sf.Inventory);
+            AzureModel.SaveInventory("filenamev", sf);
             Assert.AreEqual(78, sf.Inventory.Count());
         }
 
@@ -35,7 +35,7 @@ namespace STransformNUnit {
 
             contents = contents.Replace("\"", "");
             SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP01", "OPIS");
-            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            AzureModel.SaveInventory("filename", sf);
             Assert.AreEqual(27, sf.Inventory.Count());
             string json = sf.ExportInventory();
             MulesoftPush.PostInventory(json);
@@ -46,7 +46,7 @@ namespace STransformNUnit {
             string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\Oilsandspi.csv");
             contents = contents.Replace("\"", "");
             SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithSingleTag(contents, "AP01", "PI");
-            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            AzureModel.SaveInventory("filename", sf);
             Assert.AreEqual(125, sf.Inventory.Count());
         }
 
@@ -55,7 +55,7 @@ namespace STransformNUnit {
             string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\srphd.csv");
             contents = contents.Replace("\"", "");
             SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithSingleTag(contents, "CP03", "PHD");
-            AzureModel.SaveInventory("filename", sf, sf.Inventory);
+            AzureModel.SaveInventory("filename", sf);
             Assert.AreEqual(44, sf.Inventory.Count());
         }
 

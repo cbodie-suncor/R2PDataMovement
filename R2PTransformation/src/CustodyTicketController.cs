@@ -7,13 +7,19 @@ using System.Text;
 
 namespace R2PTransformation.src {
 
-    public class PBFile {
-        public String Filename { get; set; }
+    public class CustodyTicketBatch {
+        public CustodyTicketBatch() {
+            this.Warnings = new List<WarningMessage>();
+        }
+
         public String Json { get; set; }
+        public List<CustodyTicket> Tickets { get; set; }
         public String Plant { get; set; }
         public String AzurePath { get; set; }
-        public String Contents { get; set; }
-        public int SuccessFulRecords { get; set; }
+        public String GeneratedHoneywellPBContent { get; set; }
+        public List<WarningMessage> Warnings { get; set; }
+        public int SuccessFulRecords { get { return this.Tickets.Count; } }
+        public object BatchId { get; set; }
     }
     public class CustodyTicketController : SuncorController {
         public static string FOOTER = @"<<PRODUCT MOVEMENT IFC>>
@@ -26,16 +32,13 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
 <ENDDEFAULTS>
 ";
 
-        public static PBFile CreateHoneywellPBFile(string json) {
+        public static CustodyTicketBatch CreateHoneywellPBFile(string json) {
             if (string.IsNullOrWhiteSpace(json)) throw new Exception("Json is empty");
-            PBFile file = new PBFile();
-            List<WarningMessage> Warnings = new List<WarningMessage>();
-
-            List<CustodyTicket> tixs = GetTixFromJson(json);
-            AzureModel.AddCustodyTickets(tixs);
+            CustodyTicketBatch file = new CustodyTicketBatch();
             file.Json = json;
-            file.Contents = CreateHoneywellPBFile(tixs);
-            file.SuccessFulRecords = tixs.Count;
+            file.Tickets = GetTixFromJson(file);
+            AzureModel.SaveCustodyTickets(file);
+            file.GeneratedHoneywellPBContent = CreateHoneywellPBFile(file.Tickets);
             return file;
         }
 
@@ -47,43 +50,49 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
             return doc + FOOTER;
         }
 
-        public static List<CustodyTicket> GetTixFromJson(string json) {
+        private static List<CustodyTicket> GetTixFromJson(CustodyTicketBatch file) {
             List<CustodyTicket> tix = new List<CustodyTicket>();
-            object data = JsonConvert.DeserializeObject(json);
+            object data = JsonConvert.DeserializeObject(file.Json);
             JObject batch = (JObject)data;
-            string batchId = batch["batchId"].ToString();
+            file.BatchId = batch["batchId"].ToString();
             JArray custodyTickets = (JArray)batch["custodyTicket"];
             foreach (var v in custodyTickets) {
-                CustodyTicket ct = new CustodyTicket() {
-                    S4MaterialDocument = GetStringValue(v, "materialDocument"),
-                    BolNumber = GetStringValue(v,"bolNumber"),
-                    MovemonmentTypeDescription = GetStringValue(v, "movementTypeDescription"),
-                    Sign = GetStringValue(v, "sign"),
-                    NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
-                    NetQuantitySizeInBuoe = ParseDecimal(v, "netQuantitySizeinBUOE"),
-                    BaseUnitOfMeasure = GetStringValue(v, "baseUoM"),
-                    BaseUnitOfEntry = GetStringValue(v, "unitOfEntry"),
-                    Mass = ParseDecimal(v, "mass"),
-                    ValuationType = GetStringValue(v, "valuationType"),
-                    Density = ParseDecimal(v, "density"),
-                    DensityUom = GetStringValue(v,"densityUOM"),
-                    Origin = GetStringValue(v,"origin"),
-                    Destination = GetStringValue(v,"destination"),
-                    Plant = GetStringValue(v,"plant"),
-                    Temperature = ParseDecimal(v, "temperature"),
-                    TemperatureUnitOfMeasure= GetStringValue(v, "temperatureUom"),
-                    MovementType = GetStringValue(v,"movementType"),
-                    Mode = ParseInt(v,"mode"),
-                    VehicleNumber = GetStringValue(v, "vehicle"),
-                    VehicleText = GetStringValue(v, "vehicleText"),
-                    Tender = GetStringValue(v,"tender"),
-                    LoadStartDateTime = ParseDateTime(v,"loadStartDate"),
-                    LoadEndDateTime = ParseDateTime(v,"loadEndDate"),
-                    EnteredOnDateTime = ParseDateTime(v, "enteredOnDateTime"),
-                    DocumentDateTime = ParseDateTime(v,"documentDate"),
-                    PostingDateTime = ParseDateTime(v,"postingDateTime")
-                };
-                tix.Add(ct);
+                try {
+                    CustodyTicket ct = new CustodyTicket() {
+                        S4MaterialDocument = GetStringValue(v, "materialDocument"),
+                        BolNumber = GetStringValue(v, "bolNumber"),
+                        MovemonmentTypeDescription = GetStringValue(v, "movementTypeDescription"),
+                        Sign = GetStringValue(v, "sign"),
+                        NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
+                        NetQuantitySizeInBuoe = ParseDecimal(v, "netQuantitySizeinBUOE"),
+                        BaseUnitOfMeasure = GetStringValue(v, "baseUoM"),
+                        BaseUnitOfEntry = GetStringValue(v, "unitOfEntry"),
+                        Mass = ParseDecimal(v, "mass"),
+                        ValuationType = GetStringValue(v, "valuationType"),
+                        Density = ParseDecimal(v, "density"),
+                        DensityUom = GetStringValue(v, "densityUOM"),
+                        Origin = GetStringValue(v, "origin"),
+                        Destination = GetStringValue(v, "destination"),
+                        Plant = GetStringValue(v, "plant"),
+                        Temperature = ParseDecimal(v, "temperature"),
+                        TemperatureUnitOfMeasure = GetStringValue(v, "temperatureUom"),
+                        MovementType = GetStringValue(v, "movementType"),
+                        Mode = GetStringValue(v, "mode"),
+                        VehicleNumber = GetStringValue(v, "vehicle"),
+                        VehicleText = GetStringValue(v, "vehicleText"),
+                        Tender = GetStringValue(v, "tender"),
+                        LoadStartDateTime = ParseDateTime(v, "loadStartDate"),
+                        LoadEndDateTime = ParseDateTime(v, "loadEndDate"),
+                        EnteredOnDateTime = ParseDateTimeCasnBeNull(v, "enteredOnDateTime"),
+                        DocumentDateTime = ParseDateTimeCasnBeNull(v, "documentDate"),
+                        PostingDateTime = ParseDateTime(v, "postingDateTime")
+                    };
+                    tix.Add(ct);
+                } catch (Exception ex) {
+                    string bolNumber = GetStringValue(v, "bolNumber");
+                    string enteredOnDateTime = GetStringValue(v, "enteredOnDateTime");
+                    file.Warnings.Add(new WarningMessage(MessageType.Error, "{bolNumber:\"" + bolNumber + "\",enteredOnDateTime:\"" + enteredOnDateTime + "\",error:\"" + ex.Message + "\"}"));
+                }
             }
             return tix;
         }

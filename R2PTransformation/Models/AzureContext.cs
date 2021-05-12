@@ -26,6 +26,7 @@ namespace R2PTransformation.Models
         public virtual DbSet<MaterialLedger> MaterialLedger { get; set; }
         public virtual DbSet<MaterialMovement> MaterialMovement { get; set; }
         public virtual DbSet<ProductHierarchy> ProductHierarchy { get; set; }
+        public virtual DbSet<S4inventory> S4inventory { get; set; }
         public virtual DbSet<SourceUnitMap> SourceUnitMap { get; set; }
         public virtual DbSet<StandardUnit> StandardUnit { get; set; }
         public virtual DbSet<TagBalance> TagBalance { get; set; }
@@ -109,12 +110,17 @@ namespace R2PTransformation.Models
                     .HasMaxLength(10)
                     .IsUnicode(false);
 
+                entity.Property(e => e.Batchid)
+                    .HasColumnName("batchid")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.BolNumber)
                     .HasColumnName("BOL_Number")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Density).HasColumnType("decimal(10, 3)");
+                entity.Property(e => e.Density).HasColumnType("decimal(30, 3)");
 
                 entity.Property(e => e.DensityUom)
                     .HasColumnName("Density_UOM")
@@ -148,7 +154,11 @@ namespace R2PTransformation.Models
 
                 entity.Property(e => e.Mass)
                     .HasColumnName("mass")
-                    .HasColumnType("decimal(10, 5)");
+                    .HasColumnType("decimal(30, 5)");
+
+                entity.Property(e => e.Mode)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.MovementType)
                     .IsRequired()
@@ -164,11 +174,11 @@ namespace R2PTransformation.Models
 
                 entity.Property(e => e.NetQuantitySizeInBuoe)
                     .HasColumnName("Net_Quantity_Size_in_buoe")
-                    .HasColumnType("decimal(10, 3)");
+                    .HasColumnType("decimal(30, 3)");
 
                 entity.Property(e => e.NetQuantitySizeInUoe)
                     .HasColumnName("Net_Quantity_Size_in_uoe")
-                    .HasColumnType("decimal(10, 3)");
+                    .HasColumnType("decimal(30, 3)");
 
                 entity.Property(e => e.Origin)
                     .HasMaxLength(10)
@@ -232,6 +242,11 @@ namespace R2PTransformation.Models
                     .HasForeignKey(d => d.BaseUnitOfMeasure)
                     .HasConstraintName("FK_CustodyTicket_Base_Unit_of_Measure");
 
+                entity.HasOne(d => d.Batch)
+                    .WithMany(p => p.CustodyTicket)
+                    .HasForeignKey(d => d.Batchid)
+                    .HasConstraintName("FK_custodyticket_Batch");
+
                 entity.HasOne(d => d.TemperatureUnitOfMeasureNavigation)
                     .WithMany(p => p.CustodyTicketTemperatureUnitOfMeasureNavigation)
                     .HasForeignKey(d => d.TemperatureUnitOfMeasure)
@@ -240,21 +255,18 @@ namespace R2PTransformation.Models
 
             modelBuilder.Entity<InventorySnapshot>(entity =>
             {
-                entity.HasKey(e => new { e.Tag, e.ValType, e.QuantityTimestamp, e.Tank });
+                entity.HasKey(e => new { e.Tag, e.Tank, e.QuantityTimestamp })
+                    .HasName("Pk_inventorysnapshot");
 
                 entity.Property(e => e.Tag)
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.ValType)
-                    .HasMaxLength(30)
+                entity.Property(e => e.Tank)
+                    .HasMaxLength(75)
                     .IsUnicode(false);
 
                 entity.Property(e => e.QuantityTimestamp).HasColumnType("datetime");
-
-                entity.Property(e => e.Tank)
-                    .HasMaxLength(30)
-                    .IsUnicode(false);
 
                 entity.Property(e => e.BatchId)
                     .HasMaxLength(50)
@@ -293,6 +305,11 @@ namespace R2PTransformation.Models
                 entity.Property(e => e.System)
                     .IsRequired()
                     .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ValType)
+                    .IsRequired()
+                    .HasMaxLength(30)
                     .IsUnicode(false);
 
                 entity.Property(e => e.WorkCenter)
@@ -403,6 +420,11 @@ namespace R2PTransformation.Models
                     .HasMaxLength(20)
                     .IsUnicode(false);
 
+                entity.HasOne(d => d.Batch)
+                    .WithMany(p => p.MaterialMovement)
+                    .HasForeignKey(d => d.BatchId)
+                    .HasConstraintName("FK_materialmovement_Batch");
+
                 entity.HasOne(d => d.UnitOfEntryNavigation)
                     .WithMany(p => p.MaterialMovementUnitOfEntryNavigation)
                     .HasForeignKey(d => d.UnitOfEntry)
@@ -466,6 +488,73 @@ namespace R2PTransformation.Models
                 entity.Property(e => e.ProductHierarchyLevel3Text)
                     .HasMaxLength(100)
                     .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<S4inventory>(entity =>
+            {
+                entity.HasKey(e => new { e.Material, e.Plant, e.PostingDate, e.ValuationType });
+
+                entity.ToTable("s4inventory");
+
+                entity.Property(e => e.Plant)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.PostingDate).HasColumnType("datetime");
+
+                entity.Property(e => e.ValuationType)
+                    .HasMaxLength(30)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.BatchId)
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ClosingQuantity).HasColumnType("decimal(23, 3)");
+
+                entity.Property(e => e.EnteredAt)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.EnteredOn).HasColumnType("datetime");
+
+                entity.Property(e => e.MovementType)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.OpeningQuantity).HasColumnType("decimal(23, 3)");
+
+                entity.Property(e => e.StorageLocation)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.System)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Tag)
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.UnitOfMeasure)
+                    .HasMaxLength(10)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.WorkCenter)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                entity.HasOne(d => d.Batch)
+                    .WithMany(p => p.S4inventory)
+                    .HasForeignKey(d => d.BatchId)
+                    .HasConstraintName("FK_s4inventory_Batch");
+
+                entity.HasOne(d => d.UnitOfMeasureNavigation)
+                    .WithMany(p => p.S4inventory)
+                    .HasForeignKey(d => d.UnitOfMeasure)
+                    .HasConstraintName("FK_s4inventory_UnitOfMeasure");
             });
 
             modelBuilder.Entity<SourceUnitMap>(entity =>

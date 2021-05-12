@@ -28,7 +28,7 @@ namespace R2PTransformation.Models
         public decimal? Temperature { get; set; }
         public string TemperatureUnitOfMeasure { get; set; }
         public string MovementType { get; set; }
-        public int Mode { get; set; }
+        public string Mode { get; set; }
         public string Tender { get; set; }
         public string VehicleText { get; set; }
         public string VehicleNumber { get; set; }
@@ -38,9 +38,11 @@ namespace R2PTransformation.Models
         public string EnteredBy { get; set; }
         public DateTime? DocumentDateTime { get; set; }
         public DateTime PostingDateTime { get; set; }
+        public string Batchid { get; set; }
 
         public virtual StandardUnit BaseUnitOfEntryNavigation { get; set; }
         public virtual StandardUnit BaseUnitOfMeasureNavigation { get; set; }
+        public virtual Batch Batch { get; set; }
         public virtual StandardUnit TemperatureUnitOfMeasureNavigation { get; set; }
     }
 }

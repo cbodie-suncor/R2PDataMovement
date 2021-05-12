@@ -1,0 +1,78 @@
+
+- added a file called HistorianSnapshotTrigger.txt to retrigger the historian load
+
+S4 Inventory
+- changed the following columns in the S4Inventory table :
+- removed Material Doc field
+- remove MovementTypeDesc
+- removed headertext
+- removed all UOE fields
+- added ClosingQuantity and OpeningQuantity
+- key is now PostingDate, Material, Plant, ValuationType
+
+Custody Tickets
+- added record level issues to the result http request so Mulesoft can handle erorrs on a record level 
+- sending the bol number and entered on date and error msg on errored Custody Tickets
+ie. [{bolNumber:\"SHPBOL-1\",enteredOnDateTime:\"2021-03-25 02:57:45\",error:\"Invalid Number for mass\"}]
+
+- modified the error messages in the historian inventory load 
+	- Volume and Product Tag found, but no Material mapped to Product Tag
+	- Volume Tag exists, but no matching Product Tag found
+	- Product Tag exists, but no matching Volume Tag found
+
+
+
+
+alter table custodyticket alter column Mode varchar(100)
+go
+drop view s4inventory
+go
+drop table s4inventory
+go
+alter table [MaterialMovement] drop constraint [FK_s4inventory_Batch]
+go
+
+CREATE TABLE [dbo].s4inventory(
+	[Material] [int] not NULL,
+	[System] [varchar](50) NOT NULL,
+	[Plant] [varchar](30) not NULL,
+	[Tag] [varchar](100) NULL,
+	[MovementType] [varchar](100) NULL,
+	[StorageLocation] [varchar](100) NULL,
+	[PostingDate] [datetime] NOT NULL,
+	[ValuationType] [varchar](30) not NULL,
+	[UnitOfMeasure] [varchar](10) NULL,
+	[OpeningQuantity] [decimal](23, 3) NULL,
+	[ClosingQuantity] [decimal](23, 3) NULL,
+	[BatchId] [varchar](50) NULL,
+	[EnteredOn] [datetime] NOT NULL,
+	[EnteredAt] [varchar](50) NOT NULL,
+	[WorkCenter] [varchar](20) NULL,
+ CONSTRAINT [PK_s4inventory] PRIMARY KEY CLUSTERED (material, plant, postingDate, valuationType)
+ )
+GO
+
+ALTER TABLE [dbo].s4inventory  WITH CHECK ADD  CONSTRAINT [FK_s4inventory_Batch] FOREIGN KEY([BatchId])
+REFERENCES [dbo].[Batch] ([Id])
+GO
+
+ALTER TABLE [dbo].s4inventory CHECK CONSTRAINT [FK_s4inventory_Batch]
+GO
+
+ALTER TABLE [dbo].s4inventory  WITH CHECK ADD  CONSTRAINT [FK_s4inventory_UnitOfMeasure] FOREIGN KEY([UnitOfMeasure])
+REFERENCES [dbo].[StandardUnit] ([Name])
+GO
+
+ALTER TABLE [dbo].s4inventory CHECK CONSTRAINT [FK_s4inventory_UnitOfMeasure]
+GO
+
+
+
+ALTER TABLE [dbo].s4inventory  WITH CHECK ADD  CONSTRAINT [FK_s4inventory_UnitOfMeasure] FOREIGN KEY([UnitOfMeasure])
+REFERENCES [dbo].[StandardUnit] ([Name])
+GO
+
+ALTER TABLE [dbo].s4inventory CHECK CONSTRAINT [FK_s4inventory_UnitOfMeasure]
+GO
+
+

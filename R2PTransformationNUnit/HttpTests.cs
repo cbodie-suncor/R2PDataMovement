@@ -78,9 +78,25 @@ namespace STransformNUnit {
         }
 
         [Test]
+        public void BadCustodyTicket() {
+            string ROOTDIR2 = @"..\..\..\..\sampleFiles\CustodyTicket\";
+            HttpClient client = new HttpClient();
+            string json = File.ReadAllText(ROOTDIR2 + "Custody Ticket5.json");
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+            data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+
+            var response = client.PostAsync(baseTestURL + "CustodyTicket", data);
+            string output = response.Result.Content.ReadAsStringAsync().Result;
+            Console.WriteLine(output);
+
+            Assert.IsTrue(response.Result.StatusCode.ToString() == "BadRequest");
+            Assert.AreEqual("{\"errors\":[{bolNumber:\"SHPBOL-1\",enteredOnDateTime:\"2021-03-25 02:57:45\",error:\"Invalid Number for mass\"}]}", output) ;
+        }
+
+        [Test]
         public void SimpleInventory() {
             string BASEDIR = @"..\..\..\..\sampleFiles\";
-            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft3.json");
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft4.json");
 
             HttpClient client = new HttpClient();
             var data = new StringContent(json, Encoding.UTF8, "application/json");

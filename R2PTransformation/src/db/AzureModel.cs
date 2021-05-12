@@ -7,6 +7,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using R2PTransformation.src;
 using SuncorR2P;
+using static R2PTransformation.src.SimplePersistentController;
 
 namespace R2PTransformation.Models {
     public class AzureModel {
@@ -22,7 +23,7 @@ namespace R2PTransformation.Models {
             }
         }
 
-        public static void SaveInventory(string fileName, SuncorProductionFile pf, List<InventorySnapshot> inv) {
+        public static void SaveInventory(string fileName, SuncorProductionFile pf) {
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 Batch batch = new Batch();
                 batch.Id = pf.BatchId.ToString();
@@ -30,7 +31,7 @@ namespace R2PTransformation.Models {
                 batch.CreatedBy = "System";
                 batch.Filename = fileName;
                 context.Batch.Add(batch);
-                foreach (var item in inv) {
+                foreach (var item in pf.Inventory) {
                     InventorySnapshot found = context.InventorySnapshot.SingleOrDefault(t => t.Tag == item.Tag && t.QuantityTimestamp == item.QuantityTimestamp && t.ValType == item.ValType && t.Tank == item.Tank);
                     if (found == null)
                         batch.InventorySnapshot.Add(item);
@@ -38,15 +39,88 @@ namespace R2PTransformation.Models {
                         UpdateInventory(found, item);
                 }
                 context.SaveChanges();
-                pf.SavedInventoryRecords = inv;
+                pf.SavedInventoryRecords = pf.Inventory;
             }
         }
 
-        internal static void AddCustodyTickets(List<CustodyTicket> tixs) {
+        internal static void AddS4Inventory(S4InventoryBatch s4Inv) {
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
-                context.CustodyTicket.AddRange(tixs);
+                Batch batch = null;
+                Batch foundBatch = context.Batch.Find(new object[] { s4Inv.BatchId.ToString() });
+                if (foundBatch != null) batch = foundBatch;
+                else {
+                    batch = new Batch();
+                    batch.Id = s4Inv.BatchId;
+                    batch.Created = DateTime.Now;
+                    batch.CreatedBy = "System";
+                }
+
+                var existingInvs = context.S4inventory;
+                s4Inv.Inventory.ForEach(t => {
+                    List<S4inventory> find = context.S4inventory.Where(f => f.PostingDate == t.PostingDate && f.Plant == t.Plant && f.Material == t.Material && f.ValuationType == t.ValuationType).ToList();
+
+                    if (find.Count() > 0) {
+                        find.ForEach(t => context.S4inventory.Remove(t));
+                    } else {
+                        context.S4inventory.Add(t);
+                    }
+                    t.Batch = batch;
+                });
+
+                context.S4inventory.AddRange(s4Inv.Inventory);
                 context.SaveChanges();
             }
+        }
+
+        public static void SaveCustodyTickets(CustodyTicketBatch pf) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
+                Batch batch = null;
+                Batch foundBatch = context.Batch.Find(new object[] { pf.BatchId.ToString() });
+                if (foundBatch != null) batch = foundBatch;
+                else {
+                    batch = new Batch();
+                    batch.Id = pf.BatchId.ToString();
+                    batch.Created = DateTime.Now;
+                    batch.CreatedBy = "System";
+                }
+                foreach (var item in pf.Tickets) {
+                    CustodyTicket found = context.CustodyTicket.SingleOrDefault(t => t.S4MaterialDocument == item.S4MaterialDocument);
+                    if (found == null)
+                        batch.CustodyTicket.Add(item);
+                    else
+                        UpdateCustodyTicket(found, item);
+                }
+                context.SaveChanges();
+            }
+        }
+
+        private static void UpdateCustodyTicket(CustodyTicket existing, CustodyTicket ct) {
+            existing.MovemonmentTypeDescription = ct.MovemonmentTypeDescription;
+            existing.Sign = ct.Sign;
+            existing.NetQuantitySizeInUoe = ct.NetQuantitySizeInUoe;
+            existing.NetQuantitySizeInBuoe = ct.NetQuantitySizeInBuoe;
+            existing.Mass = ct.Mass;
+            existing.BaseUnitOfMeasure = ct.BaseUnitOfMeasure;
+            existing.BaseUnitOfEntry = ct.BaseUnitOfEntry;
+            existing.ValuationType = ct.ValuationType;
+            existing.Density = ct.Density;
+            existing.DensityUom = ct.DensityUom;
+            existing.Origin = ct.Origin;
+            existing.Destination = ct.Destination;
+            existing.Plant = ct.Plant;
+            existing.Temperature = ct.Temperature;
+            existing.TemperatureUnitOfMeasure = ct.TemperatureUnitOfMeasure;
+            existing.MovementType = ct.MovementType;
+            existing.Mode = ct.Mode;
+            existing.Tender = ct.Tender;
+            existing.VehicleText = ct.VehicleText;
+            existing.VehicleNumber = ct.VehicleNumber;
+            existing.LoadStartDateTime = ct.LoadStartDateTime;
+            existing.LoadEndDateTime = ct.LoadEndDateTime;
+            existing.EnteredOnDateTime = ct.EnteredOnDateTime;
+            existing.EnteredBy = ct.EnteredBy;
+            existing.DocumentDateTime = ct.DocumentDateTime;
+            existing.PostingDateTime = ct.PostingDateTime;
         }
 
         public static void UpdateTagBalance(List<TagBalance> tb) {

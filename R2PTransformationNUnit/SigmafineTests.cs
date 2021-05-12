@@ -51,7 +51,7 @@ namespace STransformNUnit {
         public void testInventoryLoad() {
             var bytes = File.ReadAllBytes(ROOTDIR + "031021 INVENTORY (with material codes).xls");
             SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(bytes, "COMMERCECITY", new DateTime(2021, 03, 10));
-            AzureModel.SaveInventory("filename", ms, ms.Inventory);
+            AzureModel.SaveInventory("filename", ms);
 //            ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportInventory();
             System.Console.WriteLine(json);
@@ -67,7 +67,7 @@ namespace STransformNUnit {
         public void testInventoryLoad2() {
             var bytes = File.ReadAllBytes(ROOTDIR + "031021 INVENTORY (with material codes)_WP.xls");
             SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(bytes, "COMMERCECITY", new DateTime(2021, 03, 10));
-            AzureModel.SaveInventory("filename", ms, ms.Inventory);
+            AzureModel.SaveInventory("filename", ms);
             //            ms.SavedRecords = ms.GetTagBalanceRecords();
             string json = ms.ExportInventory();
             MulesoftPush.PostInventory(json);

@@ -13,6 +13,7 @@ using R2PTransformation.src;
 using R2PTransformation.Models;
 using SuncorR2P.src;
 using System.Linq;
+using static R2PTransformation.src.SimplePersistentController;
 
 namespace SuncorR2P
 {
@@ -82,19 +83,23 @@ namespace SuncorR2P
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Inventory request processed.");
             string requestBody = String.Empty;
-            int generatedFile = 0;
+            S4InventoryBatch batch = null;
             try {
                 FoundFile.SetConnection(log);
                 using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
-                generatedFile = SimplePersistentController.PersistInventory(requestBody);
+                batch = SimplePersistentController.PersistS4Inventory(requestBody);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
                 AzureModel.RecordFatalLoad("Inventory", null, ex, requestBody);
                 string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
                 return (ActionResult)new BadRequestErrorMessageResult($"Inventory failed." + msg);
             }
-
-            return (ActionResult)new OkObjectResult($"Inventory processed successfully {generatedFile} records");
+            if (batch.Warnings.Count() > 0) {
+                string msg = string.Join(',', batch.Warnings.Select(t => t.Message));
+                return (ActionResult)new BadRequestObjectResult("{\"errors\":[" + msg + "]}");
+            } else {
+                return (ActionResult)new OkObjectResult($"Inventory processed successfully {batch.SuccessFulRecords} records");
+            }
         }
 
         [FunctionName("Hierarchy")]
@@ -122,16 +127,16 @@ namespace SuncorR2P
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Custody Ticket request processed.");
             string requestBody = String.Empty;
-            PBFile generatedFile = null;
+            CustodyTicketBatch generatedFile = null;
             try {
                 FoundFile.SetConnection(log);
-                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync();   }
+                using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
                 generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
                 generatedFile.Plant = "CP01";
                 generatedFile.AzurePath = $"CP01/custodyTickets/{DateTime.Now.ToString("yyyyMMddHHmmss")}.txt";
                 LogHelper.LogSystemError(log, productVersion, "writing file to " + generatedFile.AzurePath);
-                LogHelper.LogSystemError(log, productVersion, "wcontents to " + generatedFile.Contents);
-                AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.Contents, true);
+                LogHelper.LogSystemError(log, productVersion, "wcontents to " + generatedFile.GeneratedHoneywellPBContent);
+                AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.GeneratedHoneywellPBContent, true);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
                 AzureModel.RecordFatalLoad("CustodyTicket", null, ex, requestBody);
@@ -139,7 +144,12 @@ namespace SuncorR2P
                 return (ActionResult)new BadRequestErrorMessageResult($"CustodyTicket failed." + msg);
             }
 
-            return (ActionResult)new OkObjectResult($"Custody Tickets processed successfully {generatedFile.SuccessFulRecords} records");
+            if (generatedFile.Warnings.Count() > 0) {
+                string msg = string.Join(',', generatedFile.Warnings.Select(t => t.Message));
+                return (ActionResult)new BadRequestObjectResult("{\"errors\":[" + msg + "]}");
+            } else { 
+                return (ActionResult)new OkObjectResult($"Custody Tickets processed successfully {generatedFile.SuccessFulRecords} records");
+            }
         }
 
         [FunctionName("MaterialMovement")]

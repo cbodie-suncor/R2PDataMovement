@@ -11,7 +11,10 @@ namespace R2PTransformation.Models
     {
         public Batch()
         {
+            CustodyTicket = new HashSet<CustodyTicket>();
             InventorySnapshot = new HashSet<InventorySnapshot>();
+            MaterialMovement = new HashSet<MaterialMovement>();
+            S4inventory = new HashSet<S4inventory>();
             TagBalance = new HashSet<TagBalance>();
         }
 
@@ -21,7 +24,10 @@ namespace R2PTransformation.Models
         public string CreatedBy { get; set; }
         public string Filename { get; set; }
 
+        public virtual ICollection<CustodyTicket> CustodyTicket { get; set; }
         public virtual ICollection<InventorySnapshot> InventorySnapshot { get; set; }
+        public virtual ICollection<MaterialMovement> MaterialMovement { get; set; }
+        public virtual ICollection<S4inventory> S4inventory { get; set; }
         public virtual ICollection<TagBalance> TagBalance { get; set; }
     }
 }

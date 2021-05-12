@@ -7,31 +7,25 @@ using System.Collections.Generic;
 
 namespace R2PTransformation.Models
 {
-    public partial class MaterialMovement
+    public partial class S4inventory
     {
-        public int MaterialMovementId { get; set; }
-        public string MaterialDocument { get; set; }
-        public int? Material { get; set; }
+        public int Material { get; set; }
         public string System { get; set; }
-        public string MovementType { get; set; }
-        public string MovementTypeDesc { get; set; }
         public string Plant { get; set; }
-        public string HeaderText { get; set; }
         public string Tag { get; set; }
+        public string MovementType { get; set; }
+        public string StorageLocation { get; set; }
         public DateTime PostingDate { get; set; }
         public string ValuationType { get; set; }
-        public decimal? Quantity { get; set; }
-        public string UnitOfEntry { get; set; }
         public string UnitOfMeasure { get; set; }
-        public decimal? QuantityInUoe { get; set; }
-        public decimal? QuantityInL15 { get; set; }
+        public decimal? OpeningQuantity { get; set; }
+        public decimal? ClosingQuantity { get; set; }
         public string BatchId { get; set; }
         public DateTime EnteredOn { get; set; }
         public string EnteredAt { get; set; }
         public string WorkCenter { get; set; }
 
         public virtual Batch Batch { get; set; }
-        public virtual StandardUnit UnitOfEntryNavigation { get; set; }
         public virtual StandardUnit UnitOfMeasureNavigation { get; set; }
     }
 }

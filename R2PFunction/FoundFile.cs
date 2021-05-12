@@ -110,7 +110,7 @@ namespace SuncorR2P.src {
                 this.FailedRecords = this.ProductionFile.FailedRecords;
 
                 if (this.Inventory) {
-                    AzureModel.SaveInventory(this.AzureFullPathName, this.ProductionFile, this.ProductionFile.Inventory);
+                    AzureModel.SaveInventory(this.AzureFullPathName, this.ProductionFile);
                     this.SuccessfulRecords = this.ProductionFile.SavedInventoryRecords.Count;
                     if (this.ProductionFile.SavedInventoryRecords.Count > 0) {
                         string json = this.ProductionFile.ExportInventory();

@@ -1,0 +1,22 @@
+- changed custody ticket to show record which has invalid data
+
+
+
+alter table custodyticket alter column mass decimal(30,5)
+
+alter table custodyticket add batchid varchar(50)
+
+
+ALTER TABLE [dbo].materialmovement  WITH CHECK ADD  CONSTRAINT [FK_materialmovement_Batch] FOREIGN KEY([BatchId])
+REFERENCES [dbo].[Batch] ([Id])
+GO
+
+ALTER TABLE [dbo].materialmovement CHECK CONSTRAINT [FK_materialmovement_Batch]
+GO
+
+ALTER TABLE [dbo].custodyticket  WITH CHECK ADD  CONSTRAINT [FK_custodyticket_Batch] FOREIGN KEY([BatchId])
+REFERENCES [dbo].[Batch] ([Id])
+GO
+
+ALTER TABLE [dbo].custodyticket CHECK CONSTRAINT [FK_custodyticket_Batch]
+GO

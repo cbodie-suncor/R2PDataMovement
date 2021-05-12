@@ -305,11 +305,11 @@ namespace SuncorR2P {
         internal static bool DoesRetriggerFileExist() {
             ShareClient share = new ShareClient(CONNECTIONSTRING, SHARENAME);
             ShareDirectoryClient dir = share.GetRootDirectoryClient().GetSubdirectoryClient("master");
-            if (dir.GetFileClient("Retrigger.txt").Exists()) {
-                AzureFileHelper.DeleteFile("master/Retrigger.txt");
-                WriteFile("master/Retrigger.processed.txt", "abc", false);
+            if (dir.GetFileClient("HistorianSnapshotTrigger.txt").Exists()) {
+                AzureFileHelper.DeleteFile("master/HistorianSnapshotTrigger.txt");
                 return true;
             }
+            WriteFile("master/HistorianSnapshotTrigger.processed.txt", "abc", false);
             return false;
         }
 

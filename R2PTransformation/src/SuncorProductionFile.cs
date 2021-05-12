@@ -220,7 +220,8 @@ namespace R2PTransformation.src {
             Type = type;
         }
 
-        public WarningMessage(MessageType type, string aMessage) {
+        public WarningMessage(MessageType atype, string aMessage) {
+            Type = atype;
             Message = aMessage;
         }
         public override string ToString() {

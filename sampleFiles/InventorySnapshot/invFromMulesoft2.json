@@ -14,7 +14,7 @@
     "storageLocation": "1000" 
 	},     
 	{        
-	"date": "2021-03-23",  
+	"date": "2021-03-24",  
 	"material": "000000000000010614",  
 	"plant": "AP01",       
 	"valuationType": "SUNCOR",    
@@ -26,7 +26,7 @@
 	"storageLocation": "1000"   
 	},      
 	{       
-	"date": "2021-03-23",    
+	"date": "2021-03-25",    
     "material": "000000000000010614",  
 	"plant": "AN02",      
 	"valuationType": "SUNCOR",  

@@ -19,6 +19,7 @@ namespace R2PTransformation.Models
             InventorySnapshot = new HashSet<InventorySnapshot>();
             MaterialMovementUnitOfEntryNavigation = new HashSet<MaterialMovement>();
             MaterialMovementUnitOfMeasureNavigation = new HashSet<MaterialMovement>();
+            S4inventory = new HashSet<S4inventory>();
             SourceUnitMap = new HashSet<SourceUnitMap>();
             TagBalance = new HashSet<TagBalance>();
             TagMap = new HashSet<TagMap>();
@@ -34,6 +35,7 @@ namespace R2PTransformation.Models
         public virtual ICollection<InventorySnapshot> InventorySnapshot { get; set; }
         public virtual ICollection<MaterialMovement> MaterialMovementUnitOfEntryNavigation { get; set; }
         public virtual ICollection<MaterialMovement> MaterialMovementUnitOfMeasureNavigation { get; set; }
+        public virtual ICollection<S4inventory> S4inventory { get; set; }
         public virtual ICollection<SourceUnitMap> SourceUnitMap { get; set; }
         public virtual ICollection<TagBalance> TagBalance { get; set; }
         public virtual ICollection<TagMap> TagMap { get; set; }

@@ -28,11 +28,11 @@ namespace R2PTransformation.src {
 
             var groups = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Where(grp => grp.Count() == 2).Select(g => new { Key = g.Key, Count = g.Count(), Tank = g.Max(s => s.Tank), Tag = g.Max(s => s.StrValue), Quantity = g.Max(s => s.Value) });
             var missing = invs.GroupBy(t => new { t.Site, t.BaseTag, t.Datetime }).Where(grp => grp.Count() == 1).Select(g => new { Key = g.Key, Alias = g.Max(s=>s.Alias)}) ;
-            groups.Where(t => String.IsNullOrEmpty(t.Tag)).ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "No product tag exists in the StrValue")));
+            groups.Where(t => String.IsNullOrEmpty(t.Tag)).ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Volume and Product Tag found, but no Material mapped to Product Tag")));
 
             groups.Where(t => !String.IsNullOrEmpty(t.Tag)).ToList().ForEach(t => sf.AddInventory(t.Key.Datetime, "Inventory", system, t.Tag, t.Tank, t.Quantity));
-            missing.Where(t => t.Alias.ToLower().Contains("volume")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching product tag")));
-            missing.Where(t => t.Alias.ToLower().Contains("product")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Missing matching volume tag")));
+            missing.Where(t => t.Alias.ToLower().Contains("volume")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Volume Tag exists, but no matching Product Tag found")));
+            missing.Where(t => t.Alias.ToLower().Contains("product")).Distinct().ToList().ForEach(r => sf.Warnings.Add(new WarningMessage(MessageType.Error, r.Key.BaseTag, "Product Tag exists, but no matching Volume Tag found")));
             sf.FailedRecords = sf.Warnings.Count;
             return sf;
         }
@@ -52,7 +52,7 @@ namespace R2PTransformation.src {
                     SuncorController.ParseDecimal(t, "quality")
             ));
 
-            invs.ToList().ForEach(t => sf.AddInventory(t.Datetime, "Inventory", system, t.Tag, t.Tank, t.AvgValue));
+            invs.ToList().ForEach(t => sf.AddInventory(t.Datetime, "Inventory", system, t.Tag, t.Tank, t.Value));
             sf.FailedRecords = sf.Warnings.Count;
             return sf;
         }
@@ -64,7 +64,7 @@ namespace R2PTransformation.src {
                 pf = GetInventoryRecordsWithMultiTags(file.Contents, plant, system);
             else
                 pf = GetInventoryRecordsWithSingleTag(file.Contents, plant, system);
-            AzureModel.SaveInventory(file.FullName, pf, pf.Inventory);
+            AzureModel.SaveInventory(file.FullName, pf);
             if (pf.SavedInventoryRecords.Count > 0) json = pf.ExportInventory();
             pf.RecordSuccess(file.FullName, "Inventory Snapshot", pf.SavedInventoryRecords.Count, json);
 

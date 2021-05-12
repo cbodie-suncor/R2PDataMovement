@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using static R2PTransformation.src.SimplePersistentController;
 
 namespace STransformNUnit {
     public class SimplePersistTests {
@@ -53,18 +54,19 @@ namespace STransformNUnit {
         [Test]
         public void SimpleInventory() {
             string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft.txt");
-            SimplePersistentController.PersistInventory(json);
+            SimplePersistentController.PersistS4Inventory(json);
         }
         [Test]
         public void SimpleInventory2() {
             string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft2.json");
-            SimplePersistentController.PersistInventory(json);
+            SimplePersistentController.PersistS4Inventory(json);
         }
 
         [Test]
         public void SimpleInventory3() {
-            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft3.json");
-            SimplePersistentController.PersistInventory(json);
+            string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft4.json");
+            S4InventoryBatch batch = SimplePersistentController.PersistS4Inventory(json);
+
         }
     }
 }
