@@ -16,7 +16,7 @@ namespace STransformNUnit {
     public class InventoryTests {
         [SetUp]
         public void Setup() {
-//            DBContextWithConnectionString.CreateTestContext();
+            DBContextWithConnectionString.CreateTestContext();
         }
 
         [Test]
@@ -36,8 +36,20 @@ namespace STransformNUnit {
             contents = contents.Replace("\"", "");
             SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP01", "OPIS");
             AzureModel.SaveInventory("filename", sf);
-            Assert.AreEqual(27, sf.Inventory.Count());
-            string json = sf.ExportInventory();
+            Assert.AreEqual(77, sf.Inventory.Count());
+            string json = sf.ExportInventory("CP01");
+            MulesoftPush.PostInventory(json);
+        }
+
+        [Test]
+        public void TestMtl2() {
+            string contents = File.ReadAllText(@"..\..\..\..\sampleFiles\InventorySnapshot\mtphdSingle.csv");
+
+            contents = contents.Replace("\"", "");
+            SuncorProductionFile sf = InventoryController.GetInventoryRecordsWithMultiTags(contents, "CP01", "OPIS");
+            AzureModel.SaveInventory("filename", sf);
+            Assert.AreEqual(1, sf.Inventory.Count());
+            string json = sf.ExportInventory("CP01");
             MulesoftPush.PostInventory(json);
         }
 

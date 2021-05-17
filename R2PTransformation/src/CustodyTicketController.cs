@@ -61,7 +61,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                     CustodyTicket ct = new CustodyTicket() {
                         S4MaterialDocument = GetStringValue(v, "materialDocument"),
                         BolNumber = GetStringValue(v, "bolNumber"),
-                        MovemonmentTypeDescription = GetStringValue(v, "movementTypeDescription"),
+                        MovementTypeDescription = GetStringValue(v, "movementTypeDescription"),
                         Sign = GetStringValue(v, "sign"),
                         NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
                         NetQuantitySizeInBuoe = ParseDecimal(v, "netQuantitySizeinBUOE"),

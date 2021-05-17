@@ -94,8 +94,8 @@ namespace SuncorR2P
                 string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
                 return (ActionResult)new BadRequestErrorMessageResult($"Inventory failed." + msg);
             }
-            if (batch.Warnings.Count() > 0) {
-                string msg = string.Join(',', batch.Warnings.Select(t => t.Message));
+            if (batch.OnlyErrors.Count() > 0) {
+                string msg = string.Join(',', batch.OnlyErrors.Select(t => t.GetJsonMessage));
                 return (ActionResult)new BadRequestObjectResult("{\"errors\":[" + msg + "]}");
             } else {
                 return (ActionResult)new OkObjectResult($"Inventory processed successfully {batch.SuccessFulRecords} records");

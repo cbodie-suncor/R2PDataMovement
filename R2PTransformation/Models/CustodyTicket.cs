@@ -12,7 +12,7 @@ namespace R2PTransformation.Models
         public int CustodyTicketId { get; set; }
         public string S4MaterialDocument { get; set; }
         public string BolNumber { get; set; }
-        public string MovemonmentTypeDescription { get; set; }
+        public string MovementTypeDescription { get; set; }
         public string Sign { get; set; }
         public decimal? NetQuantitySizeInUoe { get; set; }
         public decimal NetQuantitySizeInBuoe { get; set; }

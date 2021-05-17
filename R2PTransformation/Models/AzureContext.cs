@@ -166,9 +166,9 @@ namespace R2PTransformation.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.MovemonmentTypeDescription)
+                entity.Property(e => e.MovementTypeDescription)
                     .IsRequired()
-                    .HasColumnName("movemonment_type_description")
+                    .HasColumnName("movement_type_description")
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
@@ -763,7 +763,7 @@ namespace R2PTransformation.Models
 
                 entity.Property(e => e.Tag)
                     .HasColumnName("tag")
-                    .HasMaxLength(100)
+                    .HasMaxLength(1000)
                     .IsUnicode(false);
 
                 entity.Property(e => e.TransactionEventId).HasColumnName("TransactionEvent_id");

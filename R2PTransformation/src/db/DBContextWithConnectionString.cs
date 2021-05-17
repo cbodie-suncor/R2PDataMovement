@@ -276,6 +276,7 @@ namespace R2PTransformation.Models {
             context.TagMap.Add(new TagMap { Tag = "OIL-STORAGE-CORR-LD", Plant = "EP01", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
 
             context.TagMap.Add(new TagMap { Tag = "REFF", Plant = "CP04", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
+            context.TagMap.Add(new TagMap { Tag = "BRUT_MSW", Plant = "CP01", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "BRUT_LSB", Plant = "CP01", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "DB_INV_PA", Plant = "AP01", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "YT.08WL014.VOLN", Plant = "CP03", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });

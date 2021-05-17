@@ -54,26 +54,65 @@ namespace R2PTransformation.src {
             var batch = new { CreatedBy = "R2P", Created = DateTime.Now, BatchId = this.BatchId, TagBalance = records.Where(t => t.Quantity != "" && t.ValType != "Presplit") };
             return JsonConvert.SerializeObject(batch);
         }
-        public string ExportInventory() {
-            if (this.SavedInventoryRecords == null) throw new Exception("Please call SuncorProductionFile.SaveInventory before ExportInventory");
-            var records = this.SavedInventoryRecords.Select(t => new {
-//                Date = t.QuantityTimestamp,
-                Tag = t.Tag,
-                System = t.System,
-                MovementType = t.MovementType,
-                Material = SuncorController.ParseInt(t.Material, "Material"),
-                Plant = t.Plant,
-                WorkCenter = t.WorkCenter,
-                ValType = t.ValType,
-                Tank = t.Tank,
-                QuantityTimestamp = t.QuantityTimestamp,
-                BalanceDate = t.QuantityTimestamp,
-                Quantity = t.Quantity.Value == 0 || t.Confidence < 100 ? 0.1m : t.Quantity.Value,
-                StandardUnit = t.StandardUnit
-            });
+
+        public string ExportInventory(string plant) {
+            if (this.SavedInventoryRecords == null || this.SavedInventoryRecords.Count == 0) throw new Exception("Please call SuncorProductionFile.SaveInventory before ExportInventory");
+            List<InventorySnapshot> export = new List<InventorySnapshot>();
+            List<DateTime> distinctDates = this.SavedInventoryRecords.Select(t => t.QuantityTimestamp).Distinct().ToList();
+
+            if (plant == "CP01" || plant == "CP03" || plant == "CP04") {
+                export.AddRange(this.SavedInventoryRecords);
+                foreach (DateTime singleDateTime in distinctDates) {
+                    InventorySnapshot template = this.SavedInventoryRecords[0];
+
+                    foreach (var item in AzureModel.GetAllInvTagMappings(plant)) {
+                        var find = export.Where(t => t.Tag == item.Tag && t.QuantityTimestamp == singleDateTime);
+                        if (find.Count() == 0) {
+                            export.Add(new InventorySnapshot() {
+                                Tag = item.Tag,
+                                System = template.System,
+                                MovementType = template.MovementType,
+                                Material = item.MaterialNumber,
+                                Plant = plant,
+                                WorkCenter = item.WorkCenter,
+                                ValType = item.DefaultValuationType,
+                                Tank = "Default",
+                                QuantityTimestamp = singleDateTime,
+                                Quantity = 0.1m,
+                                StandardUnit = item.DefaultUnit
+                            });
+                        }
+                    }
+                }
+
+            } else {
+                //  only export the records read from the files
+                export = this.SavedInventoryRecords;
+            }
+
+            var records = export.Select(t => GetInventoryRecordForExport(t));
             var batch = new { BatchId = this.BatchId, Batch = records };
             return JsonConvert.SerializeObject(batch);
         }
+
+        private object GetInventoryRecordForExport(InventorySnapshot t) {
+            return
+                 new {
+                     //                Date = t.QuantityTimestamp,
+                     Tag = t.Tag,
+                     System = t.System,
+                     MovementType = t.MovementType,
+                     Material = SuncorController.ParseInt(t.Material, "Material"),
+                     Plant = t.Plant,
+                     WorkCenter = t.WorkCenter,
+                     ValType = t.ValType,
+                     Tank = t.Tank,
+                     QuantityTimestamp = t.QuantityTimestamp,
+                     BalanceDate = t.QuantityTimestamp,
+                     Quantity = t.Quantity.Value == 0 || t.Confidence < 100 ? 0.1m : t.Quantity.Value,
+                     StandardUnit = t.StandardUnit
+        };
+    }
 
         public void AddInventory(DateTime dateTime, string movementType, string system, string productCode, string tank, decimal? quantity) {
             InventorySnapshot inv = new InventorySnapshot();
@@ -230,5 +269,7 @@ namespace R2PTransformation.src {
         public MessageType Type;
         public string Tag;
         public string Message;
+
+        public string GetJsonMessage { get { return "{" + Tag + ",error:\"" + Message + "\"}"; } }
     }
 }

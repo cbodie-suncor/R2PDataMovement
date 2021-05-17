@@ -1,0 +1,3 @@
+site,tag,alias,datetime,value,avgvalue,strvalue,quality
+mtphd,17R3002_MAT_PT,17R3002 Product code,2021-04-11T00:00:00.000Z,"""""","""""",BRUT_LSB,0
+mtphd,17R3002_NV_PT,17R3002 Net Volume,2021-04-11T00:00:00.000Z,117470.5391,120725.8459,"""""",0

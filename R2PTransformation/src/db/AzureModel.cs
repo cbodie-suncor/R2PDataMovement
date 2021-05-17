@@ -23,6 +23,13 @@ namespace R2PTransformation.Models {
             }
         }
 
+        public static List<TagMap> GetAllInvTagMappings(string plant) {
+            using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
+                List<TagMap> mappings = context.TagMap.Where(t=>t.Type == "Inv" && t.Plant == plant).ToList();
+                return mappings;
+            }
+        }
+
         public static void SaveInventory(string fileName, SuncorProductionFile pf) {
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
                 Batch batch = new Batch();
@@ -82,6 +89,7 @@ namespace R2PTransformation.Models {
                     batch.Id = pf.BatchId.ToString();
                     batch.Created = DateTime.Now;
                     batch.CreatedBy = "System";
+                    context.Batch.Add(batch);
                 }
                 foreach (var item in pf.Tickets) {
                     CustodyTicket found = context.CustodyTicket.SingleOrDefault(t => t.S4MaterialDocument == item.S4MaterialDocument);
@@ -95,7 +103,7 @@ namespace R2PTransformation.Models {
         }
 
         private static void UpdateCustodyTicket(CustodyTicket existing, CustodyTicket ct) {
-            existing.MovemonmentTypeDescription = ct.MovemonmentTypeDescription;
+            existing.MovementTypeDescription = ct.MovementTypeDescription;
             existing.Sign = ct.Sign;
             existing.NetQuantitySizeInUoe = ct.NetQuantitySizeInUoe;
             existing.NetQuantitySizeInBuoe = ct.NetQuantitySizeInBuoe;
@@ -224,12 +232,13 @@ namespace R2PTransformation.Models {
             existing.LastUpdated = DateTime.Now;
         }
 
-        internal static TagMap ReverseLookupTag(int material, string plant) {
+        internal static TagMap ReverseLookupForTag(string material, string plant, string valType, string type) {
             TagMap tm = null;
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
-                tm = context.TagMap.SingleOrDefault(t => t.MaterialNumber == material.ToString() && t.Plant == plant);
+                tm = context.TagMap.SingleOrDefault(t => t.MaterialNumber == material && t.Plant == plant && t.DefaultValuationType == valType && t.Type == type);
                 return tm;
             }
+            return tm;
         }
 
         internal static TagMap LookupTag(string tag, string plant, string type) {
@@ -352,10 +361,10 @@ namespace R2PTransformation.Models {
             }
         }
 
-        public static void RecordStats(string type, int successfulRecords, string json) {
+        public static void RecordStats(string type, int successfulRecords, int failedRecords, string json) {
             if (json.Length > 5990) json = json.Substring(0, 5990);
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
-                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = null, Filename = null, SuccessfulRecordCount = successfulRecords, FailedRecordCount = 0, Extra = json };
+                TransactionEvent te = new TransactionEvent() { Type = type, CreateDate = DateTime.Now, Plant = null, Filename = null, SuccessfulRecordCount = successfulRecords, FailedRecordCount = failedRecords, Extra = json };
                 te.Message = "File completed successfully";
                 context.TransactionEvent.Add(te);
                 context.SaveChanges();

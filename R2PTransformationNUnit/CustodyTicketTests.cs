@@ -84,6 +84,16 @@ namespace STransformNUnit {
         }
 
         [Test]
+        public void TestSample6() {
+            string cs = "Data Source=aaasbxarmsrvuw2015.database.windows.net;Initial Catalog=NLSandbox;User ID=tempR2PIntegration;password=NorthernLights2021;";
+            DBContextWithConnectionString.SetConnectionString(cs);
+            string json = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\Custody Ticket6.json");
+            CustodyTicketBatch tixs = CustodyTicketController.CreateHoneywellPBFile(json);
+            AzureModel.SaveCustodyTickets(tixs);
+            Assert.AreEqual(1, tixs.Tickets.Count);
+            Assert.AreEqual(0, tixs.Warnings.Count);
+        }
+        [Test]
         public void TestBuilder() {
             string targetFile = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\SampleTicket.txt");
             CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13),  EnteredBy = "170552311-1",  S4MaterialDocument = "RBOB", NetQuantitySizeInBuoe = 13507, BolNumber = "166438_", Density = 0.7260M };

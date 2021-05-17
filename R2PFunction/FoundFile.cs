@@ -113,7 +113,7 @@ namespace SuncorR2P.src {
                     AzureModel.SaveInventory(this.AzureFullPathName, this.ProductionFile);
                     this.SuccessfulRecords = this.ProductionFile.SavedInventoryRecords.Count;
                     if (this.ProductionFile.SavedInventoryRecords.Count > 0) {
-                        string json = this.ProductionFile.ExportInventory();
+                        string json = this.ProductionFile.ExportInventory(PlantName);
                         AzureFileHelper.WriteFile(this.AzureFullPathName.Replace("immediateScan", "diagnostic") + ".json", json, false);
                         if (!MulesoftPush.PostInventory(json)) {
                             LogHelper.LogSystemError(log, version, "Json NOT sent to Mulesoft");

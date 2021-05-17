@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using R2PTransformation.Models;
 using System;
@@ -99,15 +101,20 @@ namespace STransformNUnit {
             string json = File.ReadAllText(BASEDIR + "/inventorySnapshot/invFromMulesoft4.json");
 
             HttpClient client = new HttpClient();
+
+//            baseTestURL = "https://pbidevarmfncuw2001.azurewebsites.net/api/";
             var data = new StringContent(json, Encoding.UTF8, "application/json");
             data.Headers.Add("x-functions-key", "2Mps74EWSjAamb8FCVrOGjbtB/g7CNqEJrZjhwpkaa6xDw1sR6hQaw==");
+//            data.Headers.Add("x-functions-key", "RcydLOUJ/4h1PLF09sRFnPlf4RaTGFQLTygL/IVgbGZvWe3kebGqjA==");
 
             var response = client.PostAsync(baseTestURL + "Inventory", data);
             string output = response.Result.Content.ReadAsStringAsync().Result;
             Console.WriteLine(output);
 
-            if (response.Result.StatusCode.ToString() != "OK")
-                throw new Exception("CustodyTicket push failed : " + response.Result.ToString());
+            Assert.IsTrue(response.Result.StatusCode.ToString() == "BadRequest");
+            JObject responseObject = (JObject)JsonConvert.DeserializeObject(output);
+            JArray items = (JArray)responseObject["errors"];
+            Assert.AreEqual(11, items.Count);
         }
     }
 }

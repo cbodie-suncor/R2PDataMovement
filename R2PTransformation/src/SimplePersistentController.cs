@@ -17,6 +17,7 @@ namespace R2PTransformation.src {
             public String Json { get; set; }
             public List<S4inventory> Inventory{ get; set; }
             public List<WarningMessage> Warnings { get; set; }
+            public List<WarningMessage> OnlyErrors { get { return Warnings.Where(t => t.Type == MessageType.Error).ToList(); } }
             public int SuccessFulRecords { get { return this.Inventory.Count; } }
             public string BatchId { get; set; }
         }
@@ -30,7 +31,6 @@ namespace R2PTransformation.src {
             object data = JsonConvert.DeserializeObject(requestBody);
 
             List<S4inventory> mm = new List<S4inventory>();
-            List<WarningMessage> Warnings = new List<WarningMessage>();
             JObject batch = (JObject)data;
             JArray items = (JArray)batch["inventory"];
             s4InventoryBatch.BatchId = batch["batchId"].ToString();
@@ -52,18 +52,26 @@ namespace R2PTransformation.src {
                     if (s4InventoryBatch.Inventory.Where(t => t.Material == sm.Material && t.Plant == sm.Plant && t.ValuationType == sm.ValuationType && t.PostingDate == sm.PostingDate).Count() > 0) {
                         throw new Exception("Duplicate Record");
                     }
+
+                    TagMap tm = AzureModel.ReverseLookupForTag(sm.Material.ToString(), sm.Plant,sm.ValuationType, "Prod");
+
+                    if (tm == null) {
+                        s4InventoryBatch.Warnings.Add(new WarningMessage(MessageType.Info, "material:\"" + sm.Material + "\",plant:\"" + sm.Plant + "\",valuationType:\"" + sm.ValuationType + "\",date:\"" + sm.PostingDate + "\"", "No TagMapping"));
+                    }
+
                     s4InventoryBatch.Inventory.Add(sm);
                 } catch (Exception ex) {
                     string material = GetStringValue(item, "material");
                     string plant = GetStringValue(item, "plant");
                     string valType = GetStringValue(item, "valuationType");
                     string date = GetStringValue(item, "date");
-                    s4InventoryBatch.Warnings.Add(new WarningMessage(MessageType.Error, "{material:\"" + material + "\",plant:\"" + plant + "\",valuationType:\"" + valType + "\",date:\"" + date + "\",error:\"" + ex.Message + "\"}"));
+//                    s4InventoryBatch.Warnings.Add(new WarningMessage(MessageType.Error, "{material:\"" + material + "\",plant:\"" + plant + "\",valuationType:\"" + valType + "\",date:\"" + date + "\",error:\"" + ex.Message + "\"}"));
+                    s4InventoryBatch.Warnings.Add(new WarningMessage(MessageType.Error, "material:\"" + material + "\",plant:\"" + plant + "\",valuationType:\"" + valType + "\",date:\"" + date + "\"", ex.Message));
                 }
             }
             AzureModel.AddS4Inventory(s4InventoryBatch);
 
-            AzureModel.RecordStats("S4Inventory", mm.Count, requestBody);
+            AzureModel.RecordStats("S4Inventory", null, s4InventoryBatch.Warnings, null, s4InventoryBatch.SuccessFulRecords, s4InventoryBatch.Warnings.Count, requestBody);
             return s4InventoryBatch;
         }
 
@@ -90,7 +98,7 @@ namespace R2PTransformation.src {
             string batchId = data["batchId"].ToString();
             AzureModel.AddProductHierarchy(mm);
 
-            AzureModel.RecordStats("ProductHierarchy", mm.Count, requestBody);
+            AzureModel.RecordStats("ProductHierarchy", mm.Count, 0, requestBody);
             return mm.Count;
         }
 
@@ -111,7 +119,7 @@ namespace R2PTransformation.src {
             }
 
             AzureModel.AddMaterialLedger(mm);
-            AzureModel.RecordStats("MaterialLedger", mm.Count, requestBody);
+            AzureModel.RecordStats("MaterialLedger", mm.Count, 0, requestBody);
 
             return 0;
         }

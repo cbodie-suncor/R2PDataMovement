@@ -53,7 +53,7 @@ namespace STransformNUnit {
             SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(bytes, "COMMERCECITY", new DateTime(2021, 03, 10));
             AzureModel.SaveInventory("filename", ms);
 //            ms.SavedRecords = ms.GetTagBalanceRecords();
-            string json = ms.ExportInventory();
+            string json = ms.ExportInventory("COMMERCECITY");
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 100);  // this ensure the json is more than just the header
             Assert.IsTrue(ms.SavedInventoryRecords.Count > 0);
@@ -69,7 +69,7 @@ namespace STransformNUnit {
             SuncorProductionFile ms = new SigmafineParser().LoadInventoryExcel(bytes, "COMMERCECITY", new DateTime(2021, 03, 10));
             AzureModel.SaveInventory("filename", ms);
             //            ms.SavedRecords = ms.GetTagBalanceRecords();
-            string json = ms.ExportInventory();
+            string json = ms.ExportInventory("COMMERCECITY");
             MulesoftPush.PostInventory(json);
             System.Console.WriteLine(json);
             Assert.IsTrue(json.Length > 140);  // this ensure the json is more than just the header

@@ -65,12 +65,14 @@ namespace R2PTransformation.src {
             else
                 pf = GetInventoryRecordsWithSingleTag(file.Contents, plant, system);
             AzureModel.SaveInventory(file.FullName, pf);
-            if (pf.SavedInventoryRecords.Count > 0) json = pf.ExportInventory();
+            if (pf.SavedInventoryRecords.Count > 0) json = pf.ExportInventory(plant);
+
             pf.RecordSuccess(file.FullName, "Inventory Snapshot", pf.SavedInventoryRecords.Count, json);
 
-            if (pf.SavedInventoryRecords.Count > 0) MulesoftPush.PostInventory(json);
+            if (json != null) MulesoftPush.PostInventory(json);
         }
     }
+
     public enum TagType {
         SingleEntry,
         MultipleTagForentry
