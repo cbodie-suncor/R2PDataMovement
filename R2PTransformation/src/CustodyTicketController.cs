@@ -81,10 +81,10 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                         VehicleNumber = GetStringValue(v, "vehicle"),
                         VehicleText = GetStringValue(v, "vehicleText"),
                         Tender = GetStringValue(v, "tender"),
-                        LoadStartDateTime = ParseDateTime(v, "loadStartDate"),
-                        LoadEndDateTime = ParseDateTime(v, "loadEndDate"),
-                        EnteredOnDateTime = ParseDateTimeCasnBeNull(v, "enteredOnDateTime"),
-                        DocumentDateTime = ParseDateTimeCasnBeNull(v, "documentDate"),
+                        LoadStartDateTime = ParseDateTimeCanBeNull(v, "loadStartDate"),
+                        LoadEndDateTime = ParseDateTimeCanBeNull(v, "loadEndDate"),
+                        EnteredOnDateTime = ParseDateTimeCanBeNull(v, "enteredOnDateTime"),
+                        DocumentDateTime = ParseDateTimeCanBeNull(v, "documentDate"),
                         PostingDateTime = ParseDateTime(v, "postingDateTime")
                     };
                     tix.Add(ct);

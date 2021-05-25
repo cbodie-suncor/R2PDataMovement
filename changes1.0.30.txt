@@ -1,3 +1,2 @@
-- added tag lookup for the S4 Inventory to set the tag value based on the material, valuation type and plant (Prod Tag Mappings)
-- If Product Code is not in any tag for the 3 Honeywell sites, send a dummy record with a DEFAULT tank and a volume of 0.1 – only applied to CP01, CP03, CP04
-- renamed CustodyTicket.MovemonmentTypeDescription to MovementTypeDescription
+- fixed custody ticket for load start date
+- fixed issue with tag loading (prod load erasing inv and inv load erasing prod)

@@ -1,0 +1,6 @@
+- added column S4_BOL, Honeywell_BOL
+
+
+sp_rename 'custodyticket.bol_number', 'S4_BOL', 'Column'
+
+alter table custodyticket add Honeywell_BOL varchar(50)

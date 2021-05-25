@@ -135,8 +135,9 @@ namespace SuncorR2P
                 generatedFile.Plant = "CP01";
                 generatedFile.AzurePath = $"CP01/custodyTickets/{DateTime.Now.ToString("yyyyMMddHHmmss")}.txt";
                 LogHelper.LogSystemError(log, productVersion, "writing file to " + generatedFile.AzurePath);
-                LogHelper.LogSystemError(log, productVersion, "wcontents to " + generatedFile.GeneratedHoneywellPBContent);
                 AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.GeneratedHoneywellPBContent, true);
+                AzureModel.RecordStats("CustodyTicket", null, generatedFile.Warnings, null, generatedFile.SuccessFulRecords, generatedFile.Warnings.Count, requestBody);
+
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
                 AzureModel.RecordFatalLoad("CustodyTicket", null, ex, requestBody);

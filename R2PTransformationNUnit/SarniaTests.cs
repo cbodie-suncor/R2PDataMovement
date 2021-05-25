@@ -64,5 +64,11 @@ namespace STransformNUnit {
             Assert.IsTrue(pf.BalanceRecords[0].ProductionRecords.Count > 0);
             Assert.AreEqual(-102164224, pf.GetTagBalanceRecords().First(t => t.Tag == "DIESEL").Quantity);
         }
+
+        [Test]
+        public void HoneywellPBDateIssue() {
+            DateTime currentDay = new DateTime(2020, 12, 24);
+            HoneywellPBFile pf = new HoneywellPBParser().LoadFile(File.ReadAllText(ROOTDIR + "NPUpld-20201215-005900M.dateIssue.txt"), "CP03", currentDay);
+        }
     }
 }

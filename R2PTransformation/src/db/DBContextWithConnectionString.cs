@@ -90,6 +90,7 @@ namespace R2PTransformation.Models {
 
             context.TagMap.Add(new TagMap { Tag = "RBOB", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "DIESEL", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
+            context.TagMap.Add(new TagMap { Tag = "A100", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
 
             context.TagMap.Add(new TagMap { Tag = "2", Plant = "CP02", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "3", Plant = "CP02", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });

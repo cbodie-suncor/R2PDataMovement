@@ -200,8 +200,7 @@ namespace R2PTransformation.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.Sign)
-                    .IsRequired()
-                    .HasMaxLength(50)
+                    .HasMaxLength(10)
                     .IsUnicode(false);
 
                 entity.Property(e => e.Temperature).HasColumnType("decimal(10, 3)");

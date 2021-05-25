@@ -22,15 +22,27 @@ namespace R2PTransformation.src {
 
         public static DateTime ParseDateTime(JToken v, string columnName) {
             try {
+                if ((v[columnName].ToString().Substring(10,1) == "-"))  
+                    return DateTime.ParseExact(v[columnName].ToString(), "yyyy-MM-dd-HH:mm:ss", CultureInfo.InvariantCulture);
+
+                if (!(v[columnName].ToString().Contains("-") || v[columnName].ToString().Contains("/"))) // now -s or /s
+                    return DateTime.ParseExact(v[columnName].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+
                 return DateTime.Parse(v[columnName].ToString());
             } catch (Exception ex) {
                 throw new Exception("Invalid Date for " + columnName);
             }
         }
 
-        public static DateTime? ParseDateTimeCasnBeNull(JToken v, string columnName) {
+        public static DateTime? ParseDateTimeCanBeNull(JToken v, string columnName) {
             try {
                 if (v[columnName].ToString() == "") return null;
+                if (v[columnName].ToString().Length > 10 && v[columnName].ToString().Substring(10, 1) == "-")
+                    return DateTime.ParseExact(v[columnName].ToString(), "yyyy-MM-dd-HH:mm:ss", CultureInfo.InvariantCulture);
+
+                if (!(v[columnName].ToString().Contains("-") || v[columnName].ToString().Contains("/"))) // now -s or /s
+                    return DateTime.ParseExact(v[columnName].ToString(), "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+
                 return DateTime.Parse(v[columnName].ToString());
             } catch (Exception ex) {
                 throw new Exception("Invalid Date for " + columnName);

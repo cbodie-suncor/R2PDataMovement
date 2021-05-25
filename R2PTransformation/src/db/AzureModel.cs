@@ -354,6 +354,7 @@ namespace R2PTransformation.Models {
                     if (otherErrors.Count > 0) te.Message = String.Join(",", otherErrors.Select(y => y.Message).Distinct().ToArray());
                     if (noMappings.Count > 0) te.Message += (te.Message.Length > 0 ? " and " : "") + noMappings.Count + " records with no tag mappings";
                 }
+                if (te.Message.Length > 2500) te.Message = te.Message.Substring(0, 2499);
                 if (type == "Load TagMaps" || type == "Load Conversions") te.Message = "Load completed successfully";
                 if (te.Message == "") te.Message = "Load completed successfully";
                 context.TransactionEvent.Add(te);
@@ -466,7 +467,7 @@ namespace R2PTransformation.Models {
             List<TagMap> toAdd = new List<TagMap>();
             List<TagMap> toChange = new List<TagMap>();
             using (DBContextWithConnectionString context = DBContextWithConnectionString.Create()) {
-                existingTM = context.TagMap.Where(t => t.Plant == plant).ToList();
+                existingTM = context.TagMap.Where(t => t.Plant == plant && t.Type == type).ToList();
             }
             foreach (DataRow r in dt.AsEnumerable()) {
                 TagMap current = TagMapFromRow(r, type);
