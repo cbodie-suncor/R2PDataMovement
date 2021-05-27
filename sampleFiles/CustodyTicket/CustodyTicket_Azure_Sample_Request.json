@@ -18,7 +18,7 @@
 "densityUoM":"KGV",
 "origin":null,
 "destination":"CN42",
-"plant":"CN42",
+"plant":"CP03",
 "temperature":20,
 "temperatureUoM":"CEL",
 "movementType":"101",
@@ -32,7 +32,7 @@
 "documentDate":"2021-02-02T00:00:00",
 "postingDateTime":"2021-02-02T00:00:00"
 },
-{       "materialDocument": "49000109071",       "batchId": "",       "bolNumber": "123",       "material": "10776",       "movementTypeDescription": "Custody Ticket",       "sign": "",       "netQuantitySizeinUOE": "1000",       "unitOfEntry": "L15",       "netQuantitySizeinBUOE": "1000",       "baseUoM": "L15",       "mass": "-1604.049",       "valuationType": "SUNCOR",       "density": "723",       "densityUoM": "KGV",       "origin": "CP03",       "destination": "NA",       "plant": "CP03",       "temperature": "20",       "temperatureUoM": "CEL",       "movementType": "601",       "mode": "Road",       "vehicle": "",       "vehicleText": "",       "tender": "",       "loadStartDate": "",       "loadEndDate": "",       "enteredOnDateTime": "2021-04-09 11:11:57",       "documentDate": "2021-04-09",       "postingDateTime": "2021-04-09 05:11:57"     }
+{       "materialDocument": "49000109071",       "batchId": "",       "bolNumber": "123",       "material": "10776",       "movementTypeDescription": "Custody Ticket",       "sign": "",       "netQuantitySizeinUOE": "1000",       "unitOfEntry": "L15",       "netQuantitySizeinBUOE": "1000",       "baseUoM": "L15",       "mass": "-1604.049",       "valuationType": "SUNCOR",       "density": "723",       "densityUoM": "KGV",       "origin": "CP03",       "destination": "NA",       "plant": "CN42",       "temperature": "20",       "temperatureUoM": "CEL",       "movementType": "601",       "mode": "Road",       "vehicle": "",       "vehicleText": "",       "tender": "",       "loadStartDate": "",       "loadEndDate": "",       "enteredOnDateTime": "2021-04-09 11:11:57",       "documentDate": "2021-04-09",       "postingDateTime": "2021-04-09 05:11:57"     }
 
 ]
 }

@@ -37,7 +37,7 @@ namespace R2PTransformation.src {
             foreach (JObject item in items) {
                 try { 
                     S4inventory sm = new S4inventory();
-                    sm.Material = ParseInt(item, "material");
+                    sm.Material = GetStringValue(item, "material");
                     sm.Plant = GetStringValue(item, "plant");
                     sm.ValuationType = GetStringValue(item, "valuationType");
                     sm.OpeningQuantity = ParseDecimal(item, "openingQuantity");

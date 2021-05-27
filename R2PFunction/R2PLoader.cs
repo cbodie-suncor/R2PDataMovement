@@ -90,7 +90,7 @@ namespace SuncorR2P
                 batch = SimplePersistentController.PersistS4Inventory(requestBody);
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
-                AzureModel.RecordFatalLoad("Inventory", null, ex, requestBody);
+                AzureModel.RecordFatalLoad("S4Inventory", null, ex, requestBody);
                 string msg = ex.Message + (ex.InnerException == null ? "" : " - " + ex.InnerException.Message);
                 return (ActionResult)new BadRequestErrorMessageResult($"Inventory failed." + msg);
             }
@@ -132,10 +132,16 @@ namespace SuncorR2P
                 FoundFile.SetConnection(log);
                 using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
                 generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
-                generatedFile.Plant = "CP01";
-                generatedFile.AzurePath = $"CP01/custodyTickets/{DateTime.Now.ToString("yyyyMMddHHmmss")}.txt";
-                LogHelper.LogSystemError(log, productVersion, "writing file to " + generatedFile.AzurePath);
-                AzureFileHelper.WriteFile(generatedFile.AzurePath, generatedFile.GeneratedHoneywellPBContent, true);
+
+                // write out Honeywell PB files to only 3 plants (CP01, CP03, CP04)
+                string contents = generatedFile.GeneratedHoneywellPBContent("CP01");
+                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP01"), contents, true);
+
+                contents = generatedFile.GeneratedHoneywellPBContent("CP03");
+                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP03"), contents, true);
+
+                contents = generatedFile.GeneratedHoneywellPBContent("CP04");
+                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP04"), contents, true);
                 AzureModel.RecordStats("CustodyTicket", null, generatedFile.Warnings, null, generatedFile.SuccessFulRecords, generatedFile.Warnings.Count, requestBody);
 
             } catch (Exception ex) {

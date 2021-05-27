@@ -11,7 +11,7 @@ namespace R2PTransformation.Models
     {
         public int CustodyTicketId { get; set; }
         public string S4MaterialDocument { get; set; }
-        public string BolNumber { get; set; }
+        public string S4Bol { get; set; }
         public string MovementTypeDescription { get; set; }
         public string Sign { get; set; }
         public decimal? NetQuantitySizeInUoe { get; set; }
@@ -39,6 +39,7 @@ namespace R2PTransformation.Models
         public DateTime? DocumentDateTime { get; set; }
         public DateTime PostingDateTime { get; set; }
         public string Batchid { get; set; }
+        public string HoneywellBol { get; set; }
 
         public virtual StandardUnit BaseUnitOfEntryNavigation { get; set; }
         public virtual StandardUnit BaseUnitOfMeasureNavigation { get; set; }

@@ -53,9 +53,9 @@ namespace STransformNUnit {
             string json = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\CustodyTicket_Azure_Sample_Request.json");
             CustodyTicketBatch tix = CustodyTicketController.CreateHoneywellPBFile(json);
             Assert.AreEqual(2, tix.Tickets.Count);
-            String generated = tix.GeneratedHoneywellPBContent;
+            String generated = tix.GeneratedHoneywellPBContent("CP03");
             generated = generated.Replace("\n", "").Replace("\r", "");
-            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,S_TTNOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,10.000NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,723.0000<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,3343434<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", generated);
+            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,S_TTNOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,10.000NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,RAIL7529<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,10072PACKAGE,START_QTY,END_QTY,NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,RAIL7529<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", generated);
         }
 
         [Test]
@@ -96,8 +96,8 @@ namespace STransformNUnit {
         [Test]
         public void TestBuilder() {
             string targetFile = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\SampleTicket.txt");
-            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13),  EnteredBy = "170552311-1",  S4MaterialDocument = "RBOB", NetQuantitySizeInBuoe = 13507, BolNumber = "166438_", Density = 0.7260M };
-            CustodyTicket ct2 = new CustodyTicket() { PostingDateTime = new DateTime(2020, 09, 14, 07, 44, 13), EnteredBy = "170552311-2", S4MaterialDocument = "C-0", NetQuantitySizeInBuoe = 12961, BolNumber = "166438_", Density = 0.8660M };
+            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13),  EnteredBy = "170552311-1",  S4MaterialDocument = "RBOB", NetQuantitySizeInBuoe = 13507, HoneywellBol = "166438", Density = 0.7260M };
+            CustodyTicket ct2 = new CustodyTicket() { PostingDateTime = new DateTime(2020, 09, 14, 07, 44, 13), EnteredBy = "170552311-2", S4MaterialDocument = "C-0", NetQuantitySizeInBuoe = 12961, HoneywellBol = "166438", Density = 0.8660M };
 
             List<CustodyTicket> tix = new List<CustodyTicket>();
             tix.Add(ct1);

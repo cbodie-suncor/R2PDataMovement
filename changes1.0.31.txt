@@ -1,6 +1,21 @@
 - added column S4_BOL, Honeywell_BOL
+- BOL LOGIC
+For Vehicle Text Pipeline, the format should be TENDER_S/4 BOL for JSON BOL
+For Vehicle Text Rail, the Vehicle number is the JSON BOL
+For Vehicle Text Truck, the S/4 BOL is the JSON BOL
+- using HoneywellBOL for honeywellPB file generation
 
+- If Product Code is not in any tag for the 3 Honeywell sites, send a dummy record with a DEFAULT tank and a volume of 0.1 – only applied to CP01, CP03, CP04
+- remove .VOLN from tank name for inventory snapshot
 
-sp_rename 'custodyticket.bol_number', 'S4_BOL', 'Column'
+- made material in S4Inventory varchar
 
-alter table custodyticket add Honeywell_BOL varchar(50)
+sp_rename 'custodyticket.bol_number', 'S4_BOL', 'Column';
+alter table custodyticket add Honeywell_BOL varchar(50);
+
+alter table s4inventory drop constraint [PK_s4inventory] 
+go
+alter table s4inventory alter column Material varchar(20) not null
+go
+ALTER TABLE [dbo].s4inventory  ADD  CONSTRAINT [pK_s4inventory_Batch] PRIMARY KEY  (material, plant, postingDate, valuationType)
+GO

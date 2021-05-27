@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 using R2PTransformation.Models;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace R2PTransformation.src {
 
@@ -14,12 +14,18 @@ namespace R2PTransformation.src {
 
         public String Json { get; set; }
         public List<CustodyTicket> Tickets { get; set; }
-        public String Plant { get; set; }
-        public String AzurePath { get; set; }
-        public String GeneratedHoneywellPBContent { get; set; }
         public List<WarningMessage> Warnings { get; set; }
         public int SuccessFulRecords { get { return this.Tickets.Count; } }
         public object BatchId { get; set; }
+
+        public String GeneratedHoneywellPBContent(string plant) {
+            string contents = CustodyTicketController.CreateHoneywellPBFile(this.Tickets.Where(t => t.Plant == plant).ToList());
+            return contents;
+        }
+
+        public String GetAzurePath(string plant) {
+            return $"{plant}/custodyTickets/{DateTime.Now.ToString("yyyyMMddHHmmss")}.txt"; ;
+        }
     }
     public class CustodyTicketController : SuncorController {
         public static string FOOTER = @"<<PRODUCT MOVEMENT IFC>>
@@ -38,11 +44,11 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
             file.Json = json;
             file.Tickets = GetTixFromJson(file);
             AzureModel.SaveCustodyTickets(file);
-            file.GeneratedHoneywellPBContent = CreateHoneywellPBFile(file.Tickets);
             return file;
         }
 
         public static string CreateHoneywellPBFile(List<CustodyTicket> tix) {
+            if (tix.Count == 0) return null;
             string doc = HEADER;
             foreach (CustodyTicket ticket in tix) {
                 doc += GetMovement(ticket, ticket.EnteredBy);
@@ -60,7 +66,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                 try {
                     CustodyTicket ct = new CustodyTicket() {
                         S4MaterialDocument = GetStringValue(v, "materialDocument"),
-                        BolNumber = GetStringValue(v, "bolNumber"),
+                        S4Bol = GetStringValue(v, "bolNumber"),
                         MovementTypeDescription = GetStringValue(v, "movementTypeDescription"),
                         Sign = GetStringValue(v, "sign"),
                         NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
@@ -87,6 +93,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                         DocumentDateTime = ParseDateTimeCanBeNull(v, "documentDate"),
                         PostingDateTime = ParseDateTime(v, "postingDateTime")
                     };
+                    CalculateHoneywellBOL(ct);
                     tix.Add(ct);
                 } catch (Exception ex) {
                     string bolNumber = GetStringValue(v, "bolNumber");
@@ -95,6 +102,15 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                 }
             }
             return tix;
+        }
+
+        public static void CalculateHoneywellBOL(CustodyTicket ct) {
+            switch(ct.VehicleText) {
+                case "Pipeline": ct.HoneywellBol = ct.Tender + "_" + ct.S4Bol; break;
+                case "Rail": ct.HoneywellBol = ct.VehicleNumber; break;
+                case "Truck": ct.HoneywellBol = ct.S4Bol; break;
+                default: ct.HoneywellBol = ct.S4Bol; break;
+            }
         }
 
         private static string GetMovement(CustodyTicket ticket, string movementId) {
@@ -132,7 +148,7 @@ NET_QTY,{ FormatDP(ticket.NetQuantitySizeInBuoe, 3)}
 PACKAGE_COUNT,
 UNITS,L
 COMPANY,
-REFERENCE,{ (type == "D" ? ticket.BolNumber : FormatDP(ticket.Density.Value, 4) )}
+REFERENCE,{ ticket.HoneywellBol }
 ";
             result += "<END MOVEMENT DETAIL REC>\r\n";
             return result;
@@ -145,10 +161,6 @@ REFERENCE,{ (type == "D" ? ticket.BolNumber : FormatDP(ticket.Density.Value, 4) 
 
         private static string GetDateTime(DateTime startDateTime) {
             return startDateTime.ToString("dd/MM/yyyy hh:mm:ss");
-        }
-
-        public static void HandleNewRequest(string jsonContent) {
-            throw new NotImplementedException();
         }
     }
 }

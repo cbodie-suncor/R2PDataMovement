@@ -9,7 +9,7 @@ namespace R2PTransformation.Models
 {
     public partial class S4inventory
     {
-        public int Material { get; set; }
+        public string Material { get; set; }
         public string System { get; set; }
         public string Plant { get; set; }
         public string Tag { get; set; }

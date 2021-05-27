@@ -115,11 +115,6 @@ namespace R2PTransformation.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.BolNumber)
-                    .HasColumnName("BOL_Number")
-                    .HasMaxLength(50)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.Density).HasColumnType("decimal(30, 3)");
 
                 entity.Property(e => e.DensityUom)
@@ -143,6 +138,11 @@ namespace R2PTransformation.Models
                 entity.Property(e => e.EnteredOnDateTime)
                     .HasColumnName("Entered_On_DateTime")
                     .HasColumnType("datetime");
+
+                entity.Property(e => e.HoneywellBol)
+                    .HasColumnName("Honeywell_BOL")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.LoadEndDateTime)
                     .HasColumnName("Load_End_DateTime")
@@ -192,6 +192,11 @@ namespace R2PTransformation.Models
                 entity.Property(e => e.PostingDateTime)
                     .HasColumnName("Posting_DateTime")
                     .HasColumnType("datetime");
+
+                entity.Property(e => e.S4Bol)
+                    .HasColumnName("S4_BOL")
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.S4MaterialDocument)
                     .IsRequired()
@@ -491,9 +496,14 @@ namespace R2PTransformation.Models
 
             modelBuilder.Entity<S4inventory>(entity =>
             {
-                entity.HasKey(e => new { e.Material, e.Plant, e.PostingDate, e.ValuationType });
+                entity.HasKey(e => new { e.Material, e.Plant, e.PostingDate, e.ValuationType })
+                    .HasName("pK_s4inventory_Batch");
 
                 entity.ToTable("s4inventory");
+
+                entity.Property(e => e.Material)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.Plant)
                     .HasMaxLength(30)

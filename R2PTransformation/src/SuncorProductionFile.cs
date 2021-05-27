@@ -141,6 +141,7 @@ namespace R2PTransformation.src {
             }
 
             inv.Confidence = 100;
+            if (tank != null) tank = tank.Replace(".VOLN", "");
             inv.Tank = tank;
             if (quantity.HasValue) inv.Quantity = Math.Round(quantity.Value, 3);
             inv.BatchId = this.BatchId.ToString();
