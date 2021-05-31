@@ -282,6 +282,17 @@ namespace R2PTransformation.Models {
             context.TagMap.Add(new TagMap { Tag = "DB_INV_PA", Plant = "AP01", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
             context.TagMap.Add(new TagMap { Tag = "YT.08WL014.VOLN", Plant = "CP03", Type = "Inv", DefaultValuationType = "SUNCOR", MaterialNumber = "10" });
 
+            context.TagMap.Add(new TagMap { Tag = "RBOB2", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "170552311-1" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB3", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "170552311-2" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB4", Plant = "CN42", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "49000095441" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB5", Plant = "CN42", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "000000000000010422" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB6", Plant = "CN42", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "49000095440" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB7", Plant = "CP04", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "49000095441" });
+
+            context.TagMap.Add(new TagMap { Tag = "RBOB8", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "10072" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB9", Plant = "CN42", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "49000109071" });
+            context.TagMap.Add(new TagMap { Tag = "RBOB10", Plant = "CP03", Type = "Prod", DefaultValuationType = "SUNCOR", MaterialNumber = "49000109071" });
+
             context.SaveChanges();
         }
 

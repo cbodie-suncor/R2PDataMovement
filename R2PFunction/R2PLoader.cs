@@ -127,22 +127,16 @@ namespace SuncorR2P
             var productVersion = typeof(R2PLoader).Assembly.GetName().Version.ToString();
             log.LogInformation("C# HTTP trigger Custody Ticket request processed.");
             string requestBody = String.Empty;
-            CustodyTicketBatch generatedFile = null;
+            CustodyTicketBatch batch = null;
             try {
                 FoundFile.SetConnection(log);
                 using (StreamReader streamReader = new StreamReader(req.Body)) { requestBody = await streamReader.ReadToEndAsync(); }
-                generatedFile = CustodyTicketController.CreateHoneywellPBFile(requestBody);
+                batch = CustodyTicketController.CreateHoneywellPBFile(requestBody);
+                foreach (var file in batch.GeneratedHoneywellPBContent()) {
+                    if (file.Contents != null) AzureFileHelper.WriteFile(file.GetAzurePath, file.Contents, true);
+                }
 
-                // write out Honeywell PB files to only 3 plants (CP01, CP03, CP04)
-                string contents = generatedFile.GeneratedHoneywellPBContent("CP01");
-                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP01"), contents, true);
-
-                contents = generatedFile.GeneratedHoneywellPBContent("CP03");
-                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP03"), contents, true);
-
-                contents = generatedFile.GeneratedHoneywellPBContent("CP04");
-                if (contents != null) AzureFileHelper.WriteFile(generatedFile.GetAzurePath("CP04"), contents, true);
-                AzureModel.RecordStats("CustodyTicket", null, generatedFile.Warnings, null, generatedFile.SuccessFulRecords, generatedFile.Warnings.Count, requestBody);
+                AzureModel.RecordStats("CustodyTicket", null, batch.Warnings, null, batch.SuccessFulRecords, batch.Warnings.Count, requestBody);
 
             } catch (Exception ex) {
                 LogHelper.LogSystemError(log, productVersion, ex);
@@ -151,11 +145,11 @@ namespace SuncorR2P
                 return (ActionResult)new BadRequestErrorMessageResult($"CustodyTicket failed." + msg);
             }
 
-            if (generatedFile.Warnings.Count() > 0) {
-                string msg = string.Join(',', generatedFile.Warnings.Select(t => t.Message));
+            if (batch.Warnings.Where(y => y.Type != MessageType.Info).Count() > 0) {
+                string msg = string.Join(',', batch.Warnings.Where(y=>y.Type != MessageType.Info).Select(t => t.Message));
                 return (ActionResult)new BadRequestObjectResult("{\"errors\":[" + msg + "]}");
             } else { 
-                return (ActionResult)new OkObjectResult($"Custody Tickets processed successfully {generatedFile.SuccessFulRecords} records");
+                return (ActionResult)new OkObjectResult($"Custody Tickets processed successfully {batch.SuccessFulRecords} records");
             }
         }
 

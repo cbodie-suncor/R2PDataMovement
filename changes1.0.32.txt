@@ -1,0 +1,3 @@
+- add tag from prodTagMap
+- changed the filename generation for Custody Tickets to EDM_MBCMCR_postingdate_currentdate
+- placed S4 Material Document in Movement_Id on generated PB files
