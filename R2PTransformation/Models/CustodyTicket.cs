@@ -40,6 +40,7 @@ namespace R2PTransformation.Models
         public DateTime PostingDateTime { get; set; }
         public string Batchid { get; set; }
         public string HoneywellBol { get; set; }
+        public string Material { get; set; }
 
         public virtual StandardUnit BaseUnitOfEntryNavigation { get; set; }
         public virtual StandardUnit BaseUnitOfMeasureNavigation { get; set; }

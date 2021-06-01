@@ -84,8 +84,8 @@ namespace STransformNUnit {
         [Test]
         public void TestBuilder() {
             string targetFile = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\SampleTicket.txt");
-            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "",  S4MaterialDocument = "170552311-1", NetQuantitySizeInBuoe = 13507, HoneywellBol = "166438", Density = 0.7260M };
-            CustodyTicket ct2 = new CustodyTicket() { PostingDateTime = new DateTime(2020, 09, 14, 07, 44, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "cbodie", S4MaterialDocument = "170552311-2", NetQuantitySizeInBuoe = 12961, HoneywellBol = "166438", Density = 0.8660M };
+            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "",  Material = "170552311a", S4MaterialDocument = "170552311-1", NetQuantitySizeInBuoe = 13507, HoneywellBol = "166438", Density = 0.7260M };
+            CustodyTicket ct2 = new CustodyTicket() { PostingDateTime = new DateTime(2020, 09, 14, 07, 44, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "cbodie", Material = "170552311a", S4MaterialDocument = "170552311-2", NetQuantitySizeInBuoe = 12961, HoneywellBol = "166438", Density = 0.8660M };
             ct1.LookupTag();
             ct2.LookupTag();
 

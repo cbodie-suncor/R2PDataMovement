@@ -156,6 +156,11 @@ namespace R2PTransformation.Models
                     .HasColumnName("mass")
                     .HasColumnType("decimal(30, 5)");
 
+                entity.Property(e => e.Material)
+                    .HasColumnName("material")
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.Mode)
                     .HasMaxLength(100)
                     .IsUnicode(false);

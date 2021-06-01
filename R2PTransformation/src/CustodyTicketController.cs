@@ -81,6 +81,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                     CustodyTicket ct = new CustodyTicket() {
                         S4MaterialDocument = GetStringValue(v, "materialDocument"),
                         S4Bol = GetStringValue(v, "bolNumber"),
+                        Material = GetStringValue(v, "material"),
                         MovementTypeDescription = GetStringValue(v, "movementTypeDescription"),
                         Sign = GetStringValue(v, "sign"),
                         NetQuantitySizeInUoe = ParseDecimal(v, "netQuantitySizeinUOE"),
@@ -189,7 +190,7 @@ namespace R2PTransformation.Models {
         }
         public void LookupTag() {
             CustodyTicket ct = this;
-            TagMap tm = AzureModel.ReverseLookupForTag(ct.S4MaterialDocument.ToString(), ct.Plant, ct.ValuationType, "Prod");
+            TagMap tm = AzureModel.ReverseLookupForTag(ct.Material.ToString(), ct.Plant, ct.ValuationType, "Prod");
             if (tm != null) ct.Tag = tm.Tag;
         }
     }
