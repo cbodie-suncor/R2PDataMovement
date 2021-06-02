@@ -1,0 +1,1 @@
+- added sign to the quantity fields END_QTY and NET_QTY (only adding - if -)

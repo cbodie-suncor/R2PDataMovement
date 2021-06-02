@@ -1,0 +1,11 @@
+- changed the header reference in the Honeywell PB file with the following logic:
+	: <PREFIX>_<CODE>
+	PREFIX = S_ if Sign is -, R_ if NOT
+
+	CODE = PP if Mode = Pipeline
+	CODE = TT if Mode = Truck or Truck (Non-TSW) or Road
+	CODE = MM if Mode = Marin
+	CODE = RR if Mode = Rail
+
+
+	

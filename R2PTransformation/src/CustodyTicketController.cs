@@ -111,7 +111,7 @@ DATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS
                     ct.CalculateHoneywellBOL();
                     ct.LookupTag();
                     if (ct.Tag == null) {
-                        group.Warnings.Add(new WarningMessage(MessageType.Info, "material:\"" + ct.S4MaterialDocument + "\",plant:\"" + ct.Plant + "\",valuationType:\"" + ct.ValuationType + "\",date:\"" + ct.PostingDateTime + "\"", "No TagMapping"));
+                        group.Warnings.Add(new WarningMessage(MessageType.Info, "material:\"" + ct.Material + "\",plant:\"" + ct.Plant + "\",valuationType:\"" + ct.ValuationType + "\",date:\"" + ct.PostingDateTime + "\"", "No TagMapping"));
                     } else {
                         tix.Add(ct);
                     }
@@ -138,7 +138,7 @@ MOVEMENT_TYPE,M
 START_DATE_TIME,{GetDateTime(ticket.PostingDateTime)}
 END_DATE_TIME,{GetDateTime(ticket.PostingDateTime)}
 TEMPLATE_NAME,T-SAP
-REFERENCE,S_TT
+REFERENCE,{ticket.CalculateHeaderReference()}
 NOTES,
 ";
             result += "<END MOVEMENT REC>\r\n";
@@ -153,12 +153,12 @@ EQUIPMENT,
 PRODUCT,{ticket.Tag}
 PACKAGE,
 START_QTY,
-END_QTY,{ (type == "D" ? "" : FormatDP(ticket.NetQuantitySizeInBuoe, 3))}
-NET_QTY,{ FormatDP(ticket.NetQuantitySizeInBuoe, 3)}
+END_QTY,{ (type == "D" ? "" : ticket.GetSign + FormatDP(ticket.NetQuantitySizeInBuoe, 3))}
+NET_QTY,{ ticket.GetSign + FormatDP(ticket.NetQuantitySizeInBuoe, 3)}
 PACKAGE_COUNT,
 UNITS,L
 COMPANY,
-REFERENCE,{ ticket.HoneywellBol }
+REFERENCE,{ (type == "S" ? ticket.Density.ToString() : ticket.HoneywellBol ) }
 ";
             result += "<END MOVEMENT DETAIL REC>\r\n";
             return result;
@@ -176,7 +176,7 @@ REFERENCE,{ ticket.HoneywellBol }
 }
 
 namespace R2PTransformation.Models {
-    
+
     public partial class CustodyTicket {
         public String Tag;
         public void CalculateHoneywellBOL() {
@@ -188,11 +188,27 @@ namespace R2PTransformation.Models {
                 default: ct.HoneywellBol = ct.S4Bol; break;
             }
         }
+        public String CalculateHeaderReference() {
+            string signPrefix = Sign == "-" ? "S_" : "R_";
+            CustodyTicket ct = this;
+            switch (ct.Mode) {
+                case "Pipeline": return signPrefix + "PP"; break;
+                case "Marine": return signPrefix + "MM"; break;
+                case "Rail": return signPrefix + "RR"; break;
+                case "Truck": return signPrefix + "TT"; break;
+                case "Truck (Non-TSW)": return signPrefix + "TT"; break;
+                case "Road": return signPrefix + "TT"; break;
+                default: return ""; break;
+            }
+        }
+
         public void LookupTag() {
             CustodyTicket ct = this;
             TagMap tm = AzureModel.ReverseLookupForTag(ct.Material.ToString(), ct.Plant, ct.ValuationType, "Prod");
             if (tm != null) ct.Tag = tm.Tag;
         }
+
+        public string GetSign { get { return this.Sign == "-" ? "-" : ""; } }
     }
 }
 

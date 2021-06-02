@@ -114,7 +114,7 @@ namespace STransformNUnit {
             Assert.IsTrue(response.Result.StatusCode.ToString() == "BadRequest");
             JObject responseObject = (JObject)JsonConvert.DeserializeObject(output);
             JArray items = (JArray)responseObject["errors"];
-            Assert.AreEqual(16, items.Count);
+            Assert.AreEqual(11, items.Count);
         }
     }
 }

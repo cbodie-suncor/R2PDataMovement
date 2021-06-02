@@ -1,0 +1,3 @@
+- first Reference (in the Source record) holds the density and the 2nd reference (in the destination rcord) holds the BOL for Custody ticket Honeywerll PB generation.
+- the clearing of the directory CP04/CustodyTicket is something other than the Azure Service
+- unsure about the cause of the faulty master/AzureDataLoader.log - will watch it

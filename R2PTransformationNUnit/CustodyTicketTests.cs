@@ -53,7 +53,7 @@ namespace STransformNUnit {
             Assert.AreEqual(2, tix.Tickets.Count);
             List<CustodyTicketPBFile> generated = tix.GeneratedHoneywellPBContent();
             string contents = generated[0].Contents.Replace("\n", "").Replace("\r", "");
-            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,10072MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,S_TTNOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,10072SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,RBOB8PACKAGE,START_QTY,END_QTY,10.000NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,RAIL7529<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,10072SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,RBOB8PACKAGE,START_QTY,END_QTY,NET_QTY,10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,RAIL7529<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", contents);
+            Assert.AreEqual("<<PRODUCT MOVEMENT IFC>><_DEFAULTS_>DATEFORMAT, DD/MM/YYYYDATETIMEFORMAT, DD/MM/YYYY HH24:MI:SS<ENDDEFAULTS><START MOVEMENT REC>MOVEMENT_ID,10072MOVEMENT_TYPE,MSTART_DATE_TIME,02/02/2021 12:00:00END_DATE_TIME,02/02/2021 12:00:00TEMPLATE_NAME,T-SAPREFERENCE,NOTES,<END MOVEMENT REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,10072SOURCE_OR_DESTINATION,SEQUIPMENT,PRODUCT,RBOB8PACKAGE,START_QTY,END_QTY,-10.000NET_QTY,-10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,723<END MOVEMENT DETAIL REC><START MOVEMENT DETAIL REC>MOVEMENT_ID,10072SOURCE_OR_DESTINATION,DEQUIPMENT,PRODUCT,RBOB8PACKAGE,START_QTY,END_QTY,NET_QTY,-10.000PACKAGE_COUNT,UNITS,LCOMPANY,REFERENCE,RAIL7529<END MOVEMENT DETAIL REC><<PRODUCT MOVEMENT IFC>><<END OF FILE MARKER>>", contents);
         }
 
         [Test]
@@ -84,7 +84,7 @@ namespace STransformNUnit {
         [Test]
         public void TestBuilder() {
             string targetFile = File.ReadAllText(@"..\..\..\..\sampleFiles\CustodyTicket\SampleTicket.txt");
-            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "",  Material = "170552311a", S4MaterialDocument = "170552311-1", NetQuantitySizeInBuoe = 13507, HoneywellBol = "166438", Density = 0.7260M };
+            CustodyTicket ct1 = new CustodyTicket(){ PostingDateTime = new DateTime(2020, 09, 14, 07, 43, 13), Plant = "CP03", Sign = "-", ValuationType = "SUNCOR", Mode = "Truck", EnteredBy = "",  Material = "170552311a", S4MaterialDocument = "170552311-1", NetQuantitySizeInBuoe = 13507, HoneywellBol = "166438", Density = 876.7260M };
             CustodyTicket ct2 = new CustodyTicket() { PostingDateTime = new DateTime(2020, 09, 14, 07, 44, 13), Plant = "CP03", ValuationType = "SUNCOR", EnteredBy = "cbodie", Material = "170552311a", S4MaterialDocument = "170552311-2", NetQuantitySizeInBuoe = 12961, HoneywellBol = "166438", Density = 0.8660M };
             ct1.LookupTag();
             ct2.LookupTag();

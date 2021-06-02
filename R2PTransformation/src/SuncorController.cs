@@ -22,7 +22,7 @@ namespace R2PTransformation.src {
 
         public static DateTime ParseDateTime(JToken v, string columnName) {
             try {
-                if ((v[columnName].ToString().Substring(10,1) == "-"))  
+                if (v[columnName].ToString().Length > 10 &&  v[columnName].ToString().Substring(10,1) == "-")  
                     return DateTime.ParseExact(v[columnName].ToString(), "yyyy-MM-dd-HH:mm:ss", CultureInfo.InvariantCulture);
 
                 if (!(v[columnName].ToString().Contains("-") || v[columnName].ToString().Contains("/"))) // now -s or /s

@@ -40,5 +40,12 @@ namespace R2PTransformationNUnit {
             new ProductionMatDocController().Persist(json);
             Assert.True(1 == 1); ;
         }
+
+        [Test]
+        public void JsonTest5() {
+            string json = File.ReadAllText(ROOTDIR + "sample5.json");
+            new ProductionMatDocController().Persist(json);
+            Assert.True(1 == 1); ;
+        }
     }
 }
